@@ -76,6 +76,7 @@ textheight=24cm, % llncs has 19.3cm
 %\usepackage{tikz}
 %\usepackage{tikz-3dplot}
 \usepackage{mathtools}
+\usepackage{coffeestains}
 
 %% For contact
 \newcommand{\rbar}{\bar{\bm{r}}}
@@ -103,6 +104,7 @@ textheight=24cm, % llncs has 19.3cm
 
 \abstract
 {
+\coffeestainA{0.2}{0.85}{-25}{5cm}{10.3cm}
 This work extends the application of Jacobian-free Newton–Krylov (JFNK) methods to higher-order cell-centred finite-volume formulations for solid mechanics.
 While conventional cell-centred schemes are typically restricted to second-order accuracy, we present third- and fourth-order formulations that employ local least-squares reconstructions for gradient evaluation combined with Gaussian quadrature at cell faces for flux integration.
 These schemes enable accurate resolution of complex stress and deformation fields in both linear and nonlinear solid mechanics, while retaining the flexibility and geometric generality of finite-volume methods.
@@ -127,7 +129,6 @@ The implementations are openly released in the solids4foam toolbox for OpenFOAM,
 %Paper outline:
 %
 %Intro
-
 Potential structure of this section:
 
 	1.	Higher-order discretisation in computational solid mechanics remains relatively underexplored compared to fluid dynamics, despite its potential for improving accuracy and efficiency. Comment on 'why' we should care about higher order: potentially cheaper to achieve the same mesh error; potential to reduce the amount of data when running large models on HPC systems (where data is the bottleneck).
@@ -148,6 +149,67 @@ Potential structure of this section:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Mathematical Model and Numerical Methods}\label{sec:math_model}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+skica molekule na symmetry planeu
+skica molekule na dirichlet boundariu
+sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neumman rub!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Test Cases}\label{sec:test_cases}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{itemize}
+\item[•] Linear elastic
+\begin{itemize}
+\item[•] MMS with uniform and non-uniform boundary distribution
+\item[•] Cantilever beam - to show that convergence is same with traction boundaries
+\item[•] Spherical cavity - to show convergence norms for realistic 3D (this we already have on cantilever beam but here timings are different becouse it is 3D and it has source term calculation which is overhead)
+\item[•] Elliptic plate - to show parallel performance and benefits of high-order
+\end{itemize}
+\end{itemize}
+\subsection{Case 1: Order Verification via the Manufactured Solution Procedure}
+
+
+
+\subsection{Case 2: Cantilever beam}
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/cantilever/cantilever.png} 
+	\caption{Cantilever beam case: geometry and boundary conditions}
+	\label{fig:cantilever}
+\end{figure}
+
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Hexahedral mesh]
+ 	{
+ 		\label{fig:mms_solution}
+    		\includegraphics[width=0.47\textwidth]{figures/cantilever/dispErrors_hex} 
+    }
+ 	\subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:mms_mesh}
+    		\includegraphics[height=0.28\textwidth]{figures/cantilever/dispErrors_tet-struct}  
+    	}
+    	\subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:mms_mesh}
+    		\includegraphics[height=0.3\textwidth]{figures/cantilever/dispErrors_tet-unstruct}  
+    }
+ 	\caption{Cantilever beam case: Displacement magnitude discretisation errors}
+ 	\label{fig:cell}
+ \end{figure}
+
+%- dodaj sliku koju san stavio za cantilever
+%- left zero and right force
+%- pdf of mesh above diagram - find how to merge them.
+%- analytical solution left and right
+
+\subsection{Case 4: Spherical cavity}
+%- analytical solution on boundaries
+%Case 3: Elliptic plate (kako izvuc rezultate?)
+
 
 %
 %Math model and numerical methods
@@ -999,12 +1061,6 @@ Potential structure of this section:
 %% Although applying the same tolerances for the segregated and Jacobian-free Newton-Krylov solution procedures may seem reasonable, care must be taken with $s_{\text{tol}}$. The Jacobian-free Newton-Krylov method typically makes a small number of large corrections to the solution, whereas the segregated procedure often makes a large number of small corrections. Consequently, if the same $s_{\text{tol}}$ value were used, the segregated procedure might be declared convergent prematurely. To avoid this, $s_{\text{tol}}$ is set to zero in the present work, meaning convergence is based solely on residual reduction. Nonetheless, setting $s_{\text{tol}} > 0$ could yield a more robust procedure capable of handling potential stalling.
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Test Cases}\label{sec:test_cases}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-To be added.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions} \label{sec:conclusion}
@@ -1074,8 +1130,6 @@ the University Technology Centre (UTC phases I and II) at UCD
 (www.ucd.ie/bekaert), from I-Form, funded by Science Foundation Ireland (SFI)
 Grant Numbers {16/RC/3872} and {21/RC/10295\_P2}, co-funded under European Regional Development Fund and by I-Form industry partners, and from NexSys, funded by SFI Grant Number 21/SPP/3756.
 Additionally, the authors wish to acknowledge the DJEI/DES/SFI/HEA Irish Centre for High-End Computing (ICHEC) for the provision of computational facilities and support (www.ichec.ie), and part of this work has been carried out using the UCD ResearchIT Sonic cluster which was funded by UCD IT Services and the UCD Research Office.
-%\hl{Ivan/Zeljko: add any additional acknowledgements here}
-
 
 
 \newpage
