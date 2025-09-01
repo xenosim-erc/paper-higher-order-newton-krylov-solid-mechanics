@@ -162,7 +162,7 @@ sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neum
 \item[•] Linear elastic
 \begin{itemize}
 \item[•] MMS with uniform and non-uniform boundary distribution
-\item[•] Cantilever beam - to show that convergence is same with traction boundaries
+\item[•] Cantilever beam - to show that convergence is same with traction boundaries. Only 2D case. 
 \item[•] Spherical cavity - to show convergence norms for realistic 3D (this we already have on cantilever beam but here timings are different becouse it is 3D and it has source term calculation which is overhead)
 \item[•] Elliptic plate - to show parallel performance and benefits of high-order
 \end{itemize}
@@ -172,7 +172,11 @@ sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neum
 
 
 \subsection{Case 2: Cantilever beam}
-
+%TO DO:
+% - segregated solutions
+% - Geometry and boundary conditions image
+% - mesh images
+%
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.7\textwidth]{figures/cantilever/cantilever.png} 
@@ -185,26 +189,42 @@ sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neum
 	\subfigure[Hexahedral mesh]
  	{
  		\label{fig:mms_solution}
-    		\includegraphics[width=0.47\textwidth]{figures/cantilever/dispErrors_hex} 
+    		\includegraphics[scale=0.8]{figures/cantilever/dispErrors_hex} 
     }
- 	\subfigure[Tetrahedral unstructured mesh]
+ 	\subfigure[Tetrahedral structured mesh]
  	{
  		\label{fig:mms_mesh}
-    		\includegraphics[height=0.28\textwidth]{figures/cantilever/dispErrors_tet-struct}  
+    		\includegraphics[scale=0.8]{figures/cantilever/dispErrors_tet-struct}  
     	}
     	\subfigure[Tetrahedral unstructured mesh]
  	{
  		\label{fig:mms_mesh}
-    		\includegraphics[height=0.3\textwidth]{figures/cantilever/dispErrors_tet-unstruct}  
+    		\includegraphics[scale=0.8]{figures/cantilever/dispErrors_tet-unstruct}  
     }
- 	\caption{Cantilever beam case: Displacement magnitude discretisation errors}
+ 	\caption{Cantilever beam case: displacement magnitude discretisation errors}
  	\label{fig:cell}
  \end{figure}
 
-%- dodaj sliku koju san stavio za cantilever
-%- left zero and right force
-%- pdf of mesh above diagram - find how to merge them.
-%- analytical solution left and right
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Hexahedral mesh]
+ 	{
+ 		\label{fig:mms_solution}
+    		\includegraphics[scale=0.8]{figures/cantilever/stressErrors_hex} 
+    }
+ 	\subfigure[Tetrahedral structured mesh]
+ 	{
+ 		\label{fig:mms_mesh}
+    		\includegraphics[scale=0.8]{figures/cantilever/stressErrors_tet-struct}  
+    	}
+    	\subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:mms_mesh}
+    		\includegraphics[scale=0.8]{figures/cantilever/stressErrors_tet-unstruct}  
+    }
+ 	\caption{Cantilever beam case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors. Results for $N=3$ are not shown because stress error is around $\sim$ $10^{-12}$}
+ 	\label{fig:cell}
+ \end{figure}
 
 \subsection{Case 4: Spherical cavity}
 %- analytical solution on boundaries
