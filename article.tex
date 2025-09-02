@@ -169,7 +169,46 @@ sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neum
 \end{itemize}
 \subsection{Case 1: Order Verification via the Manufactured Solution Procedure}
 
+The first test case consists of a $0.2 \times 0.2 \times 0.2$ m cube with linear elastic ($E = 200$ GPa, $\nu = 0.3$) properties.
+A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is employed of the form \citep{Mazzanti2024}
+\begin{eqnarray}
+	\bb{u} =
+	\begin{pmatrix}
+	a_x \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
+	a_y \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) \\
+	a_z \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) 
+	\end{pmatrix}
+\end{eqnarray}
+where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
+The Cartesian coordinates are given by $x$, $y$ and $z$.
+The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in authors previous publication \cite[cardiff2025].
 
+\begin{itemize}
+\item[•] tet strucu mesh is more accurate becouse it have much larger DOF
+\item[•] add polyhedral mesh and tet unstructured mesh
+\item[•] add pablo 2d case
+\end{itemize}
+
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Hexahedral mesh]
+ 	{
+ 		\label{fig:mms_solution}
+    		\includegraphics[scale=0.8]{figures/mms/mms_dispErrors_ho-hex} 
+    }
+ 	\subfigure[Tetrahedral structured mesh]
+ 	{
+ 		\label{fig:mms_mesh}
+    		\includegraphics[scale=0.8]{figures/mms/mms_dispErrors_ho-tet-struct}  
+    }
+%    	\subfigure[Tetrahedral unstructured mesh]
+% 	{
+% 		\label{fig:mms_mesh}
+%    		\includegraphics[scale=0.8]{figures/mms/placeholder.pdf}  
+%    }
+ 	\caption{Manufactured solution cube: error convergence for displacement magnitude}
+ 	\label{fig:cell}
+ \end{figure}
 
 \subsection{Case 2: Cantilever beam}
 %TO DO:
@@ -177,7 +216,7 @@ sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neum
 % - Geometry and boundary conditions image
 % - mesh images
 %
-\begin{figure}[h]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.7\textwidth]{figures/cantilever/cantilever.png} 
 	\caption{Cantilever beam case: geometry and boundary conditions}
@@ -227,6 +266,8 @@ sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neum
  \end{figure}
 
 \subsection{Case 4: Spherical cavity}
+
+\subsection{Error-cost relationship}
 %- analytical solution on boundaries
 %Case 3: Elliptic plate (kako izvuc rezultate?)
 
