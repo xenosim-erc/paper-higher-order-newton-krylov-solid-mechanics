@@ -76,7 +76,7 @@ textheight=24cm, % llncs has 19.3cm
 %\usepackage{tikz}
 %\usepackage{tikz-3dplot}
 \usepackage{mathtools}
-\usepackage{coffeestains}
+%\usepackage{coffeestains}
 
 %% For contact
 \newcommand{\rbar}{\bar{\bm{r}}}
@@ -104,7 +104,7 @@ textheight=24cm, % llncs has 19.3cm
 
 \abstract
 {
-\coffeestainA{0.2}{0.85}{-25}{5cm}{10.3cm}
+%\coffeestainA{0.2}{0.85}{-25}{5cm}{10.3cm}
 This work extends the application of Jacobian-free Newton–Krylov (JFNK) methods to higher-order cell-centred finite-volume formulations for solid mechanics.
 While conventional cell-centred schemes are typically restricted to second-order accuracy, we present third- and fourth-order formulations that employ local least-squares reconstructions for gradient evaluation combined with Gaussian quadrature at cell faces for flux integration.
 These schemes enable accurate resolution of complex stress and deformation fields in both linear and nonlinear solid mechanics, while retaining the flexibility and geometric generality of finite-volume methods.
@@ -153,6 +153,13 @@ Potential structure of this section:
 skica molekule na symmetry planeu
 skica molekule na dirichlet boundariu
 sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neumman rub!
+
+Philip comment: we should mention the importance of using consistent areas and
+volumes, e.g when discretising the volumetric terms we should use the same cell
+decomposition as we use to calculate the cell volume; the same applies for the
+face area integrals. Ivan noted this is required for non-flat faces to get the
+expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Test Cases}\label{sec:test_cases}
