@@ -164,7 +164,7 @@ expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Test Cases}\label{sec:test_cases}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+- explain how L2 and Linf are calculated!
 \begin{itemize}
 \item[•] Linear elastic
 \begin{itemize}
@@ -175,8 +175,42 @@ expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
 \end{itemize}
 \end{itemize}
 \subsection{Case 1: Order Verification via the Manufactured Solution Procedure}
-\subsubsection{2D case}
+The first test case consists of a  $0.2 \times 0.2$ m square or $0.2 \times 0.2 \times 0.2$ m cube with linear elastic ($E = 200$ GPa, $\nu = 0.3$) properties.
+A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is employed in the form or polynomial, trigonometric \citep{Mazzanti2024} or mixed form \citep{Castrillo2022}:
+\begin{itemize}
+\item[•] \textbf{2D} 
+\begin{eqnarray}
+	\bb{u} =
+	\begin{pmatrix}
+ e^{x^2}\sin(y)\\
+\ln(3+y)\cos(x)+\sin(y)\\
+ 0.
+	\end{pmatrix}
+\end{eqnarray}
+\item[•] \textbf{3D - polynomial}
 
+\begin{eqnarray}
+	\bb{u} =
+	\begin{pmatrix}
+	a_x(x^3 + xy^2) \\
+	a_y(y^3 + yz^2) \\
+	a_z(z^3 + zx^2)
+	\end{pmatrix}
+\end{eqnarray}
+where $a_x = 1\,\mu$m, $a_y = 1\,\mu$m, and $a_z = 1\,\mu$m.
+\item[•] \textbf{3D - trigonometric}
+ \begin{eqnarray}
+	\bb{u} =
+	\begin{pmatrix}
+	a_x \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
+	a_y \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) \\
+	a_z \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) 
+	\end{pmatrix}
+\end{eqnarray}
+where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
+\end{itemize}
+The Cartesian coordinates are given by $x$, $y$ and $z$.
+The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in authors previous publication \citep{Cardiff2025} or obtained by manufactured solution procedure.
 
 \begin{figure}[H]
  	\centering
@@ -220,27 +254,8 @@ expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
  	\caption{Manufactured solution cube (2D case): error convergence for stress magnitude}
  	\label{fig:cell}
  \end{figure}
- 
- \subsubsection{3D case}
- The first test case consists of a $0.2 \times 0.2 \times 0.2$ m cube with linear elastic ($E = 200$ GPa, $\nu = 0.3$) properties.
-A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is employed of the form \citep{Mazzanti2024}
-\begin{eqnarray}
-	\bb{u} =
-	\begin{pmatrix}
-	a_x \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
-	a_y \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) \\
-	a_z \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) 
-	\end{pmatrix}
-\end{eqnarray}
-where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
-The Cartesian coordinates are given by $x$, $y$ and $z$.
-The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in authors previous publication \cite[cardiff2025].
+  
 
-\begin{itemize}
-\item[•] tet strucu mesh is more accurate becouse it have much larger DOF
-\item[•] add polyhedral mesh and tet unstructured mesh
-\item[•] add pablo 2d case - to show that we have 2 order convergence for quadratic method in 2D settings
-\end{itemize}
 \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
@@ -290,6 +305,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
  \end{figure}
 
 \subsection{Case 2: Cantilever beam}
+The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
 %TO DO:
 % - segregated solutions
 % - Geometry and boundary conditions image
@@ -344,7 +360,73 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
  	\label{fig:cell}
  \end{figure}
 
-\subsection{Case 4: Spherical cavity}
+
+\subsection{Case 3: Plate hole}
+% Case can be also found in:
+% Finite volume method for stress analysis in complex domain
+% Application of the nite volume method and unstructured meshes to linear elasticity
+%
+This benchmark problem consists of a thin, infinitely large plate with a circular hole, subjected to uniaxial tension. Owing to the symmetry of the geometry and loading, only one quarter of the plate is modeled as a finite domain. To minimize the influence of the finite computational boundaries, the exact tractions obtained from the analytical solution \cite{Demirdzic1997} are prescribed on the outer edges BC and CD. Symmetry boundary conditions are applied on boundaries AB and DE, while zero traction is specified on the hole boundary. The material properties are defined by a Young’s modulus of $E = 200 \,\text{GPa}$ and a Poisson’s ratio of $\nu = 0.3$.
+%
+\begin{figure}[H]
+ 	\centering
+ 	\subfigure[Case geometry]
+ 	{
+ 		\label{fig:plateHole:a}
+    		\includegraphics[scale=1]{figures/plateHole-geometry} 
+    }
+	\subfigure[Hexahedral mesh]
+ 	{
+ 		\label{fig:plateHole:b}
+    		\includegraphics[scale=0.06]{figures/plateHole-hexmesh} 
+    }
+ 	\subfigure[Tetrahedral mesh]
+ 	{
+ 		\label{fig:plateHole:a}
+    	\includegraphics[scale=0.06]{figures/plateHole-tetmesh}  
+    }
+ 	\caption{Plate hole case geometry and mesh}
+ 	\label{fig:plateHole}
+\end{figure}
+%
+Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This results in lower slope for displacement but not affecting the stresses. I'm not sure why S4F results flatten on finer meshes.
+%
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Hexahedral mesh]
+ 	{
+ 		\label{fig:plateHole-disp:a}
+    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_hex} 
+    }
+ 	\subfigure[Tetrahedral mesh]
+ 	{
+ 		\label{fig:plateHole-disp:b}
+    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_tet-unstruct}  
+    }
+ 	\caption{Plate hole case: displacement magnitude discretisation errors}
+ 	\label{fig:plateHole-disp}
+ \end{figure}
+ 
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Hexahedral mesh]
+ 	{
+ 		\label{fig:plateHole-stress:a}
+    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_hex} 
+    }
+ 	\subfigure[Tetrahedral mesh]
+ 	{
+ 		\label{fig:plateHole-stress:a}
+    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_tet-unstruct}  
+   	}
+ 	\caption{Plate hole case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors.}
+ 	\label{fig:plateHole-stress}
+ \end{figure}
+ 
+ 
+ 
+\subsection{Case 4: Elliptic plate}
+\subsection{Case 5: Spherical cavity}
 
 \subsection{Error-cost relationship}
 %- analytical solution on boundaries
