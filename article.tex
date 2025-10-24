@@ -58,7 +58,6 @@ textheight=24cm, % llncs has 19.3cm
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage{amsmath}
 %\usepackage{movie15} %to allow movie embedding
-\usepackage[section]{placeins}
 \usepackage{enumitem}
 \usepackage{color,soul}
 \usepackage{xfrac}
@@ -76,13 +75,13 @@ textheight=24cm, % llncs has 19.3cm
 %\usepackage{tikz}
 %\usepackage{tikz-3dplot}
 \usepackage{mathtools}
-%\usepackage{coffeestains}
 
 %% For contact
 \newcommand{\rbar}{\bar{\bm{r}}}
 \newcommand{\xibar}{\bar{\xi}}
 %\newcommand{\magRV}{\bbit{\psi}}
 \newcommand{\diag}{\rm diag}
+
 
 \begin{document}
 
@@ -91,16 +90,10 @@ textheight=24cm, % llncs has 19.3cm
 \author[1,2]{\fnm{Ivan} \sur{Batisti\'{c}}}
 \author[1,3]{\fnm{Pablo} \sur{Castrillo}}
 \author*[1]{\fnm{Philip} \sur{Cardiff}}\email{philip.cardiff@ucd.ie}
-%\author[5]{\fnm{Hiroaki} \sur{Nishikawa}}
 
 \affil*[1]{\orgdiv{School of Mechanical and Materials Engineering}, \orgname{University College Dublin}, \orgaddress{\country{Ireland}}}
 \affil[2]{\orgdiv{Faculty of Mechanical Engineering and Naval Architecture}, \orgname{University of Zagreb}, \orgaddress{\country{Croatia}}}
-\affil[3]{\orgdiv{To be added}, \orgname{To be added}, \orgaddress{\country{Uruguay}}}
-%\affil[2]{\orgdiv{UCD Centre for Mechanics}, \orgname{University College Dublin}, \orgaddress{\country{Ireland}}}
-%\affil[3]{\orgdiv{SFI I-Form Centre}, \orgname{University College Dublin}, \orgaddress{\country{Ireland}}}
-%\affil[5]{\orgname{National Institute of Aerospace}, \orgaddress{\country{Hampton, VA 23666, USA}}}
-
-
+\affil[3]{\orgdiv{Instituto de Estructuras y Transporte, Facultad de Ingeniería}, \orgname{Universidad de la República}, \orgaddress{\country{Uruguay}}}
 
 \abstract
 {
@@ -145,12 +138,8 @@ Potential structure of this section:
 	5.	We demonstrate that the proposed approach significantly improves accuracy while retaining computational efficiency, and we show that compact-stencil Jacobians remain effective as preconditioners in the higher-order setting.
 
 	6.	The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on higher-order cell-centred finite-volume methods for solids, and to explore the synergy between such methods and Jacobian-free Newton–Krylov solution strategies.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Mathematical Model and Numerical Methods}\label{sec:math_model}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-skica molekule na symmetry planeu
+	
+	skica molekule na symmetry planeu
 skica molekule na dirichlet boundariu
 sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neumman rub!
 
@@ -160,21 +149,163 @@ decomposition as we use to calculate the cell volume; the same applies for the
 face area integrals. Ivan noted this is required for non-flat faces to get the
 expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%      
+\section{Mathematical Model}
+\label{sec:math_model}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+For arbitrary body of volume $\Omega$ bounded by surface $\Gamma$ with outward facing unit normal $\bb{n}$
+the strong integral form of linear momentum in \emph{total} Lagrangian form is:
+%
+\begin{eqnarray} \label{eqn:momentum_TL}
+     \int_{\Omega_o} \rho_o \frac{\partial^2 \bb{u} }{\partial t^2} \text{d}\Omega_o
+     =
+     \oint_{\Gamma_o} \left( \bb{n}_o \cdot  \bb{P}^T\right)  \text{d}\Gamma_o
+     + \int_{\Omega_o}  \bb{f}_b \, \text{d}\Omega_o,
+\end{eqnarray}
+%
+where $\rho$ is density, $\bb{u}$ is the displacement vector, $\bb{P}$ is the first Piola–Kirchhoff stress tensor,
+and $\bb{f}_b$ is a body force per unit volume, e.g., $\rho \bb{g}$, where $\bb{g}$ is gravity.
+Subscript $o$ is used to indicate quantities in the initial reference configuration.
+Through Nanson's formula it is possible to relate the first Piola–Kirchhoff stress tensor with the Cauchy $\bb{\sigma}$ stress tensor in the current configuration:
+%
+\begin{equation} \label{eqn:nanson}
+\bb{P}=J \bb{\sigma} \bb{F}^{-\text{T}},
+\end{equation} 
+%
+where $\bb{F}$ is deformation gradient defined as $\textbf{I} + (\bb{\nabla}_o \bb{u})^{\text{T}}$ and $J$ is its determinant $J = \text{det}(\bb{F})$.
+\\
+This work also considers linear geometry formulation, i.e. small strain assumption:
+%
+\begin{eqnarray} \label{eqn:momentum_lingeom}
+    \int_{\Omega} \rho \frac{\partial^2 \bb{u} }{\partial t^2} \, \text{d}\Omega
+     =
+     \oint_{\Gamma} \bb{n} \cdot \bb{\sigma}_s \,  \text{d}\Gamma
+     + \int_{\Omega}  \bb{f}_b \, \text{d}\Omega,
+\end{eqnarray}
+%
+where $\bb{\sigma}_s$ is the engineering (small strain) stress tensor which coincide with Piola stress tensor.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Test Cases}\label{sec:test_cases}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-- explain how L2 and Linf are calculated!
-\begin{itemize}
-\item[•] Linear elastic
-\begin{itemize}
-\item[•] MMS with uniform and non-uniform boundary distribution
-\item[•] Cantilever beam - to show that convergence is same with traction boundaries. Only 2D case. 
-\item[•] Spherical cavity - to show convergence norms for realistic 3D (this we already have on cantilever beam but here timings are different becouse it is 3D and it has source term calculation which is overhead)
-\item[•] Elliptic plate - to show parallel performance and benefits of high-order
-\end{itemize}
-\end{itemize}
+Constitutive relation for Cauchy $\bb{\sigma}$ stress in Equations \ref{eqn:nanson} and \ref{eqn:momentum_lingeom} is given by a chosen mechanical law. 
+Mechanical laws considered in this work (Hooke's law, St.\,Venant-Kirchhoff, Mooney–Rivlin, neo-Hookean, and Guccione) are briefly outlined in Appendix \ref{app:mechLaws}.
+The governing equations are complemented by boundary conditions, with three types considered here: prescribed displacement, prescribed traction, and symmetry.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%      
+\section{High-order Finite Volume Discretisation}
+\label{sec:math_model}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+ adsasdasdasd     
+ \begin{figure}[H]
+ 	\centering
+	\subfigure[Control volume in 3D]
+ 	{
+ 		\label{fig:mms_solution}
+    		\includegraphics[scale=0.8]{figures/cv} 
+    }
+ 	\subfigure[Control volume in 2D]
+ 	{
+ 		\label{fig:mms_mesh}
+    		\includegraphics[scale=0.8]{figures/cv}  
+    }
+ 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$, which share a face $f_i$}
+ 	\label{fig:cell}
+ \end{figure}
+ 
+ Sliku dekompozicije za volumni integral
+%
+%------------------------------------------------------------------------------
+\subsection{Volume Integrals}
+\label{sec:vol_int}
+%------------------------------------------------------------------------------
+%
+
+%
+%------------------------------------------------------------------------------
+\subsection{Surface Integrals}
+\label{sec:vol_int}
+%------------------------------------------------------------------------------
+%
+
+
+%
+%------------------------------------------------------------------------------
+\subsection{Alpha Stabilisation}
+\label{sec:vol_int}
+%------------------------------------------------------------------------------
+%
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%      
+\section{Solution Algorithm}
+\label{sec:math_model}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+
+
+%
+%------------------------------------------------------------------------------
+\subsection{Jacobian-free Newton-Krylov Algorithm}
+\label{sec:vol_int}
+%------------------------------------------------------------------------------
+%
+
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%        
+\section{Test Cases}
+\label{sec:test_cases}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Test cases list (pros/cons having some case)
+%
+% MMS 
+%     - 2D to show order of convergence in 2D. The behaviour is not the same as in 3D
+%     - To show order of convergence
+% Cantilever beam 
+%     -to show that convergence is same with traction boundaries. Only 2D case. 
+% Spherical cavity
+%     - realistic 3D without source term which is overhead in mms
+% Elliptic plate 
+%     - to show parallel performance
+% Cook's membarne
+%    - Can be modelled with large (NeoHookean) and small deformations
+%    - Can be used to show problems we have in 2D with hex mesh?
+% Pressurised cylinder
+%    - Can be modelled with large (Rivlin) and small deformations
+% Idealised ventricle
+%    - realstic 3D with large deformations
+% Plate hole (maybe to replace with plateEllipticHole)
+
+
+root mean square error
+\begin{equation}
+L_2 = \frac{1}{N_{\text{c}}}\sum_{i=1}^{N_{\text{c}}} |\Delta \phi_i|,
+\end{equation}
+and infinity norm representing the maximum absolute error
+\begin{equation}
+L_{\inf} = \max_{1 \leq i \leq N_{\text{c}}} |\Delta \phi_i|,
+\end{equation}
+where $\Delta \phi_i$ is the difference between expected and predicted solutions and $N_{\text{c}}$ is the overall number of computational points, i.e. cells.
+Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x^2+u_y^2+u_z^2}$ and von Mises stress:
+\begin{equation}
+\sigma_{ekv}=\sqrt{\frac{1}{2}\left[  (\sigma_{xx}-\sigma_{yy})^2+(\sigma_{yy}-\sigma_{zz})^2+(\sigma_{zz}-\sigma_{xx})^2 \right]+3\left(\sigma_{xy}^2+\sigma_{yz}^2+\sigma_{zx}^2\right)}
+\end{equation}
+%
+%------------------------------------------------------------------------------
 \subsection{Case 1: Order Verification via the Manufactured Solution Procedure}
+\label{case:mms}
+%------------------------------------------------------------------------------
+%
 The first test case consists of a  $0.2 \times 0.2$ m square or $0.2 \times 0.2 \times 0.2$ m cube with linear elastic ($E = 200$ GPa, $\nu = 0.3$) properties.
 A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is employed in the form or polynomial, trigonometric \citep{Mazzanti2024} or mixed form \citep{Castrillo2022}:
 \begin{itemize}
@@ -303,8 +434,11 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
  	\caption{Manufactured solution cube (3D case): error convergence for stress magnitude}
  	\label{fig:cell}
  \end{figure}
-
+%
+%------------------------------------------------------------------------------
 \subsection{Case 2: Cantilever beam}
+%------------------------------------------------------------------------------
+%
 The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
 %TO DO:
 % - segregated solutions
@@ -360,8 +494,56 @@ The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimension
  	\label{fig:cell}
  \end{figure}
 
+\subsection{Case 3: Internally pressurised thick-walled cylinder}
 
-\subsection{Case 3: Plate hole}
+In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner radius $R_i = 7$ m, outer radius $R_o = 18.625$ m, and loaded internally with pressure $p = 100$ MPa is analysed. Two types of material are considered:
+\begin{itemize}
+\item[i.] Small strain, linear-elastic \cite{Bijelonja2006}: $E=10$ GPa, $\nu=0.3$.
+\item[ii.] Finite strain, Mooney-Rivlin law \cite{Bijelonja2005a}: $c_{10} = 80$ MPa, $c_{01} = 20$ MPa, and $c_{11} = 0.0$ MPa and Poisson's ratio $\nu=0.49$
+\end{itemize} 
+The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of unstructured tetrahedral grids. Gravitational and inertial effects are neglected. Linear elastic case is solved using one loading increment while hyperelastic case is solved using 100 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.
+
+%Pogledaj reference sve jesu li dobre, Green1992 je u bijelonji starija knjiha, vidi da li ima jos ovaj cejs.
+
+\textcolor{red}{popraviiti slova na slici 8}
+
+
+\begin{figure}[H]
+ 	\centering
+ 	\subfigure[Case geometry]
+ 	{
+ 		\label{fig:plateHole:a}
+    		\includegraphics[scale=1]{figures/pressurisedCylinder-geometry} 
+    }
+	\subfigure[Tetrahedral mesh]
+ 	{
+ 		\label{fig:plateHole:b}
+    		\includegraphics[scale=0.053]{figures/pressurisedCylinder-mesh} 
+    }
+ 	\caption{Plate hole case geometry and mesh}
+ 	\label{fig:plateHole}
+\end{figure}
+
+
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Displacement convergence]
+ 	{
+ 		\label{fig:plateHole-disp:a}
+    	\includegraphics[scale=0.8]{figures/pressurisedCylinder-dispErrors_tet} 
+    }
+ 	\subfigure[Stress convergence]
+ 	{
+ 		\label{fig:plateHole-disp:b}
+    	\includegraphics[scale=0.8]{figures/pressurisedCylinder-stressErrors_tet}  
+    }
+ 	\caption{Pressurised cylinder case: displacement and stress magnitude discretisation errors for linear elastic material}
+ 	\label{fig:plateHole-disp}
+ \end{figure}
+
+\subsection{Case 4: Cooks membrane}
+
+\subsection{Case 4: Plate hole}
 % Case can be also found in:
 % Finite volume method for stress analysis in complex domain
 % Application of the nite volume method and unstructured meshes to linear elasticity
@@ -425,10 +607,19 @@ Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This resu
  
  
  
-\subsection{Case 4: Elliptic plate}
-\subsection{Case 5: Spherical cavity}
+\subsection{Case 5: Elliptic plate}
+\subsection{Case 6: Spherical cavity}
+\subsection{Case 7: Idealised ventricle}
 
 \subsection{Error-cost relationship}
+
+\subsection{Stabilisation scheme}
+
+\subsection{Effects of poor interpolation conditioning}
+
+Plate hole sa hex mrezom tu staviti i objasniti sto se desava u 2D-u sa kondicijskim brojem interpolacije
+
+\subsection{Code parallelisation}
 %- analytical solution on boundaries
 %Case 3: Elliptic plate (kako izvuc rezultate?)
 
@@ -1356,15 +1547,194 @@ Additionally, the authors wish to acknowledge the DJEI/DES/SFI/HEA Irish Centre 
 
 \newpage
 
-%\begin{appendices}
+\newpage
+
+\begin{appendices}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\section{Mechanical Laws}
+\label{app:mechLaws}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\subsection{Linear Elasticity}
+The definition of engineering stress $\bb{\sigma}_s$ for linear elasticity can be given as
+\begin{eqnarray}  \label{eq:linearElastic}
+	\bb{\sigma}_s
+	&=& 2 \mu \bb{\varepsilon} + \lambda \, \text{tr} \left( \bb{\varepsilon} \right) \textbf{I} \notag \\
+	&=& \mu \bb{\nabla} \bb{u} + \mu \left( \bb{\nabla} \bb{u}\right)^{\text{T}} + \lambda \left(\bb{\nabla} \cdot \bb{u} \right) \textbf{I}
+\end{eqnarray}
+where $\lambda$ is the first Lam\'{e} parameter, and $\mu$ is the second Lam\'{e} parameter, synonymous with the shear modulus.
+The Lam\'{e} parameters can be expressed in term of the Young's modulus ($E$) and Poisson's ratio $\nu$ as
+\begin{eqnarray}
+	\mu = \frac{E}{2(1 + \nu)}, \quad \lambda = \frac{E \nu}{(1+\nu)(1 - 2\nu)}
+\end{eqnarray}
+%
+%------------------------------------------------------------------------------
+\subsection{St.\,Venant-Kirchoff Hyperelasticity}
+%------------------------------------------------------------------------------
+%
+The St.\,Venant-Kirchoff model defines the second Piola–Kirchhoff stress $\textbf{S}$ as
+\begin{eqnarray}
+	\bb{S} &=& 2 \mu \bb{E} + \lambda \, \text{tr} \left( \bb{E} \right) \textbf{I}
+\end{eqnarray}
+where, as before, $\lambda$ is the first Lam\'{e} parameter, and $\mu$ is the second Lam\'{e} parameter.
+The Lagrangian Green strain $\textbf{E}$ is defined as
+\begin{eqnarray}
+	\bb{E} &=& \frac{1}{2} \left( \bb{\nabla} \bb{u} + \bb{\nabla} \bb{u}^{\text{T}} + \bb{\nabla} \bb{u} \cdot \bb{\nabla} \bb{u}^{\text{T}}  \right)
+\end{eqnarray}
+
+The true stress can be calculated from the second Piola–Kirchhoff stress as
+\begin{eqnarray} \label{eq:S2sigma}
+	\bb{\sigma} &=& \frac{1}{J} \bb{F} \cdot \bb{S} \cdot \bb{F}^{\text{T}}
+\end{eqnarray}
+%
+%------------------------------------------------------------------------------
+\subsection{Neo-Hookean Hyperelasticity}
+%------------------------------------------------------------------------------
+%
+The definition of true (Cauchy) stress $\bb{\sigma}$ for neo-Hookean hyperelasticity can be given as
+\begin{eqnarray} \label{eq:neoHook}
+	\bb{\sigma}
+	&=& \frac{\mu}{J} \, \text{dev} \left( \bar{\bb{b}} \right) + \frac{\kappa}{2} \frac{J^2 - 1}{J} \textbf{I}
+\end{eqnarray}
+where, once again, $\mu$ is the shear modulus, and $\kappa$ is the bulk modulus.
+The bulk modulus can be expressed in terms of the Young's modulus ($E$) and Poisson's ratio $\nu$ as
+\begin{eqnarray}
+	\kappa = \frac{E}{3(1 - 2\nu)}
+\end{eqnarray}
+The volume-preserving component of the elastic left Cauchy--Green deformation tensor is $\boldsymbol{b}$ is given as
+\begin{eqnarray}
+	\bar{\bb{b}} = J^{-2/3} \bb{b} = J^{-2/3} \bb{F} \cdot \bb{F}^{\text{T}}
+\end{eqnarray}
+In the limit of small deformations $\lVert \nabla \mathbf{u} \rVert  \ll 1$, neo-Hookean hyperelasticity (Equation \ref{eq:neoHook}) reduces to linear elasticity (Equation \ref{eq:linearElastic}).
+%
+%------------------------------------------------------------------------------
+\subsection{Guccione Hyperelasticity}
+%------------------------------------------------------------------------------
+%
+The \citet{Guccione1995} hyperelastic law defines the second Piola-Kirchhoff stress as
+\begin{eqnarray}
+	\boldsymbol{S}
+		%&=&  \frac{\partial \Psi}{\partial \boldsymbol{E} } \notag \\
+		&=& \frac{\partial Q}{\partial \boldsymbol{E} } \left( \frac{C}{2} \right) e^Q + \frac{\kappa}{2} \frac{J^2 - 1}{J} \textbf{I} 
+\end{eqnarray}
+where
+\begin{eqnarray}
+%	\Psi(I_1, I_2, I_4, I_5) &=& \frac{C}{2} \left( e^{Q(I_1, I_2, I_4, I_5)} - 1 \right) \\
+	Q(I_1, I_2, I_4, I_5) &=& c_t I_1^2 - 2 c_t I_2 + (c_f - 2c_{fs} + c_t) I_4^2   + 2(c_{fs} - c_t) I_5 \\
+	\frac{\partial Q}{\partial \boldsymbol{E} }
+%		&=& \frac{\partial Q}{\partial I_1} \frac{\partial I_1}{\partial \boldsymbol{E} } + \frac{\partial Q}{\partial I_2} \frac{\partial I_2}{\partial \boldsymbol{E} }
+%		+ \frac{\partial Q}{\partial I_4} \frac{\partial I_4}{\partial \boldsymbol{E} } + \frac{\partial Q}{\partial I_5} \frac{\partial I_5}{\partial \boldsymbol{E} } \notag \\
+		&=&  2 c_t \boldsymbol{E} + 2(c_f - 2 c_{fs} + c_t)I_4 ( \boldsymbol{f_0} \otimes \boldsymbol{f_0} ) \notag \\
+		&&+ 2(c_{fs} - c_t)\left[\boldsymbol{E} \cdot  (\boldsymbol{f_0} \otimes \boldsymbol{f_0}) + ( \boldsymbol{f_0} \otimes \boldsymbol{f_0} ) \cdot \boldsymbol{E} \right]
+\end{eqnarray}
+The scalars $C$, $c_f$, $c_{fs}$, and $c_t$ are material parameters and invariants of the Green strain, $\boldsymbol{E} = \boldsymbol{F}^{\text{T}} \cdot \boldsymbol{F}$, are defined as
+\begin{eqnarray}
+	I_1 = \text{tr}(\boldsymbol{E}), \quad
+	I_2 =  \frac{1}{2} \left[ \text{tr}^2(\boldsymbol{E}) - \text{tr}(\boldsymbol{E} \cdot \boldsymbol{E}) \right], \notag \\
+	I_4 = \boldsymbol{E}  : \left( \boldsymbol{f_0} \otimes \boldsymbol{f_0} \right), \quad 
+	I_5 = \left( \boldsymbol{E} \cdot \boldsymbol{E} \right): \left( \boldsymbol{f_0} \otimes \boldsymbol{f_0} \right)
+\end{eqnarray}
+with $\boldsymbol{f_0}$ representing the unit fibre directions in the initial configuration.
+
+Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress to the true stress.
+%
+%------------------------------------------------------------------------------
+\subsection{Mon-Rivlin - add here if used}
+%------------------------------------------------------------------------------
+%
+
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\section{Body Force for the Method of Manufactured Solutions Case} 
+\label{app:mms}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The body force for the manufactured solution case is \citep{Mazzanti2024}:
+\begin{align}
+\bb{f}_b = 
+    \begin{pmatrix}
+    \lambda
+    \left[
+        8 a_y \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
+        \quad + 4 a_z \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \\
+        \quad \left. - 16 a_x \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
+    \right] \\
+    + \mu
+    \left[
+        8 a_y \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
+        \quad + 4 a_z \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \\
+        \quad \left. - 5 a_x \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
+    \right] \\
+    - 32 a_x \mu_ \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
+    \\
+    \lambda
+    \left[
+        8 a_x \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
+        \quad + 2 a_z \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
+        \quad \left. - 4 a_y \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
+    \right] \\
+    + \mu
+    \left[
+        8 a_x \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
+        \quad + 2 a_z \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
+        \quad \left. - 17 a_y \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
+    \right] \\
+    - 8 a_y \mu_ \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
+    \\
+    \lambda
+    \left[
+        4 a_x \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \right. \\
+        \quad + 2 a_y \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
+        \quad \left. - a_z \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
+    \right] \\
+    + \mu
+    \left[
+        4 a_x \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \right. \\
+        \quad + 2 a_y \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
+        \quad \left. - 20 a_z \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
+    \right] \\
+    - 2 a_z \mu_ \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
+    \end{pmatrix}
+\end{align}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\section{WIP}
-%\label{app:WIP}
+\section{Meshes Used with the Method of Manufactured Solutions}
+\label{app:meshes}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%To be added, if needed.
+%\begin{figure}[htbp]
+%	\centering
+%	\subfigure[Regular tetrahedral mesh with $4\,374$ cells]
+%	{
+%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_tet}  
+%   	}
+%	\subfigure[Regular polyhedral mesh with $1\,000$ cells]
+%	{
+%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_poly}  
+%   	}
+%	\subfigure[Regular hexahedral mesh with $1\,000$ cells]
+%	{
+%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_hex}  
+%   	}
+%	\subfigure[Distorted hexahedral mesh with $1\,000$ cells]
+%	{
+%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_hex_distorted}  
+%   	}
+%	\caption{Meshes used in the method of manufactured solutions case}
+%	\label{fig:mms_all}
+%\end{figure}
 
-%\end{appendices}
+
+
+
+
+\end{appendices}
 
 
 \bibliography{bibliography}% common bib file

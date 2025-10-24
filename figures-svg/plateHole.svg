@@ -10,7 +10,7 @@
    xml:space="preserve"
    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
    sodipodi:docname="plateHole.svg"
-   inkscape:export-filename="../figures/plateHole-geometry.pdf"
+   inkscape:export-filename="../figures/plateHole-geometry.png"
    inkscape:export-xdpi="17.104378"
    inkscape:export-ydpi="17.104378"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -28,13 +28,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="2.8437947"
-     inkscape:cx="285.35816"
-     inkscape:cy="120.78931"
+     inkscape:zoom="3.7930212"
+     inkscape:cx="192.85418"
+     inkscape:cy="71.578825"
      inkscape:window-width="1944"
      inkscape:window-height="1162"
-     inkscape:window-x="0"
-     inkscape:window-y="44"
+     inkscape:window-x="621"
+     inkscape:window-y="174"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -1079,4 +1079,12 @@
    id="id-dab0e911-262f-4c78-92a8-c754700ef6f8"
    style="stroke-width:1.01799" />
       </g></g>
-</g></g></svg>
+</g><path
+       style="fill:#f4f4f4;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-miterlimit:0;stroke-dasharray:2, 0.8, 0.4, 0.8;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       d="m 28.300405,34.992076 46.1454,0.01887"
+       id="path16-8-5"
+       sodipodi:nodetypes="cc" /><path
+       style="fill:#f4f4f4;stroke:#000000;stroke-width:0.2;stroke-linecap:square;stroke-miterlimit:0;stroke-dasharray:2, 0.8, 0.4, 0.8;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       d="M 29.944566,-9.6616239 30.014596,36.9301"
+       id="path16-8-9"
+       sodipodi:nodetypes="cc" /></g></svg>

@@ -1,5 +1,6 @@
 # Ignore the article pdf
-article.pdf
+# article.pdf
+ignore.pdf
 
 # macOS
 .DS_Store
