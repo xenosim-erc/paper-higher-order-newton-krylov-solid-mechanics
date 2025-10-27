@@ -139,6 +139,7 @@ Potential structure of this section:
 
 	6.	The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on higher-order cell-centred finite-volume methods for solids, and to explore the synergy between such methods and Jacobian-free Newton–Krylov solution strategies.
 	
+	7. pokazano je da se moze splitat surface topologija cv-a na surface
 	skica molekule na symmetry planeu
 skica molekule na dirichlet boundariu
 sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neumman rub!
@@ -200,37 +201,113 @@ The governing equations are complemented by boundary conditions, with three type
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
- adsasdasdasd     
- \begin{figure}[H]
- 	\centering
-	\subfigure[Control volume in 3D]
- 	{
- 		\label{fig:mms_solution}
-    		\includegraphics[scale=0.8]{figures/cv} 
-    }
- 	\subfigure[Control volume in 2D]
- 	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/cv}  
-    }
- 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$, which share a face $f_i$}
- 	\label{fig:cell}
- \end{figure}
- 
- Sliku dekompozicije za volumni integral
-%
-%------------------------------------------------------------------------------
-\subsection{Volume Integrals}
-\label{sec:vol_int}
-%------------------------------------------------------------------------------
-%
+In this work, a finite volume discretization is employed to approximate the strong form of the governing equations. 
+The computational points are located at the cell centroids, where the solution is treated as point-valued rather than cell-averaged. 
+This type of discretization is commonly referred to as the deconvolution finite volume method \cite{Nishikawa2025, Nishikawa2021}.
 
+The spatial domain is partitioned into a finite set of contiguous convex polyhedral control volumes, each denoted by $P$.
+Representative control volumes in 2D and 3D settings is is shown in Figure \ref{fig:cell}. 
+The computational node associated with each cell $P$ is positioned at the cell centroid $\bb{x}_P$, the cell volume is denoted by $\Omega_P$,
+and the centroid of a neighboring control volume is denoted by $N$.
+Each control volume is bounded by a set of polygonal faces, which are categorized as follows:
+\begin{itemize}
+\item[•] Internal faces — shared between adjacent control volumes. The centroid of an internal face is denoted by $f$, its outward unit normal vector by $\bb{n}_f$, and its face area by $\Gamma_f$.
+\item[• ] Boundary faces — located on the boundary of the spatial domain. The centroid of a boundary face is denoted by $b$, its outward unit normal vector by $\bb{n}_b$, and its surface area by $\Gamma_b$. 
+\end{itemize}
+%a face center 𝐱jk of a quadrilateral face between the cells 𝑗 and 𝑘 can be defined by the arithmetic average
+%Estimating the residual requires calculating the volume integral of the source term
+%129 and the surface integral of the normal flux for each cell. This is achieved using Gaussian
+%130 integration, where a weighted sum of values at quadrature points is used to approximate
+%131 the integral. The source integral calculation is performed as a weighted sum of values of
+%132 the source term at the interior quadrature points for each cell. The flux integral part
+%133 requires estimating the normal flux at quadrature points along the boundary of each cell
+%Napisati da 2d probleme tretiramo kao 2D, nije standardni openfoam pristup - hibridna je kombinacija
+%
+%------------------------------------------------------------------------------
+%\subsection{Solution domain discretisation}
+%------------------------------------------------------------------------------
+%
+% The volume of an internal finite volume Ω𝑣
+%is denoted as 𝑉𝑣 and the area of a face Σ𝑓 is denoted as 𝐴𝑓. The out-
+%ward normal of a face is represented by n0,𝑓. The centroid of a volume
+%is denoted as 𝑿𝑛, the centroid of a face is denoted as 𝑿𝑓 (for bound-
+%ary faces, 𝑿𝑛
+%=𝑿𝑓 ), and 𝑿𝑓,𝑔 represents the 𝑔-th quadrature point on
+%the face Σ𝑓. These centroids are referred to as nodes or cells. The total
+%number of finite volumes 𝑁v is segregated into internal cells (𝑁ic) and
+%boundary cells (𝑁bc), where 𝑁v
+%=𝑁ic +𝑁bc. 
+\begin{figure}[h]
+ 	\centering
+	\subfigure[Control volume in 2D]
+ 	{
+ 		\label{fig:cell2D}
+    	\includegraphics[scale=0.8]{figures/cv2D} 
+    }
+    \quad
+ 	\subfigure[Control volume in 3D]
+ 	{
+ 		\label{fig:cell3D}
+    	\includegraphics[scale=0.8]{figures/cv3D}  
+    }
+ 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$}
+ 	\label{fig:cell}
+\end{figure}
+%
+Accurate and robust flux integration is required over these arbitrary polyhedral volumes. 
+To facilitate this, each polygonal face $f$ is subdivided into triangular subfaces, 
+on which quadrature points $\bb{x}_{fg}$ are defined for numerical flux evaluation.
+The fan triangulation method is adopted for face decomposition to minimise number of integration points.
+Furthermore, each cell volume P is decomposed into tetrahedral
+(in 3D) or triangular (in 2D) subelements, with volume quadrature points $\mathbf{x}_{\Omega,q}$ defined within each subelement.
+A key advantage of this geometric framework is its unified treatment of arbitrary polyhedral topologies—all control 
+volumes are handled consistently using the same reconstruction and integration procedures. 
+%The discretization of the governing equations over a control volume P results in an algebraic stencil coupling 
+%the centroid value $\mathbf{u}_P$ with the centroid values $\mathbf{u}_N$ of neighboring cells.
+
+Before proceeding with the discretization of the volume and surface integrals, it is convenient to introduce the following sets of cell faces.
+ The set of internal faces is denoted by $\mathcal{F}_P^{int}$, and the set of boundary faces by $\mathcal{F}_P^{bnd}$.
+The boundary-face set $\mathcal{F}_P^{bnd}$ is further partitioned into three mutually disjoint subsets,
+$\mathcal{F}_P^{bnd} := \mathcal{F}_P^{dip} \cup \mathcal{F}_P^{sym} \cup \mathcal{F}_P^{trac}$,
+representing boundary faces where displacement ($\mathcal{F}_P^{dip}$), traction ($\mathcal{F}_P^{trac}$),
+ or symmetry ($\mathcal{F}_P^{sym}$) conditions are prescribed.
 %
 %------------------------------------------------------------------------------
 \subsection{Surface Integrals}
 \label{sec:vol_int}
 %------------------------------------------------------------------------------
 %
+% moram dodat kako se tezine racunaju
+To ensure robustness, the method automatically switches to a cell-center decomposition when fan triangulation 
+produces degenerate or near-zero-area triangles. 
+For cell P, and its surfaces
+\begin{equation}
+\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma} \; \text{d}\Gamma_P 
+= 
+\sum_{f=1}^{f=N_f} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma} \; \text{d}\Gamma_f
+\approx
+\sum_{f=1}^{f=N_f} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_q}\alpha_q \; \bb{\sigma}(\bb{x}_{f,q}) \right]\Gamma_f
+\end{equation}
+sigma ovisi o gradijentu, napisati preko konstoituivne relacije da se racuna sigma
+\begin{equation}
+\bb{\sigma}_s(\bb{x}_{f,q}) =   \mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}
+\end{equation}
+$(\nabla \bb{u})_{f,q}$ is given in section 3
+%
+%------------------------------------------------------------------------------
+\subsection{Volume Integrals}
+\label{sec:vol_int}
+%------------------------------------------------------------------------------
+%
+Moram dodat kako se volumene tezine racuanaju da treba biti konzistentan
+\begin{figure}[H]
+ 	\centering
+    \includegraphics[scale=0.8]{figures/volumeTerm} 
+ 	\caption{Volume integration}
+ 	\label{fig:volumeTerm}
+\end{figure}
+
+%Volume mora biti konzistentan. Ciritari Nisikawu 2025.
 
 
 %
@@ -239,6 +316,52 @@ The governing equations are complemented by boundary conditions, with three type
 \label{sec:vol_int}
 %------------------------------------------------------------------------------
 %
+% In the latter section will be shown that discretisation withoud stabilisation is stable only on regular grids.
+% The effect of stabilisaion can be obtained alternatuvely with large number of intehration poisnt and large stencil, howver alpha stabilisation
+% introduced is more efficient and provide better stabilisation.
+%Rhie-chow is second order- here we use Nishikawa alpha wich can be reduced to Rhie-chow stabilisation - see NK paper.
+%UCNS3D: An open-source high-order finite-volume unstructured CFD, Nishiklawa 2025 paper
+solver
+\begin{equation}
+\bb{t}_s = f_s \frac{2\mu +\lambda}{|\bb{d} \cdot \bb{n}|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)
+\end{equation}
+
+\begin{equation}
+\bb{u}_{fP}^* = \bb{u}_P + \bb{d}_{Pf} \cdot (\nabla \bb{u})_P + \frac{1}{2}\bb{d}_{Pf}^2 \!:\! (\nabla \nabla \bb{u})_P + \frac{1}{6}\bb{d}_{Pf}^2 \!::\! (\nabla \nabla \nabla \bb{u})_P
+\end{equation}
+blabla
+\begin{equation}
+\bb{u}_{fN}^* = \bb{u}_N + \bb{d}_{Pf} \cdot (\nabla \bb{u})_N + \frac{1}{2}\bb{d}_{Nf}^2 \!:\! (\nabla \nabla \bb{u})_N + \frac{1}{6}\bb{d}_{Nf}^2 \!::\! (\nabla \nabla \nabla \bb{u})_N
+\end{equation}
+where $\bb{d}_{Pf}$ and $\bb{d}_{Nf}$  are defined as distance between face centre and cell centre, i.e. $\bb{d}_{fN}=(\bb{x}_f-\bb{x}_N)$ and is $\bb{d}_{fP}=(\bb{x}_f-\bb{x}_P)$ 
+
+
+
+%
+%------------------------------------------------------------------------------
+\subsection{High order interpolation scheme}
+\label{sec:ho_scheme}
+%------------------------------------------------------------------------------
+%
+
+\subsection{Stencil}
+slika lijevo (internal + boudnary molecule)
+Slika desno cell centred molecule
+Slka ispod za simetriju kako je implementirana
+
+
+\subsection{Weight function}
+\begin{equation}
+w(\bb{x}, \bb{x}_N, k) = \frac{e^{-\tilde{d}^2k^2}-e^{-k^2}}{1-e^{-k^2}},
+\end{equation}
+where $\tilde{d}=\frac{d}{d_s}$
+%
+%------------------------------------------------------------------------------
+\subsection{Boundary conditions}
+\label{sec:bc}
+%------------------------------------------------------------------------------
+%
+
 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -285,7 +408,12 @@ The governing equations are complemented by boundary conditions, with three type
 % Idealised ventricle
 %    - realstic 3D with large deformations
 % Plate hole (maybe to replace with plateEllipticHole)
-
+%The comparison of the performance of the reconstruction schemes discussed in
+%319 the preceding section is done based on the convergence of the 𝐿- and 𝐿T norms of error
+%320 in the reconstructed solution at flux integration points. This evaluation is carried out using
+%321 model problems in 2-D with known exact solutions, and the specific exact solutions for
+%322 the single-variable model problems examined are presented in Appendix B. The schemes
+%323 are also tested using the supersonic vortex problem discussed earlier.
 
 root mean square error
 \begin{equation}
@@ -361,7 +489,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
     		\includegraphics[scale=0.8]{figures/mms/2D/mms_dispErrors_ho-tet-unstruct}  
     }
  	\caption{Manufactured solution cube (2D case): error convergence for displacement magnitude}
- 	\label{fig:cell}
+ 	\label{fig:xx}
  \end{figure}
  
  
@@ -383,7 +511,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
     		\includegraphics[scale=0.8]{figures/mms/2D/mms_stressErrors_ho-tet-unstruct}  
     }
  	\caption{Manufactured solution cube (2D case): error convergence for stress magnitude}
- 	\label{fig:cell}
+ 	\label{fig:jj}
  \end{figure}
   
 
@@ -410,7 +538,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
     		\includegraphics[scale=0.8]{figures/mms/3D/mms_dispErrors_ho-poly}  
     }
  	\caption{Manufactured solution cube (3D case): error convergence for displacement magnitude}
- 	\label{fig:cell}
+ 	\label{fig:jj}
  \end{figure}
  
  
@@ -432,7 +560,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
     		\includegraphics[scale=0.8]{figures/mms/3D/mms_stressErrors_ho-poly}  
     }
  	\caption{Manufactured solution cube (3D case): error convergence for stress magnitude}
- 	\label{fig:cell}
+ 	\label{fig:jj}
  \end{figure}
 %
 %------------------------------------------------------------------------------
@@ -470,7 +598,7 @@ The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimension
     		\includegraphics[scale=0.8]{figures/cantilever/dispErrors_tet-unstruct}  
     }
  	\caption{Cantilever beam case: displacement magnitude discretisation errors}
- 	\label{fig:cell}
+ 	\label{fig:jj}
  \end{figure}
 
 \begin{figure}[H]
@@ -491,7 +619,7 @@ The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimension
     		\includegraphics[scale=0.8]{figures/cantilever/stressErrors_tet-unstruct}  
     }
  	\caption{Cantilever beam case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors. Results for $N=3$ are not shown because stress error is around $\sim$ $10^{-12}$}
- 	\label{fig:cell}
+ 	\label{fig:uu}
  \end{figure}
 
 \subsection{Case 3: Internally pressurised thick-walled cylinder}
