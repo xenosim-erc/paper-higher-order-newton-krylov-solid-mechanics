@@ -111,7 +111,7 @@ The implementations are openly released in the solids4foam toolbox for OpenFOAM,
 
 
 
-\keywords{Jacobian-free Newton-Krylov, higher-order, cell-centred finite volume method, GMRES, solids4foam, OpenFOAM}
+\keywords{Jacobian-free Newton-Krylov, higher-order, cell-centred finite volume method, solid mechanics, solids4foam, OpenFOAM}
 
 \maketitle
 
@@ -250,7 +250,7 @@ Each control volume is bounded by a set of polygonal faces, which are categorize
  		\label{fig:cell3D}
     	\includegraphics[scale=0.8]{figures/cv3D}  
     }
- 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$}
+ 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$.}
  	\label{fig:cell}
 \end{figure}
 %
@@ -258,58 +258,83 @@ Accurate and robust flux integration is required over these arbitrary polyhedral
 To facilitate this, each polygonal face $f$ is subdivided into triangular subfaces, 
 on which quadrature points $\bb{x}_{fg}$ are defined for numerical flux evaluation.
 The fan triangulation method is adopted for face decomposition to minimise number of integration points.
-Furthermore, each cell volume P is decomposed into tetrahedral
+%For robustness, centre-point decomposition is used whenever the fan triangulation produces degenerate or near-zero-area triangles.
+Although the computational mesh is always three-dimensional, 
+two-dimensional problems are treated as planar, where the surface integration reduces to line integration along edges, 
+therefore, no subdivision is required.
+Each cell volume P is decomposed into tetrahedral
 (in 3D) or triangular (in 2D) subelements, with volume quadrature points $\mathbf{x}_{\Omega,q}$ defined within each subelement.
 A key advantage of this geometric framework is its unified treatment of arbitrary polyhedral topologies—all control 
 volumes are handled consistently using the same reconstruction and integration procedures. 
 %The discretization of the governing equations over a control volume P results in an algebraic stencil coupling 
 %the centroid value $\mathbf{u}_P$ with the centroid values $\mathbf{u}_N$ of neighboring cells.
 
-Before proceeding with the discretization of the volume and surface integrals, it is convenient to introduce the following sets of cell faces.
- The set of internal faces is denoted by $\mathcal{F}_P^{int}$, and the set of boundary faces by $\mathcal{F}_P^{bnd}$.
-The boundary-face set $\mathcal{F}_P^{bnd}$ is further partitioned into three mutually disjoint subsets,
-$\mathcal{F}_P^{bnd} := \mathcal{F}_P^{dip} \cup \mathcal{F}_P^{sym} \cup \mathcal{F}_P^{trac}$,
-representing boundary faces where displacement ($\mathcal{F}_P^{dip}$), traction ($\mathcal{F}_P^{trac}$),
- or symmetry ($\mathcal{F}_P^{sym}$) conditions are prescribed.
+Before proceeding with the discretization of the volume and surface integrals, we introduce the following sets of cell faces.
+ The set of internal faces is denoted by $\mathcal{F}_P^{\text{int}}$, and the set of boundary faces by $\mathcal{F}_P^{\text{bnd}}$.
+The boundary-face set $\mathcal{F}_P^{\text{bnd}}$ is further partitioned into three mutually disjoint subsets,
+$\mathcal{F}_P^{bnd} := \mathcal{F}_P^{\text{dip}} \cup \mathcal{F}_P^{\text{sym}} \cup \mathcal{F}_P^{\text{trac}}$,
+representing boundary faces where displacement ($\mathcal{F}_P^{\text{dip}}$), traction ($\mathcal{F}_P^{\text{trac}}$),
+ or symmetry ($\mathcal{F}_P^{\text{sym}}$) conditions are prescribed. For convenience, we additionally define the set of non-traction boundary faces as $\mathcal{F}_P^{\text{non-trac}} := \mathcal{F}_P^{\text{dip}} \cup \mathcal{F}_P^{\text{sym}}$.
 %
 %------------------------------------------------------------------------------
 \subsection{Surface Integrals}
 \label{sec:vol_int}
 %------------------------------------------------------------------------------
 %
-% moram dodat kako se tezine racunaju
-To ensure robustness, the method automatically switches to a cell-center decomposition when fan triangulation 
-produces degenerate or near-zero-area triangles. 
-For cell P, and its surfaces
-\begin{equation}
-\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma} \; \text{d}\Gamma_P 
-= 
-\sum_{f=1}^{f=N_f} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma} \; \text{d}\Gamma_f
-\approx
-\sum_{f=1}^{f=N_f} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_q}\alpha_q \; \bb{\sigma}(\bb{x}_{f,q}) \right]\Gamma_f
+The surface integral term is discretised by integrating over quadrature points of each cell face:
+%
+\begin{equation}\label{eq:divStressDiscret}
+\begin{split}
+&\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_P  
+=
+\sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f 
+\approx 
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \bb{\sigma}_s(\bb{x}_{f,q}) \right]\Gamma_f \\
+& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \bb{\sigma}_s(\bb{x}_{b,q}) \right]\Gamma_b 
++ \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}} \bb{n}_{b} \cdot \bb{T}_{b,q} \Gamma_b,
+\end{split}
 \end{equation}
-sigma ovisi o gradijentu, napisati preko konstoituivne relacije da se racuna sigma
+%
+where $\Gamma_P$ indicates the surface of cell $P$, 
+vector $\bb{T}_{b,g}$ represents the prescribed traction at the traction boundary quadrature point,
+$N_{f,q}$ is the number of face quadrature points and
+$\alpha_q$ is quadrature weight. 
+For non-triangular faces, face quadrature weights are scaled by the ratio of each triangle’s area to the total face area,
+computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential, 
+as inconsistency can degrade overall accuracy.
+
+The stress tensor at a quadrature point $\bb{x}_{f,q}$, denoted $\bb{\sigma}_s(\boldsymbol{x}_{f,q})$, is computed as a function of the displacement gradient according to the adopted mechanical constitutive law.
+For the case of engineering (Cauchy) stress, it is given by:
 \begin{equation}
 \bb{\sigma}_s(\bb{x}_{f,q}) =   \mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}
 \end{equation}
-$(\nabla \bb{u})_{f,q}$ is given in section 3
+where $\mu$ and $\lambda$ are the Lamé parameters.
+Expressions for other constitutive laws are provided in Appendix \ref{app:mechLaws}.
+The computation of the displacement gradient $(\nabla \bb{u})_{f,q}$ is given in Section \ref{sec:ho_scheme}.
 %
 %------------------------------------------------------------------------------
 \subsection{Volume Integrals}
 \label{sec:vol_int}
 %------------------------------------------------------------------------------
 %
-Moram dodat kako se volumene tezine racuanaju da treba biti konzistentan
-\begin{figure}[H]
+The volume integral is discretised by integrating over the cell volume quadrature points:
+%
+\begin{equation}
+\int_{\Omega} \bb{f}_b \text{d}\Omega
+\approx
+ \sum_{q=1}^{q=N_{\Omega,q}}\beta_q \; \bb{f}_b(\bb{x}_{\Omega,q})  \Omega_P,
+\end{equation}
+%
+where $N_{\Omega,q}$ is the number of cell quadrature points and $\beta_q$ are the corresponding quadrature weights.
+To evaluate these integrals over arbitrary polyhedral cells, the control volume is partitioned into a set of non-overlapping tetrahedra using the face subdivisions already defined for surface integration.
+Each tetrahedron is formed by connecting the cell centroid P with one of the triangular faces, as illustrated in Figure \ref{fig:volumeTerm}.
+\begin{figure}[h]
  	\centering
     \includegraphics[scale=0.8]{figures/volumeTerm} 
- 	\caption{Volume integration}
+ 	\caption{Volume integration, cell decomposition into tetrahedral elements}
  	\label{fig:volumeTerm}
 \end{figure}
-
-%Volume mora biti konzistentan. Ciritari Nisikawu 2025.
-
-
+The cell partition is resolved at the quadrature weight calculation level, where the integration weights are scaled by the ratio of its host tetrahedron’s volume to the total cell volume. As in the computation of face quadrature weights, it is crucial to use a consistent cell volume \cite{Nishikawa2025}.
 %
 %------------------------------------------------------------------------------
 \subsection{Alpha Stabilisation}
@@ -751,54 +776,6 @@ Plate hole sa hex mrezom tu staviti i objasniti sto se desava u 2D-u sa kondicij
 %- analytical solution on boundaries
 %Case 3: Elliptic plate (kako izvuc rezultate?)
 
-
-%
-%Math model and numerical methods
-%- General governing equation -> unknown D; limit ourselves to compressibility
-
-%% \subsection{Governing Equations} \label{sec:governing_eqn}
-
-%% In this work, interest is restricted to Lagrangian formulations of the conservation of linear momentum.
-%% Assuming small strains, the linear geometry formulation is expressed in strong integral form as:
-%% \begin{eqnarray} \label{eqn:momentum_lingeom}
-%%     \int_{\Omega} \rho \frac{\partial^2 \bb{u} }{\partial t^2} \, d\Omega
-%%     =
-%%     \oint_{\Gamma} \bb{n} \cdot \bb{\sigma}_s \,  d\Gamma
-%%     + \int_{\Omega}  \bb{f}_b \, d\Omega
-%% \end{eqnarray}
-%% where $\Omega$ is the volume of an arbitrary body bounded by a surface $\Gamma$ with outwards pointing normal $\bb{n}$.
-%% The density is $\rho$, $\bb{u}$ is the displacement vector, $\bb{\sigma}_s$ is the engineering (small strain) stress tensor, and $\bb{f}_b$ is a body force per unit volume, e.g., $\rho \bb{g}$, where $\bb{g}$ is gravity.
-
-%% More generally,  linear momentum conservation can be expressed in a nonlinear geometry form, which is suitable for finite strains.
-%% Two equivalent nonlinear geometry forms are common: the \emph{total} Lagrangian form:
-%% \begin{eqnarray} \label{eqn:momentum_TL}
-%%     \int_{\Omega_o} \rho_o \frac{\partial^2 \bb{u} }{\partial t^2} d\Omega_o
-%%     =
-%%     \oint_{\Gamma_o} \left( J \bb{F}^{-\text{T}} \cdot \bb{n}_o \right) \cdot \bb{\sigma} \ d\Gamma_o
-%%     + \int_{\Omega_o}  \bb{f}_b \, d\Omega_o
-%% \end{eqnarray}
-%% and the \emph{updated} Lagrangian form:
-%% \begin{eqnarray} \label{eqn:momentum_UL}
-%%     \int_{\Omega_u} \frac{\partial }{\partial t} \left( \rho_u \frac{\partial \bb{u} }{\partial t} \right) d\Omega_u
-%%     = \oint_{\Gamma_u}(j\bb{f}^{-\text{T}}\cdot{\bb{n}_u)\cdot \bb{\sigma}}\ d\Gamma_u
-%%     + \int_{\Omega_u}  \bb{f}_b \, d\Omega_u
-%% \end{eqnarray}
-%% where subscript $o$ indicates quantities in the initial reference configuration, and subscript $u$ indicates quantities in the updated configuration.
-%% The true (Cauchy) stress tensor is indicated by $\bb{\sigma}$.
-%% The deformation gradient is defined as $\bb{F} = \textbf{I} + (\bb{\nabla} \bb{u})^{\text{T}}$ and its determinant as $J = \text{det}(\bb{F})$.
-%% Similarly, the \emph{relative} deformation gradient is given in terms of the displacement \emph{increment} as $\bb{f}=\textbf{I} + \left[\bb{\nabla}(\Delta \bb{u}) \right]^{\text{T}}$ and its determinant as $j = \text{det}(\bb{f})$.
-%% The displacement increment is the change in displacement between the current time step and the previous time step when the time interval is discretised into a finite number of steps.
-
-%% %The two forms are connected through Nanson’s formula \cite{bathe_finite_1996}, which relate the deformed area vector $\bb{\Gamma}$ with the initial area vector $\bb{\Gamma}_{o}$:
-%% %\begin{equation}
-%% %    \bb{\Gamma} = J\bb{F}^{-\text{T}}\cdot\bb{\Gamma}_o
-%% %\end{equation}
-%% %Although the total Lagrangian approach is a viable option for wire drawing, the current work adopts the updated Lagrangian approach as developing Eulerian-type upstream and downstream conditions (Section \ref{sec:euler_BCs}) is conceptually easier in an updated Lagrangian formulation.
-
-
-%% The governing equations are complemented by boundary conditions, with three types considered here: prescribed displacement, prescribed traction, and symmetry.
-%% The definition of the engineering stress ($\bb{\sigma}_s$) and true stress ($\bb{\sigma}$) in Equations \ref{eqn:momentum_lingeom}, \ref{eqn:momentum_TL} and \ref{eqn:momentum_UL} is given by a chosen mechanical law.
-%% Five mechanical laws are considered in this work, as briefly outlined in Appendix \ref{app:mechLaws}: linear elasticity (Hooke's law), three forms of hyperelasticity (St.\,Venant-Kirchhoff, neo-Hookean, and Guccione), and neo-Hookean $J_2$ hyperelastoplasticity.
 
 
 %% %%--------------------------------------------------------------------------------------------------------------------%%
