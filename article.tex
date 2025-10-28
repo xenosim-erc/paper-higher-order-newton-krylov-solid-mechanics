@@ -204,7 +204,11 @@ The governing equations are complemented by boundary conditions, with three type
 In this work, a finite volume discretization is employed to approximate the strong form of the governing equations. 
 The computational points are located at the cell centroids, where the solution is treated as point-valued rather than cell-averaged. 
 This type of discretization is commonly referred to as the deconvolution finite volume method \cite{Nishikawa2025, Nishikawa2021}.
-
+%
+%------------------------------------------------------------------------------
+\subsection{Solution domain discretisation}
+%------------------------------------------------------------------------------
+%
 The spatial domain is partitioned into a finite set of contiguous convex polyhedral control volumes, each denoted by $P$.
 Representative control volumes in 2D and 3D settings is is shown in Figure \ref{fig:cell}. 
 The computational node associated with each cell $P$ is positioned at the cell centroid $\bb{x}_P$, the cell volume is denoted by $\Omega_P$,
@@ -222,21 +226,6 @@ Each control volume is bounded by a set of polygonal faces, which are categorize
 %132 the source term at the interior quadrature points for each cell. The flux integral part
 %133 requires estimating the normal flux at quadrature points along the boundary of each cell
 %Napisati da 2d probleme tretiramo kao 2D, nije standardni openfoam pristup - hibridna je kombinacija
-%
-%------------------------------------------------------------------------------
-%\subsection{Solution domain discretisation}
-%------------------------------------------------------------------------------
-%
-% The volume of an internal finite volume Ω𝑣
-%is denoted as 𝑉𝑣 and the area of a face Σ𝑓 is denoted as 𝐴𝑓. The out-
-%ward normal of a face is represented by n0,𝑓. The centroid of a volume
-%is denoted as 𝑿𝑛, the centroid of a face is denoted as 𝑿𝑓 (for bound-
-%ary faces, 𝑿𝑛
-%=𝑿𝑓 ), and 𝑿𝑓,𝑔 represents the 𝑔-th quadrature point on
-%the face Σ𝑓. These centroids are referred to as nodes or cells. The total
-%number of finite volumes 𝑁v is segregated into internal cells (𝑁ic) and
-%boundary cells (𝑁bc), where 𝑁v
-%=𝑁ic +𝑁bc. 
 \begin{figure}[h]
  	\centering
 	\subfigure[Control volume in 2D]
@@ -268,6 +257,7 @@ A key advantage of this geometric framework is its unified treatment of arbitrar
 volumes are handled consistently using the same reconstruction and integration procedures. 
 %The discretization of the governing equations over a control volume P results in an algebraic stencil coupling 
 %the centroid value $\mathbf{u}_P$ with the centroid values $\mathbf{u}_N$ of neighboring cells.
+\textcolor{red}{Integration rules publications - cite them - maybe appendix?}
 
 Before proceeding with the discretization of the volume and surface integrals, we introduce the following sets of cell faces.
  The set of internal faces is denoted by $\mathcal{F}_P^{\text{int}}$, and the set of boundary faces by $\mathcal{F}_P^{\text{bnd}}$.
@@ -289,28 +279,28 @@ The surface integral term is discretised by integrating over quadrature points o
 =
 \sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f 
 \approx 
-\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \bb{\sigma}_s(\bb{x}_{f,q}) \right]\Gamma_f \\
-& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \bb{\sigma}_s(\bb{x}_{b,q}) \right]\Gamma_b 
-+ \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}} \bb{n}_{b} \cdot \bb{T}_{b,q} \Gamma_b,
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right]\Gamma_f \\
+& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{b,q} \right]\Gamma_b 
++ \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}}   \bb{n}_{b} \cdot  \sum_{q=1}^{q=N_{f,q}}\bb{T}_{b,q} \Gamma_b,
 \end{split}
 \end{equation}
 %
 where $\Gamma_P$ indicates the surface of cell $P$, 
 vector $\bb{T}_{b,g}$ represents the prescribed traction at the traction boundary quadrature point,
 $N_{f,q}$ is the number of face quadrature points and
-$\alpha_q$ is quadrature weight. 
+$\alpha_q$ is quadrature weight. Subscript $_{f,q}$ indicates that quantity is calculated at quadrature point location $\bb{x}_{f,q}$.
 For non-triangular faces, face quadrature weights are scaled by the ratio of each triangle’s area to the total face area,
 computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential, 
 as inconsistency can degrade overall accuracy.
 
-The stress tensor at a quadrature point $\bb{x}_{f,q}$, denoted $\bb{\sigma}_s(\boldsymbol{x}_{f,q})$, is computed as a function of the displacement gradient according to the adopted mechanical constitutive law.
+The stress tensor at a quadrature point $\bb{x}_{f,q}$, denoted $(\bb{\sigma}_s)_{f,q}$, is computed as a function of the displacement gradient according to the adopted mechanical constitutive law.
 For the case of engineering (Cauchy) stress, it is given by:
 \begin{equation}
 \bb{\sigma}_s(\bb{x}_{f,q}) =   \mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}
 \end{equation}
 where $\mu$ and $\lambda$ are the Lamé parameters.
 Expressions for other constitutive laws are provided in Appendix \ref{app:mechLaws}.
-The computation of the displacement gradient $(\nabla \bb{u})_{f,q}$ is given in Section \ref{sec:ho_scheme}.
+The computation of the displacement gradient $(\nabla \bb{u})_{f,q}$ is shown in Section \ref{sec:ho_scheme}.
 %
 %------------------------------------------------------------------------------
 \subsection{Volume Integrals}
@@ -320,12 +310,22 @@ The computation of the displacement gradient $(\nabla \bb{u})_{f,q}$ is given in
 The volume integral is discretised by integrating over the cell volume quadrature points:
 %
 \begin{equation}
-\int_{\Omega} \bb{f}_b \text{d}\Omega
+\int_{\Omega_P} \bb{f}_b \text{d}\Omega_P
 \approx
- \sum_{q=1}^{q=N_{\Omega,q}}\beta_q \; \bb{f}_b(\bb{x}_{\Omega,q})  \Omega_P,
+ \sum_{q=1}^{q=N_{\bb{f},q}}\beta_q \; \left(\bb{f}_b\right)_{\Omega,q}  \Omega_P,
 \end{equation}
 %
-where $N_{\Omega,q}$ is the number of cell quadrature points and $\beta_q$ are the corresponding quadrature weights.
+where $N_{\bb{f},q}$ is the number of cell quadrature points and $\beta_q$ are the corresponding quadrature weights.
+Similarly, the inertia term (e.g. left-hand side term of Equation \eqref{eqn:momentum_lingeom}):
+%
+\begin{equation}
+\int_{\Omega_P} \rho \frac{\partial^2 \bb{u}}{\partial t^2} \text{d}\Omega_P
+\approx
+ \sum_{q=1}^{q=N_{\bb{u},q}}\gamma_q \; \bb{\rho}_{\,\Omega,q}  \left(\frac{\partial^2 \bb{u}}{\partial t^2} \right)_{\Omega,q}  \Omega_P,
+\end{equation}
+%
+where $N_{\bb{u},q}$ and $\gamma_q$ are quadrature points and corresponding weights used for inertia term integration. Subscript $_{\Omega,q}$ is used to denote that quantity is calculated at quadrature point location $\bb{x}_{\Omega,q}$.
+
 To evaluate these integrals over arbitrary polyhedral cells, the control volume is partitioned into a set of non-overlapping tetrahedra using the face subdivisions already defined for surface integration.
 Each tetrahedron is formed by connecting the cell centroid P with one of the triangular faces, as illustrated in Figure \ref{fig:volumeTerm}.
 \begin{figure}[h]
@@ -337,31 +337,47 @@ Each tetrahedron is formed by connecting the cell centroid P with one of the tri
 The cell partition is resolved at the quadrature weight calculation level, where the integration weights are scaled by the ratio of its host tetrahedron’s volume to the total cell volume. As in the computation of face quadrature weights, it is crucial to use a consistent cell volume \cite{Nishikawa2025}.
 %
 %------------------------------------------------------------------------------
-\subsection{Alpha Stabilisation}
+\subsection{Stabilisation Scheme}
 \label{sec:vol_int}
 %------------------------------------------------------------------------------
 %
-% In the latter section will be shown that discretisation withoud stabilisation is stable only on regular grids.
-% The effect of stabilisaion can be obtained alternatuvely with large number of intehration poisnt and large stencil, howver alpha stabilisation
-% introduced is more efficient and provide better stabilisation.
-%Rhie-chow is second order- here we use Nishikawa alpha wich can be reduced to Rhie-chow stabilisation - see NK paper.
-%UCNS3D: An open-source high-order finite-volume unstructured CFD, Nishiklawa 2025 paper
-solver
+The evaluation of the surface term (diffusive flux) requires estimates of the solution gradient at the quadrature points $\bb{x}_{f,q}$ of a face.
+The most common approach is to average the gradients reconstructed from each side of a quadrature point, either using arithmetic averaging or interpolation with geometrically weighted coefficients.
+In the present work, the solution gradient is evaluated directly at the quadrature points, eliminating the need for such interpolation.
+However, as in the aforementioned averaging-based approaches, the discretisation of the diffusive flux may lead to numerical instabilities, manifested as zero-energy (checkerboard-type) modes.
+To suppress these high-frequency oscillations, an appropriate stabilisation (damping) must be introduced.
+
+The most widely used stabilization technique in the finite-volume framework is the Rhie–Chow type stabilization \cite{Rhie1983}, which is second-order accurate \cite{Cardiff2025}.
+Since this limits the overall convergence rate to second order, it is not suitable for the present high-order discretisation.
+Instead, we employ an $\alpha$-damping scheme \cite{Nishikawa2010}, which preserves the designed high-order convergence of the method \cite{ Nishikawa2011}.
+This damping is introduced in the form of an additional traction term $\bb{t}_s$, defined as a function of the solution jump between the values extrapolated from the centroids of the two cells sharing a common face:
 \begin{equation}
-\bb{t}_s = f_s \frac{2\mu +\lambda}{|\bb{d} \cdot \bb{n}|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)
+\bb{t}_s = \alpha \frac{\bar{K}}{|\bb{d}_{PN} \cdot \bb{n}_f|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)
 \end{equation}
+%
+where $\alpha$ is scale factor and $\bar{K}$ a stiffness-type parameter that gives the stabilisation an appropriate scale and dimension.
+It is calculated using Lamé parameters $\bar{K} = 2\mu +\lambda$, following previous works \cite{Tukovic2013,Cardiff2017,Cardiff2018}. 
+The vector $\bb{d}_{PN}$ connects the centroid of cell $P$ with that of its neighboring cell $N$, 
+while the product $\bb{d}_{PN} \cdot \bb{n}_f$ serves as a skewness measure, increasing the damping on highly skewed cells \cite{Nishikawa2011}.
+The quantities $\bb{u}_{fN}^*$ and $\bb{u}_{fP}^*$ denote the displacements at the face center $f$,
+ extrapolated from the cell centers using the derivatives evaluated at $N$ and $P$, respectively:
+\begin{equation}\label{eq:alphaJump}
+\begin{split}
+\bb{u}_{fN}^* &= \bb{u}_N + \bb{d}_{Pf} \cdot (\nabla \bb{u})_N + \frac{1}{2}\bb{d}_{Nf}^2 \!:\! (\nabla \nabla \bb{u})_N + \frac{1}{6}\bb{d}_{Nf}^2 \!::\! (\nabla \nabla \nabla \bb{u})_N, \\
+\bb{u}_{fP}^*& = \bb{u}_P + \bb{d}_{Pf} \cdot (\nabla \bb{u})_P + \frac{1}{2}\bb{d}_{Pf}^2 \!:\! (\nabla \nabla \bb{u})_P + \frac{1}{6}\bb{d}_{Pf}^2 \!::\! (\nabla \nabla \nabla \bb{u})_P,
+\end{split}
+\end{equation}
+where $\bb{d}_{Pf} = \bb{x}_f - \bb{x}_P$ and $\bb{d}_{Nf} = \bb{x}_f - \bb{x}_N$ represent the vectors from the cell centers to the face center.
+The second and third derivatives in Equation \eqref{eq:alphaJump} are employed only for third- and fourth-order discretizations, respectively, and their computation is described in Section \ref{sec:ho_scheme}.
 
+The damping contribution is added to the surface integral in Equation \eqref{eq:divStressDiscret}, for internal faces and boundary faces on which displacement is prescribed:
 \begin{equation}
-\bb{u}_{fP}^* = \bb{u}_P + \bb{d}_{Pf} \cdot (\nabla \bb{u})_P + \frac{1}{2}\bb{d}_{Pf}^2 \!:\! (\nabla \nabla \bb{u})_P + \frac{1}{6}\bb{d}_{Pf}^2 \!::\! (\nabla \nabla \nabla \bb{u})_P
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}} \cup \mathcal{F}_P^{\text{disp}}} \bb{t}_s \Gamma_f =  
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}}  \alpha \frac{\bar{K}}{|\bb{d}_{PN} \cdot \bb{n}_f|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)\Gamma_f 
++ 
+\sum_{b \,\in\, \mathcal{F}_P^{\text{disp}}}  \alpha \frac{\bar{K}}{|\bb{d}_{Pb} \cdot \bb{n}_b|}(\bb{u}_{b}-\bb{u}_{fP}^*)\Gamma_b,
 \end{equation}
-blabla
-\begin{equation}
-\bb{u}_{fN}^* = \bb{u}_N + \bb{d}_{Pf} \cdot (\nabla \bb{u})_N + \frac{1}{2}\bb{d}_{Nf}^2 \!:\! (\nabla \nabla \bb{u})_N + \frac{1}{6}\bb{d}_{Nf}^2 \!::\! (\nabla \nabla \nabla \bb{u})_N
-\end{equation}
-where $\bb{d}_{Pf}$ and $\bb{d}_{Nf}$  are defined as distance between face centre and cell centre, i.e. $\bb{d}_{fN}=(\bb{x}_f-\bb{x}_N)$ and is $\bb{d}_{fP}=(\bb{x}_f-\bb{x}_P)$ 
-
-
-
+where $\bb{u}_{b}$ is the prescribed displacement and $\bb{d}_{Pb}=\bb{x}_b - \bb{x}_P$. 
 %
 %------------------------------------------------------------------------------
 \subsection{High order interpolation scheme}
@@ -766,7 +782,7 @@ Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This resu
 
 \subsection{Error-cost relationship}
 
-\subsection{Stabilisation scheme}
+\subsection{Stabilisation scheme effects}
 
 \subsection{Effects of poor interpolation conditioning}
 
