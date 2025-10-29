@@ -85,7 +85,7 @@ textheight=24cm, % llncs has 19.3cm
 
 \begin{document}
 
-\title[Article Title]{A Jacobian-free Newton-Krylov method for cell-centred finite volume solid mechanics}
+\title[Article Title]{A Jacobian-free Newton-Krylov method for high order cell-centred finite volume solid mechanics}
 
 \author[1,2]{\fnm{Ivan} \sur{Batisti\'{c}}}
 \author[1,3]{\fnm{Pablo} \sur{Castrillo}}
@@ -206,7 +206,7 @@ The computational points are located at the cell centroids, where the solution i
 This type of discretization is commonly referred to as the deconvolution finite volume method \cite{Nishikawa2025, Nishikawa2021}.
 %
 %------------------------------------------------------------------------------
-\subsection{Solution domain discretisation}
+\subsection{Solution Domain Discretisation}
 %------------------------------------------------------------------------------
 %
 The spatial domain is partitioned into a finite set of contiguous convex polyhedral control volumes, each denoted by $P$.
@@ -342,7 +342,7 @@ The cell partition is resolved at the quadrature weight calculation level, where
 %------------------------------------------------------------------------------
 %
 The evaluation of the surface term (diffusive flux) requires estimates of the solution gradient at the quadrature points $\bb{x}_{f,q}$ of a face.
-The most common approach is to average the gradients reconstructed from each side of a quadrature point, either using arithmetic averaging or interpolation with geometrically weighted coefficients.
+The most common approach is to average the gradients reconstructed from each side of a quadrature point, either using arithmetic averaging \cite{test} or interpolation with geometrically weighted coefficients\cite{test}.
 In the present work, the solution gradient is evaluated directly at the quadrature points, eliminating the need for such interpolation.
 However, as in the aforementioned averaging-based approaches, the discretisation of the diffusive flux may lead to numerical instabilities, manifested as zero-energy (checkerboard-type) modes.
 To suppress these high-frequency oscillations, an appropriate stabilisation (damping) must be introduced.
@@ -356,7 +356,7 @@ This damping is introduced in the form of an additional traction term $\bb{t}_s$
 \end{equation}
 %
 where $\alpha$ is scale factor and $\bar{K}$ a stiffness-type parameter that gives the stabilisation an appropriate scale and dimension.
-It is calculated using Lamé parameters $\bar{K} = 2\mu +\lambda$, following previous works \cite{Tukovic2013,Cardiff2017,Cardiff2018}. 
+It is calculated using Lamé parameters $\bar{K} = 2\mu +\lambda$, following previous works \cite{Tukovic2013,Cardiff2017,Cardiff2018} where this value is used for Rhie-Chow stabilisation. 
 The vector $\bb{d}_{PN}$ connects the centroid of cell $P$ with that of its neighboring cell $N$, 
 while the product $\bb{d}_{PN} \cdot \bb{n}_f$ serves as a skewness measure, increasing the damping on highly skewed cells \cite{Nishikawa2011}.
 The quantities $\bb{u}_{fN}^*$ and $\bb{u}_{fP}^*$ denote the displacements at the face center $f$,
@@ -377,8 +377,7 @@ The damping contribution is added to the surface integral in Equation \eqref{eq:
 + 
 \sum_{b \,\in\, \mathcal{F}_P^{\text{disp}}}  \alpha \frac{\bar{K}}{|\bb{d}_{Pb} \cdot \bb{n}_b|}(\bb{u}_{b}-\bb{u}_{fP}^*)\Gamma_b,
 \end{equation}
-where $\bb{u}_{b}$ is the prescribed displacement and $\bb{d}_{Pb}=\bb{x}_b - \bb{x}_P$. 
-%
+where $\bb{u}_{b}$ is the prescribed displacement and $\bb{d}_{Pb}=\bb{x}_b - \bb{x}_P$. Note that the damping term is integrated using a single quadrature point per face, as there is no requirement for high accuracy in evaluating the stabilization contribution; it is only important that the added term converges with the desired order.
 %------------------------------------------------------------------------------
 \subsection{High order interpolation scheme}
 \label{sec:ho_scheme}
@@ -420,8 +419,68 @@ where $\tilde{d}=\frac{d}{d_s}$
 \label{sec:vol_int}
 %------------------------------------------------------------------------------
 %
+The linear momentum balance (Equation \eqref{eqn:momentum_TL} and \eqref{eqn:momentum_lingeom}) can be expressed as:
+%
+\begin{equation}
+\bb{R}(\bb{u}) = 0,
+\end{equation}
+%
+where $\bb{u}$ is primary unknown field (displacement) and $\bb{R}$ represents the \emph{residual} (imbalance) of the equation.
+For the implicit discretisation of momentum balance, residual vector is the function of the unknown displacement field at iteration $k+1$:
+%
+\begin{equation}
+\bb{R}(\bb{u}_{k+1}) = 0,
+\end{equation}
+%
+The residual can be approximated using first-order Taylor expansion about current point $k$:
+%
+\begin{equation}
+ 	\bb{R}(\bb{u}_{k+1}) \approx \bb{R}(\bb{u}_{k}) \;+\;  \bb{R}'(\bb{u}_{k}) (\bb{u}_{k+1} - \bb{u}_{k}), 
+\end{equation}
+%
+where $\bb{R}'$ is the Jacobian matrix $\bb{J}\equiv\bb{R}'\equiv\partial \bb{R} / \partial \bb{u}$. 
+Imposing $\bb{R}(\bb{u}_{k+1}) = \bb{0}$ yields the standard Newton update equation:
+%
+\begin{equation}
+\bb{J}(\bb{u}_k) \delta \bb{u} = -\bb{R}(\bb{u}_k)
+\end{equation}
+%
+where $\delta \bb{u}=\bb{u}_{k+1} - \bb{u}_{k}$.
+In the Jacobian-free Newton–Krylov approach, the Jacobian matrix is not formed explicitly.
+Instead, a Krylov subspace method (e.g., GMRES) is used to solve the linear system iteratively, requiring only the action of the Jacobian on a vector:
+%
+\begin{equation}
+\bb{J} \bb{v} \approx \frac{\bb{R}(\bb{u}+\epsilon \bb{v})-\bb{R}(\bb{u})}{\bb{\epsilon}}
+\end{equation}
+%
+where $\bb{v}$ is arbitrary vector (e.g., from a Krylov subspace) and $\epsilon$ is a small scalar perturbation.%
+To mitigate the effect of ill-conditioned Jacobian matrices on convergence and robustness, a right preconditioning strategy is employed:
+%
+\begin{equation}\label{eq:jfnk}
+ 	\bb{J} \bb{P}^{-1} \bb{v}\approx 	\frac{\bb{R}(\bb{u} + \epsilon \bb{P}^{-1} \bb{v}) - \bb{R}(\bb{u})}{\epsilon}
+\end{equation}
+%
+where $\bb{P}$ denotes the preconditioning matrix.
+As the preconditioner, we adopt a compact-stencil approximate Jacobian, the one that is used in the second-order cell-centre semi-implicit discretisation with segregated solution procedure.  Following the classification of Knoll and Keyes \cite{Knoll2004}, this preconditioning choice may be considered "physics-based".
 
-
+The approximate Jacobian, for cell $P$, corresponds to the discretised diffusion term using a central-difference scheme:
+%
+ \begin{eqnarray}
+ 	\bb{P}_P = \oint_{\Gamma_P} \bar{K} \, \bb{n} \cdot \bb{\nabla} \bb{u} \; d\Gamma_P &\approx&
+ 		\sum_{f_i \in \mathcal{F}^{\text{int}}_P}  \bar{K}
+ 		\left|\bb{\Delta}_{f_i} \right| \frac{ \bb{u}_{N_{f_i}} - \bb{u}_P}{\left|\bb{d}_{f_i}\right|}    \left|\bb{\Gamma}_{f_i}\right| \notag \\
+ 	+  \sum_{d_i \in \mathcal{F}^{\text{disp}}_P}  \bar{K}
+ %		\left|\bb{\Delta}_{d_i} \right| \left( \ \frac{ \bar{\bb{u}}_{d_i} - \bb{u}_P}{\left|\bb{d}_{d_i}\right|}  \right) 
+ 	&&	\left|\bb{\Delta}_{d_i} \right| \frac{ \bar{\bb{u}}_{d_i}  - \bb{u}_P}{\left|\bb{d}_{d_i}\right|} 
+ 		\left|\bb{\Gamma}_{d_i}\right| \notag  
+ 		+ \sum_{s_i \in \mathcal{F}^{\text{symm}}_P}  \bar{K}
+ 		\left|\bb{\Delta}_{s_i} \right| \frac{ \bb{R}_{s_i} \cdot \bb{u}_{P} - \bb{u}_P}{\left|\bb{d}_{s_i}\right|}
+ 		\left|\bb{\Gamma}_{s_i}\right|
+ \end{eqnarray}
+%
+Note that the non-orthogonal correction, which is normally required to preserve accuracy when discretising the diffusion term on skewed meshes, is omitted here.
+Including it would enlarge the stencil (molecule) and compromise the compactness achieved with the central-difference approximation.
+As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself. An extended discussion with additional details is provided in the authors’ previous work \cite{Cardiff2025}.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %        
