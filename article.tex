@@ -140,6 +140,12 @@ Potential structure of this section:
 	6.	The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on higher-order cell-centred finite-volume methods for solids, and to explore the synergy between such methods and Jacobian-free Newton–Krylov solution strategies.
 	
 	7. pokazano je da se moze splitat surface topologija cv-a na surface
+	
+	8. nemamo proracunske tocke na rubu
+	
+	9. dodali smo stabilizaciju i pokazali da je nuzna
+	
+	10. SA JFNK ne moramo konstruirati matricu sto moze biti vremenski zathejno i matematicki zajebano isto
 	skica molekule na symmetry planeu
 skica molekule na dirichlet boundariu
 sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neumman rub!
@@ -218,14 +224,7 @@ Each control volume is bounded by a set of polygonal faces, which are categorize
 \item[•] Internal faces — shared between adjacent control volumes. The centroid of an internal face is denoted by $f$, its outward unit normal vector by $\bb{n}_f$, and its face area by $\Gamma_f$.
 \item[• ] Boundary faces — located on the boundary of the spatial domain. The centroid of a boundary face is denoted by $b$, its outward unit normal vector by $\bb{n}_b$, and its surface area by $\Gamma_b$. 
 \end{itemize}
-%a face center 𝐱jk of a quadrilateral face between the cells 𝑗 and 𝑘 can be defined by the arithmetic average
-%Estimating the residual requires calculating the volume integral of the source term
-%129 and the surface integral of the normal flux for each cell. This is achieved using Gaussian
-%130 integration, where a weighted sum of values at quadrature points is used to approximate
-%131 the integral. The source integral calculation is performed as a weighted sum of values of
-%132 the source term at the interior quadrature points for each cell. The flux integral part
-%133 requires estimating the normal flux at quadrature points along the boundary of each cell
-%Napisati da 2d probleme tretiramo kao 2D, nije standardni openfoam pristup - hibridna je kombinacija
+%
 \begin{figure}[h]
  	\centering
 	\subfigure[Control volume in 2D]
@@ -260,7 +259,7 @@ volumes are handled consistently using the same reconstruction and integration p
 \textcolor{red}{Integration rules publications - cite them - maybe appendix?}
 
 Before proceeding with the discretization of the volume and surface integrals, we introduce the following sets of cell faces.
- The set of internal faces is denoted by $\mathcal{F}_P^{\text{int}}$, and the set of boundary faces by $\mathcal{F}_P^{\text{bnd}}$.
+The set of internal faces is denoted by $\mathcal{F}_P^{\text{int}}$, and the set of boundary faces by $\mathcal{F}_P^{\text{bnd}}$.
 The boundary-face set $\mathcal{F}_P^{\text{bnd}}$ is further partitioned into three mutually disjoint subsets,
 $\mathcal{F}_P^{bnd} := \mathcal{F}_P^{\text{dip}} \cup \mathcal{F}_P^{\text{sym}} \cup \mathcal{F}_P^{\text{trac}}$,
 representing boundary faces where displacement ($\mathcal{F}_P^{\text{dip}}$), traction ($\mathcal{F}_P^{\text{trac}}$),
@@ -342,7 +341,7 @@ The cell partition is resolved at the quadrature weight calculation level, where
 %------------------------------------------------------------------------------
 %
 The evaluation of the surface term (diffusive flux) requires estimates of the solution gradient at the quadrature points $\bb{x}_{f,q}$ of a face.
-The most common approach is to average the gradients reconstructed from each side of a quadrature point, either using arithmetic averaging \cite{test} or interpolation with geometrically weighted coefficients\cite{test}.
+The most common approach is to average the gradients reconstructed from each side of a quadrature point, either using arithmetic averaging \textcolor{red}{!!!!}\cite{test} or interpolation with geometrically weighted coefficients\cite{test}\textcolor{red}{!!!!}.
 In the present work, the solution gradient is evaluated directly at the quadrature points, eliminating the need for such interpolation.
 However, as in the aforementioned averaging-based approaches, the discretisation of the diffusive flux may lead to numerical instabilities, manifested as zero-energy (checkerboard-type) modes.
 To suppress these high-frequency oscillations, an appropriate stabilisation (damping) must be introduced.
@@ -378,26 +377,118 @@ The damping contribution is added to the surface integral in Equation \eqref{eq:
 \sum_{b \,\in\, \mathcal{F}_P^{\text{disp}}}  \alpha \frac{\bar{K}}{|\bb{d}_{Pb} \cdot \bb{n}_b|}(\bb{u}_{b}-\bb{u}_{fP}^*)\Gamma_b,
 \end{equation}
 where $\bb{u}_{b}$ is the prescribed displacement and $\bb{d}_{Pb}=\bb{x}_b - \bb{x}_P$. Note that the damping term is integrated using a single quadrature point per face, as there is no requirement for high accuracy in evaluating the stabilization contribution; it is only important that the added term converges with the desired order.
+%
 %------------------------------------------------------------------------------
 \subsection{High order interpolation scheme}
 \label{sec:ho_scheme}
 %------------------------------------------------------------------------------
 %
+For an arbitrary point in space, denoted by $\tilde{\bb{x}}$ (for example, a face quadrature point), the displacement field can be reconstructed using a pointwise interpolation of the surrounding cell-centre values:
+%
+\begin{equation}\label{eq:interp}
+(\bb{u})_{\tilde{\bb{x}}} = \sum_{N \in \mathcal{S}}c_N \bb{u}_N,
+\end{equation}
+%
+where $c_N$ are scalar interpolation coefficients associated with the neighbouring cell-centre (computational) points $\bb{u}_N$, and $\mathcal{S}$ denotes the interpolation stencil, i.e. the set of computational points used in the interpolation, with $|\mathcal{S}|$ being its size.
+The same interpolation can be used to evaluate the first and higher-order spatial derivatives of the displacement field:
+%
+\begin{equation}\label{eq:derInterp}
+\left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}}=\sum_{N \in \mathcal{S}}c_{x_N} \bb{u}_N, \qquad
+\left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}}=\sum_{N \in \mathcal{S}}c_{y_N} \bb{u}_N, \qquad
+\left(\frac{\partial \bb{u}}{\partial z}\right)_{\tilde{\bb{x}}}=\sum_{N \in \mathcal{S}}c_{z_N} \bb{u}_N, 
+\end{equation}
+%
+where $c_{x_N}$, $c_{y_N}$ and $c_{z_N}$ are the interpolation coefficients corresponding to the spatial derivatives in the $x-$, $y-$, and $z-$directions, respectively.
+The procedure for computing these interpolation coefficients is described in the following section.
+%
+%------------------------------------------------------------------------------
+\subsubsection{Local Regression Estimators}
+%------------------------------------------------------------------------------
+%
+The Local Regression Estimators (LRE) method is used to determine the interpolation coefficients in Equations \eqref{eq:interp} and \eqref{eq:derInterp}.
+A truncated Taylor expansion of the displacement field, denoted by $\bar{\boldsymbol{u}}$, in the vicinity of $\tilde{\boldsymbol{x}}$ is written as:
+%
+\begin{equation}
+\begin{split}
+\bar{\bb{u}}(\bb{x}) =
+(\bb{u})_{\tilde{\bb{x}}}
+ + \left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}}(x-\tilde{x})&
+ + \left(\frac{\partial \bb{u}}{\partial y}\right)_{\tilde{\bb{x}}}(y-\tilde{y})
+ + \left(\frac{\partial \bb{u}}{\partial z}\right)_{\tilde{\bb{x}}}(z-\tilde{z})
+ + \frac{1}{2}\left(\frac{\partial^2 \bb{u}}{\partial x^2}\right)_{\tilde{\bb{x}}}(x-\tilde{x})^2 \\
+ +  \frac{1}{2}\left(\frac{\partial^2 \bb{u}}{\partial x \partial y}\right)_{\tilde{\bb{x}}}&(x-\tilde{x})(y-\tilde{y})
+ +  \frac{1}{2}\left(\frac{\partial^2 \bb{u}}{\partial x \partial z}\right)_{\tilde{\bb{x}}}(x-\tilde{x})(z-\tilde{z})
+ + \dots
+\end{split}
+\end{equation}
+%
+The expansion is truncated at polynomial order $p$, which corresponds to $N_t$ terms, where $N_t = \dfrac{(d+p)!}{(d!\,p!)}$ in $d$ spatial dimensions.
+The truncated expansion can then be written compactly using a polynomial basis $\mathbf{q}$ and a vector of unknown coefficients $\bar{\mathbf{a}}$ representing the derivatives:
+%
+\begin{equation}
+\bar{\bb{u}} = \mathbf{q}^T(\bb{x}-\tilde{\bb{x}})\bar{\mathbf{a}}(\tilde{\bb{x}}),
+\end{equation}
+%
+where
+%
+\begin{equation}
+\begin{split}
+&\mathbf{q}^T(\bb{x}-\tilde{\bb{x}}) = \left[1, (x-\tilde{x}), (y-\tilde{y}), (z-\tilde{z}), \frac{1}{2}(x-\tilde{x})^2, \dots \right],\\
+& \bar{\mathbf{a}}(\tilde{\bb{x}}) = \left[(\bb{u})_{\tilde{\bb{x}}}, \left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}},
+ \left(\frac{\partial \bb{u}}{\partial y}\right)_{\tilde{\bb{x}}}, 
+ \left(\frac{\partial \bb{u}}{\partial z}\right)_{\tilde{\bb{x}}},
+ \left(\frac{\partial^2 \bb{u}}{\partial x^2}\right)_{\tilde{\bb{x}}},
+ \dots  \right].
+\end{split}
+\end{equation}
+%
+The LRE method estimates the parameter vector $\bar{\mathbf{a}}$ by minimizing the weighted sum of squared differences between the Taylor approximation and the cell-centre values:
+%
+\begin{equation}\label{eq:ls}
+\mathcal{R} = \frac{1}{2} \sum_{N \in \mathcal{S}} w_N \left [ \bar{\bb{u}}(\bb{x}_N) - \bb{u}_N\right]^2 = \sum_{N \in \mathcal{S}} w_N \left [ \mathbf{q}^T(\bb{x}-\tilde{\bb{x}})\bar{\mathbf{a}}(\tilde{\bb{x}}) - \bb{u}_N\right]^2
+\end{equation}
+%
+Minimizing Equation \eqref{eq:ls} with respect to $\bar{\mathbf{a}}(\tilde{\boldsymbol{x}})$ leads to the following normal equations:
+%
+\begin{equation}
+\mathbf{\bar{M}}(\tilde{\bb{x}}) \mathbf{\bar{a}}(\tilde{\bb{x}}) = \mathbf{\bar{Q}}(\tilde{\bb{x}}) \mathbf{{W}}(\tilde{\bb{x}}) \mathbf{u},
+\end{equation}
+%
+where $\mathbf{M}(\tilde{\bb{x}})=\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})\mathbf{Q}^T(\tilde{\bb{x}})$, $\mathbf{Q}(\tilde{\bb{x}})$ is the $N_t \times |\mathcal{S}|$ matrix whose $N-$th column is $\mathbf{q}^T(\bb{x}-\tilde{\bb{x}})$ and $\mathbf{W}(\tilde{\bb{x}})$ is a diagonal weighting matrix of size $|\mathcal{S}| \times |\mathcal{S}|$.
+Defining $\mathbf{A}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})$, the system becomes:
+\begin{equation}
+\mathbf{\bar{a}}(\tilde{\bb{x}}) = \mathbf{\bar{A}}(\tilde{\bb{x}})\mathbf{u}, 
+\end{equation}
+%
+The rows of $\bar{\mathbf{A}}$ correspond to the interpolation coefficients used in 
+Eqs.~\eqref{eq:interp} and \eqref{eq:derInterp}.  
+The inversion of $\bar{\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.  
+This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}$ to positive values, and employing a QR decomposition for improved numerical stability, see \cite{Castrillo2022, Castrillo2023}.
+%
 
-\subsection{Stencil}
+%
+The weight function in Equation \eqref{eq:ls} is radially symmetric exponential function:
+\begin{equation}\label{eq:weightFunc}
+w_N = \dfrac{e^{-\tilde{d}^2k^2}-e^{-k^2}}{1-e^{-k^2}},
+\end{equation}
+where $d=|\bb{\tilde{x}}-\bb{x}_N|$, $d_s=2r_s$ is the stencil diameter, $\tilde{d}=d/d_s$ and $r_s$ is the stencil radius, defined as the maximum distance $|\bb{\tilde{x}}-\bb{x}_N|$ in stencil $\mathcal{S}$. The weighting function in Equation \eqref{eq:weightFunc} has been previously used in the context of the Navier–Stokes equations 
+\cite{Khelladi2011, Ramirez2014} and solid mechanics problems \cite{Castrillo2022, Castrillo2023, Castrillo2024}.  
+Following these studies, the shape parameter $k = 6$ is adopted herein for both 2D and 3D cases, as it was shown to provide optimal performance \cite{Castrillo2022, Castrillo2023, Castrillo2024}.
+%
+%------------------------------------------------------------------------------
+\subsubsection{Interpolation Stencil}
 slika lijevo (internal + boudnary molecule)
 Slika desno cell centred molecule
 Slka ispod za simetriju kako je implementirana
-
-
-\subsection{Weight function}
+There exists an optimal size nxI of points in the stencil such as
+Nmin 6 nxI 6 Nmax. The minimum number of points correspond to
+the dimension of the polynomial basis, it is given by
 \begin{equation}
-w(\bb{x}, \bb{x}_N, k) = \frac{e^{-\tilde{d}^2k^2}-e^{-k^2}}{1-e^{-k^2}},
+\frac{p+1p+2}{2}, \qquad \frac{(p+1)( p+2)( p+3)}{6}
 \end{equation}
-where $\tilde{d}=\frac{d}{d_s}$
 %
 %------------------------------------------------------------------------------
-\subsection{Boundary conditions}
+\subsubsection{Boundary Conditions}
 \label{sec:bc}
 %------------------------------------------------------------------------------
 %
@@ -447,13 +538,13 @@ Imposing $\bb{R}(\bb{u}_{k+1}) = \bb{0}$ yields the standard Newton update equat
 %
 where $\delta \bb{u}=\bb{u}_{k+1} - \bb{u}_{k}$.
 In the Jacobian-free Newton–Krylov approach, the Jacobian matrix is not formed explicitly.
-Instead, a Krylov subspace method (e.g., GMRES) is used to solve the linear system iteratively, requiring only the action of the Jacobian on a vector:
+Instead, a Krylov subspace method (e.g., GMRES) is used to solve the linear system iteratively, requiring only the action of the Jacobian on a arbitrary vector $\bb{v}$:
 %
 \begin{equation}
-\bb{J} \bb{v} \approx \frac{\bb{R}(\bb{u}+\epsilon \bb{v})-\bb{R}(\bb{u})}{\bb{\epsilon}}
+\bb{J} \bb{v} \approx \frac{\bb{R}(\bb{u}+\epsilon \bb{v})-\bb{R}(\bb{u})}{\epsilon}
 \end{equation}
 %
-where $\bb{v}$ is arbitrary vector (e.g., from a Krylov subspace) and $\epsilon$ is a small scalar perturbation.%
+where $\epsilon$ is a small scalar perturbation.
 To mitigate the effect of ill-conditioned Jacobian matrices on convergence and robustness, a right preconditioning strategy is employed:
 %
 \begin{equation}\label{eq:jfnk}
@@ -461,26 +552,30 @@ To mitigate the effect of ill-conditioned Jacobian matrices on convergence and r
 \end{equation}
 %
 where $\bb{P}$ denotes the preconditioning matrix.
-As the preconditioner, we adopt a compact-stencil approximate Jacobian, the one that is used in the second-order cell-centre semi-implicit discretisation with segregated solution procedure.  Following the classification of Knoll and Keyes \cite{Knoll2004}, this preconditioning choice may be considered "physics-based".
+As the preconditioner, we adopt a compact-stencil approximate Jacobian, the one that is used in the second-order cell-centre semi-implicit discretisation with segregated solution procedure \cite{Cardiff2018, Tukovic2018}. Following the classification of Knoll and Keyes \cite{Knoll2004}, this preconditioning choice may be considered "physics-based".
 
 The approximate Jacobian, for cell $P$, corresponds to the discretised diffusion term using a central-difference scheme:
 %
- \begin{eqnarray}
- 	\bb{P}_P = \oint_{\Gamma_P} \bar{K} \, \bb{n} \cdot \bb{\nabla} \bb{u} \; d\Gamma_P &\approx&
- 		\sum_{f_i \in \mathcal{F}^{\text{int}}_P}  \bar{K}
- 		\left|\bb{\Delta}_{f_i} \right| \frac{ \bb{u}_{N_{f_i}} - \bb{u}_P}{\left|\bb{d}_{f_i}\right|}    \left|\bb{\Gamma}_{f_i}\right| \notag \\
- 	+  \sum_{d_i \in \mathcal{F}^{\text{disp}}_P}  \bar{K}
- %		\left|\bb{\Delta}_{d_i} \right| \left( \ \frac{ \bar{\bb{u}}_{d_i} - \bb{u}_P}{\left|\bb{d}_{d_i}\right|}  \right) 
- 	&&	\left|\bb{\Delta}_{d_i} \right| \frac{ \bar{\bb{u}}_{d_i}  - \bb{u}_P}{\left|\bb{d}_{d_i}\right|} 
- 		\left|\bb{\Gamma}_{d_i}\right| \notag  
- 		+ \sum_{s_i \in \mathcal{F}^{\text{symm}}_P}  \bar{K}
- 		\left|\bb{\Delta}_{s_i} \right| \frac{ \bb{R}_{s_i} \cdot \bb{u}_{P} - \bb{u}_P}{\left|\bb{d}_{s_i}\right|}
- 		\left|\bb{\Gamma}_{s_i}\right|
- \end{eqnarray}
+\begin{equation}
+\begin{split}
+ 	\bb{P}_P = \oint_{\Gamma_P} \bar{K} \, \bb{n} \cdot \bb{\nabla} \bb{u} \; \text{d}\Gamma_P \approx
+ 		\sum_{f \in \mathcal{F}^{\text{int}}_P}  \bar{K} &
+ 		\left|\bb{\Delta}_{f} \right| \frac{ \bb{u}_{N} - \bb{u}_P}{\left|\bb{d}_{PN}\right|}    \Gamma_{f}
+ 	+  \sum_{b \in \mathcal{F}^{\text{disp}}_P}  \bar{K} 
+ 		\left|\bb{\Delta}_{b} \right| \frac{ \bar{\bb{u}}_{b}  - \bb{u}_P}{\left|\bb{d}_{Pb}\right|} 
+ 		\left|\bb{\Gamma}_{b}\right|    \\
+ 	&	+ \sum_{b \in \mathcal{F}^{\text{symm}}_P}  \bar{K}
+ 		\left|\bb{\Delta}_{b} \right| \frac{ \bb{R}_{b} \cdot \bb{u}_{P} - \bb{u}_P}{\left|\bb{d}_{Pb}\right|} {\Gamma}_{b},
+\end{split}
+\end{equation}
 %
+where $\bb{\Delta}_{f}=\bb{d_{PN}}/(\bb{d}_{PN} \cdot \bb{n}_f)$ is \emph{over-relaxed orthogonal} vector \cite{Demirdzic2015} and $\bb{R}_b=\mathbf{I}-2\bb{n}_b \otimes\bb{n}_b$ is reflection tensor \cite{Demirdzic2022}.
 Note that the non-orthogonal correction, which is normally required to preserve accuracy when discretising the diffusion term on skewed meshes, is omitted here.
 Including it would enlarge the stencil (molecule) and compromise the compactness achieved with the central-difference approximation.
-As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself. An extended discussion with additional details is provided in the authors’ previous work \cite{Cardiff2025}.
+As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself. 
+
+For the JFNK solver, the PETSc library (version 3.22.2) \cite{PETSc} is used, where the interfaces for evaluating the approximate Jacobian (matrix $\bb{P}$) and the residual ($\boldsymbol{R}(\bb{u})$) are implemented within the \texttt{solids4foam} toolbox \cite{Cardiff2018, Tukovic2018}, which is built on OpenFOAM-v2312 \cite{Weller1998}.
+An extended discussion with additional implementation details is provided in the authors’ previous work \cite{Cardiff2025}, where the JFNK solver is coupled with a second-order residual evaluation.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %        
@@ -528,6 +623,8 @@ Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x
 \begin{equation}
 \sigma_{ekv}=\sqrt{\frac{1}{2}\left[  (\sigma_{xx}-\sigma_{yy})^2+(\sigma_{yy}-\sigma_{zz})^2+(\sigma_{zz}-\sigma_{xx})^2 \right]+3\left(\sigma_{xy}^2+\sigma_{yz}^2+\sigma_{zx}^2\right)}
 \end{equation}
+
+
 %
 %------------------------------------------------------------------------------
 \subsection{Case 1: Order Verification via the Manufactured Solution Procedure}
@@ -1703,19 +1800,26 @@ Plate hole sa hex mrezom tu staviti i objasniti sto se desava u 2D-u sa kondicij
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \backmatter
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bmhead{Data Availability}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\hl{To be updated}
-The codes presented are publicly available at \url{https://github.com/solids4foam/solids4foam} on the \texttt{feature-petsc-snes} branch, and the cases and plotting scripts are available at \url{https://github.com/solids4foam/solid-benchmarks}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The codes presented are publicly available at \url{https://github.com/solids4foam/solids4foam}, and the cases and plotting scripts are available at \url{https://github.com/solids4foam/solid-benchmarks}.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bmhead{Declaration of generative AI and AI-assisted technologies in the writing process}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+During the preparation of this work, the authors used ChatGPT and Grammarly as writing assistants.
+After using these tools, the authors reviewed and edited the content as needed and take full responsibility for the content of the publication.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bmhead{Acknowledgments}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Technical reviews and insightful comments from Hiroaki Nishikawa of the National Institute of Aerospace, Hampton, VA, USA, are greatly appreciated.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 This project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (Grant Agreement No. 101088740).
 Financial support is gratefully acknowledged from the Irish Research Council
 through the Laureate programme, grant number IRCLA/2017/45, from Bekaert through
@@ -1723,12 +1827,9 @@ the University Technology Centre (UTC phases I and II) at UCD
 (www.ucd.ie/bekaert), from I-Form, funded by Science Foundation Ireland (SFI)
 Grant Numbers {16/RC/3872} and {21/RC/10295\_P2}, co-funded under European Regional Development Fund and by I-Form industry partners, and from NexSys, funded by SFI Grant Number 21/SPP/3756.
 Additionally, the authors wish to acknowledge the DJEI/DES/SFI/HEA Irish Centre for High-End Computing (ICHEC) for the provision of computational facilities and support (www.ichec.ie), and part of this work has been carried out using the UCD ResearchIT Sonic cluster which was funded by UCD IT Services and the UCD Research Office.
-
-
+%
 \newpage
-
-\newpage
-
+%
 \begin{appendices}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
