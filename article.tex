@@ -227,17 +227,16 @@ Each control volume is bounded by a set of polygonal faces, which are categorize
 %
 \begin{figure}[h]
  	\centering
-	\subfigure[Control volume in 2D]
- 	{
- 		\label{fig:cell2D}
-    	\includegraphics[scale=0.8]{figures/cv2D} 
-    }
-    \quad
- 	\subfigure[Control volume in 3D]
- 	{
- 		\label{fig:cell3D}
-    	\includegraphics[scale=0.8]{figures/cv3D}  
-    }
+%	\subfigure[Control volume in 2D]
+% 	{
+% 		\label{fig:cell2D}
+%    	\includegraphics[scale=1]{figures/cv2D} 
+%    }
+% 	\subfigure[Control volume in 3D]
+% 	{
+% 		\label{fig:cell3D}
+    	\includegraphics[scale=1]{figures/cv3D}  
+%    }
  	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$.}
  	\label{fig:cell}
 \end{figure}
@@ -329,7 +328,7 @@ To evaluate these integrals over arbitrary polyhedral cells, the control volume 
 Each tetrahedron is formed by connecting the cell centroid P with one of the triangular faces, as illustrated in Figure \ref{fig:volumeTerm}.
 \begin{figure}[h]
  	\centering
-    \includegraphics[scale=0.8]{figures/volumeTerm} 
+    \includegraphics[scale=1]{figures/volumeTerm} 
  	\caption{Volume integration, cell decomposition into tetrahedral elements}
  	\label{fig:volumeTerm}
 \end{figure}
@@ -477,6 +476,8 @@ Following these studies, the shape parameter $k = 6$ is adopted herein for both 
 %
 %------------------------------------------------------------------------------
 \subsubsection{Interpolation Stencil}
+%------------------------------------------------------------------------------
+%
 slika lijevo (internal + boudnary molecule)
 Slika desno cell centred molecule
 Slka ispod za simetriju kako je implementirana
@@ -486,10 +487,39 @@ the dimension of the polynomial basis, it is given by
 \begin{equation}
 \frac{p+1p+2}{2}, \qquad \frac{(p+1)( p+2)( p+3)}{6}
 \end{equation}
+
+%
+\begin{figure}[h]
+ 	\centering
+	\subfigure[Stencil $\mathcal{S}_f$ for internal face $f$ quadrature  \newline  points $\bb{x}_{f,q}$]
+ 	{
+ 		\label{fig:faceStencil}
+    	\includegraphics[scale=1]{figures/faceStencil} 
+    }\hspace*{-0.1cm}
+ 	\subfigure[Stencil for boundary face $b$ quadrature points $\bb{x}_{b,q}$ in the case of \newline
+ 	displacement $\mathcal{S}^{\text{disp}}_b$ and symmetry $\mathcal{S}^{\text{symm}}_b$ boundary type. ]
+ 	{
+ 		\label{fig:cellStencil}
+    	\includegraphics[scale=1]{figures/stencilSymm}  
+    }
+ 	\caption{Interpolation stencil for internal and boundary face.}
+ 	\label{fig:stencil}
+\end{figure}
+
+
+
+%
 %
 %------------------------------------------------------------------------------
 \subsubsection{Boundary Conditions}
 \label{sec:bc}
+%------------------------------------------------------------------------------
+%
+
+
+%
+%------------------------------------------------------------------------------
+\subsubsection{Gradient Calculation}
 %------------------------------------------------------------------------------
 %
 
@@ -574,7 +604,7 @@ Note that the non-orthogonal correction, which is normally required to preserve 
 Including it would enlarge the stencil (molecule) and compromise the compactness achieved with the central-difference approximation.
 As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself. 
 
-For the JFNK solver, the PETSc library (version 3.22.2) \cite{PETSc} is used, where the interfaces for evaluating the approximate Jacobian (matrix $\bb{P}$) and the residual ($\boldsymbol{R}(\bb{u})$) are implemented within the \texttt{solids4foam} toolbox \cite{Cardiff2018, Tukovic2018}, which is built on OpenFOAM-v2312 \cite{Weller1998}.
+For the JFNK solver, the PETSc library (version 3.22.2) \cite{PETSc} is used, where the interfaces for evaluating the approximate Jacobian (matrix $\bb{P}$) and the high-order residual ($\boldsymbol{R}(\bb{u})$) are implemented within the \texttt{solids4foam} toolbox \cite{Cardiff2018, Tukovic2018}, which is built on OpenFOAM-v2312 \cite{Weller1998}.
 An extended discussion with additional implementation details is provided in the authors’ previous work \cite{Cardiff2025}, where the JFNK solver is coupled with a second-order residual evaluation.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
