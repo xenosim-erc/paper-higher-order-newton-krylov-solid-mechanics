@@ -13,7 +13,7 @@
 %%%% Standard Packages
 %%<additional latex packages, if required can be included here>
 
-\setlength{\parskip}{\baselineskip}
+\setlength{\parskip}{0.15\baselineskip}
 
 \usepackage{graphicx}%
 \usepackage{amsmath,amssymb,amsfonts,bm}%
@@ -131,6 +131,13 @@ Potential structure of this section:
 	3.	The solution strategy is a crucial factor: segregated iterative solvers remain the standard in finite-volume solid mechanics but often suffer from slow convergence and limited robustness, and they are efficient for higher orders, as shown by Demirdzic.
 	Jacobian-free Newton–Krylov (JFNK) methods have emerged as a promising alternative, avoiding the need for explicit Jacobian construction while enabling quadratic convergence through Krylov subspace acceleration.
 	In addition, the JFNK approach is well-suited for integration into existing segregated frameworks.
+	Until the recent introduction of the Jacobian-free Newton–Krylov (JFNK) algorithm as an option for finite volume solid mechanics solvers, 
+the most common solution strategy was based on the segregated approach, which may be interpreted as a quasi-Newton method.
+Alternatively, some studies employed the Newton method for both linear material behaviour (special case of the Newton procedure) and for nonlinear materials.
+The primary barrier to the wider adoption of full Newton methods has been the complexity of the required linearization.
+For non-linear material models, such as those involving plasticity, the derivation, implementation,
+and assembly of the analytical Jacobian is a notoriously complex.
+The present work addresses this critical limitation by adopting the JFNK algorithm, which eliminates the need for explicit Jacobian assembly while retaining the quadratic convergence properties of Newton's method.
 
 	4.	Our previous work established the feasibility and efficiency of JFNK for second-order cell-centred formulations, where a compact-stencil approximate Jacobian proved highly effective as a preconditioner.
 	This study extends JFNK to third- and fourth-order cell-centred finite-volume formulations for linear and nonlinear solid mechanics, combining least-squares gradient reconstruction with Gaussian quadrature integration.
@@ -309,7 +316,7 @@ The computation of the displacement gradient $(\nabla \bb{u})_{f,q}$ is shown in
 %
 The volume integral is discretised by integrating over the cell volume quadrature points:
 %
-\begin{equation}
+\begin{equation}\label{eq:bodyTerm}
 \int_{\Omega_P} \bb{f}_b \text{d}\Omega_P
 \approx
  \sum_{q=1}^{q=N_{\bb{f},q}}\beta_q \; \left(\bb{f}_b\right)_{\Omega,q}  \Omega_P,
@@ -318,7 +325,7 @@ The volume integral is discretised by integrating over the cell volume quadratur
 where $N_{\bb{f},q}$ is the number of cell quadrature points and $\beta_q$ are the corresponding quadrature weights.
 Similarly, the inertia term (e.g. left-hand side term of Equation \eqref{eqn:momentum_lingeom}):
 %
-\begin{equation}
+\begin{equation}\label{eq:inertiaTerm}
 \int_{\Omega_P} \rho \frac{\partial^2 \bb{u}}{\partial t^2} \text{d}\Omega_P
 \approx
  \sum_{q=1}^{q=N_{\bb{u},q}}\gamma_q \; \bb{\rho}_{\,\Omega,q}  \left(\frac{\partial^2 \bb{u}}{\partial t^2} \right)_{\Omega,q}  \Omega_P,
@@ -480,11 +487,11 @@ Following these studies, the shape parameter $k = 6$ is adopted herein for both 
 \subsubsection{Interpolation Stencil}
 %------------------------------------------------------------------------------
 %
-The minimum stencil size $|\mathcal{S}|_{\text{min}}$ is determined by the dimension of the polynomial basis and the interpolation order, and is given by:
+The minimum stencil size $|\mathcal{S}|_{\text{min}}$ is determined by the dimension of the polynomial basis and the interpolation order, i.e. $|\mathcal{S}|_{\text{min}} = N_t$:
 \begin{equation}
 \begin{split}
 \text{for 2D:}\quad & |\mathcal{S}|_{\text{min}} = \frac{(p+1)(p+2)}{2}, \\ 
-\text{for 3D:}\quad & |\mathcal{S}|_{\text{min}} = \frac{(p+1)(p+2)(p+3)}{6},
+\text{for 3D:}\quad & |\mathcal{S}|_{\text{min}} =\frac{(p+1)(p+2)(p+3)}{6}.
 \end{split}
 \end{equation}
 %
@@ -534,11 +541,38 @@ Alternative stencil construction strategies that account for the local cell dist
 
 %
 %------------------------------------------------------------------------------
-\subsubsection{Computing Gradient}
+\subsubsection{Computing Gradients}
 %------------------------------------------------------------------------------
 %
+Nishikawa2025 - for face quadrature points we use and store only first derivatives.
+\begin{equation}
+(\nabla \bb{u})_{f,q} = \sum_{N \,\in\,  \mathcal{S}_f}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N,
+\end{equation}
+
+%
+where $\bb{c}_{\bb{x}_N}^T = \left[ \,c_{x_N}, \; c_{y_N},\; c_{z_N} \right]$ is interpolation vector, i.e. see Equation \eqref{eq:derInterp}.
+The same procedure is used at displacement boundaries with stencil $\mathcal{S}_b^{\text{disp}}$, while for symmetry boundary special care is taken to include ghost points:
+%
+\begin{equation}
+(\nabla \bb{u})_{b,q} = \sum_{N \,\in\,  \mathcal{S}_b^{\text{disp}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N,
+\end{equation}
+%
+\begin{equation}
+(\nabla \bb{u})_{b,q} = 
+\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm+}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N + 
+\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm+}}}  \bb{c}_{\bb{x}_N} \otimes (\mathbf{I}-2\bb{n}_b \otimes \bb{n}_b)\bb{u}_N,
+\end{equation}
 
 
+- gradient na face quadrature point
+the same is for boundary, where 
+- gradient at face quadrature point for symmetry point
+-gradient at face quadrature point for diosplacement point
+podjelit za simetriju na podskup fizicke i podskup ghost
+
+- u slucaju implicitne diskretizacije sume se rasporeduje u stiffnes matrix, u paperu here onda se izracuna i ide kao gotov produkt u vector R
+
+Napisi sto se desava u slucaju stabilicaije, sve se racuna za cell centre sa molekulom za cell centre
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %      
@@ -547,8 +581,8 @@ Alternative stencil construction strategies that account for the local cell dist
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-
-
+The nonlinear system arising from the finite volume discretization is solved using the Jacobian-free Newton–Krylov (JFNK) algorithm. 
+The subsequent subsection describes the numerical formulation and implementation aspects of this approach.
 %
 %------------------------------------------------------------------------------
 \subsection{Jacobian-free Newton-Krylov Algorithm}
@@ -1974,7 +2008,73 @@ Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress t
 %------------------------------------------------------------------------------
 %
 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\section{Preconditioner Based on True Jacobian} 
+\label{app:P}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 
+\begin{equation}
+\begin{split} 
+& \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
+= \\
+=&
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}\right) \right]\Gamma_f \\
+=& 
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I} \bb{u}_N  + \mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\bb{n}_f^T) \bb{u}_N +\lambda  \sum_{N\,\in\,\mathcal{S}_f}(\bb{n}_f \bb{c}_{x_N}^T) \bb{u}_N\right) \right]\Gamma_f
+\end{split}
+\end{equation}
+
+
+\textcolor{red}{Provjeri sto se desava sa simetrijom i displacement rubom pa nadopisi}
+
+\begin{equation}
+\begin{split}
+&\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_P  
+=
+\sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f 
+\approx 
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right]\Gamma_f \\
+& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{b,q} \right]\Gamma_b 
++ \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}}   \bb{n}_{b} \cdot  \sum_{q=1}^{q=N_{f,q}}\bb{T}_{b,q} \Gamma_b,
+\end{split}
+\end{equation}
+
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\section{Time integration scheme} 
+\label{app:time}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+For the unsteady problem considered in this study, the second-order backward differentiation formula (BDF2) is employed for time integration. The inertia term (Equation~\eqref{eq:inertiaTerm}) is discretized using a single quadrature point per cell, located at the cell centre $P$, with the acceleration at that point computed as:
+%
+\begin{equation} \label{eq:inertia2}
+ 	\left(\dfrac{\partial^2 \boldsymbol{u}_P}{\partial t^2}\right)_P
+ 	\approx
+ 	\dfrac{3\boldsymbol{v}_P^{[t+1]} - 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t} 
+ 	\approx
+ 	\frac{3\left( 
+ 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t} 
+ 		\right) 
+ 	- 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t}
+\end{equation}
+%
+where $\Delta t$ is the time increment -- assumed constant here.
+Superscript $[t]$ indicates the time level, with $\bb{u}_P^{[t+1]}$ corresponding to the unknown displacement at the current time step.
+The velocity vector $\bb{v} = \partial \bb{u}/\partial t$ at the current time step is also updated using the BDF2 scheme as
+%
+\begin{equation}
+ 	\boldsymbol{v}_P^{[t+1]}	\approx
+ 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t}.
+\end{equation}
+%
+Consequently, the displacement and velocity at the two previous time steps must be stored, or alternatively, the displacement at the previous four time steps. The discretisation of the acceleration term in Equation~\ref{eq:inertiaTerm} can also be performed using higher-order time integration schemes. However, such formulations require integration over multiple volume quadrature points, rather than a single point, which is sufficient for the second-order scheme employed here.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
