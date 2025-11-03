@@ -85,7 +85,7 @@ textheight=24cm, % llncs has 19.3cm
 
 \begin{document}
 
-\title[Article Title]{A Jacobian-free Newton-Krylov method for high order cell-centred finite volume solid mechanics}
+\title[Article Title]{A Jacobian-free Newton-Krylov method for high-order cell-centred finite volume solid mechanics}
 
 \author[1,2]{\fnm{Ivan} \sur{Batisti\'{c}}}
 \author[1,3]{\fnm{Pablo} \sur{Castrillo}}
@@ -227,17 +227,18 @@ Each control volume is bounded by a set of polygonal faces, which are categorize
 %
 \begin{figure}[h]
  	\centering
-%	\subfigure[Control volume in 2D]
-% 	{
-% 		\label{fig:cell2D}
-%    	\includegraphics[scale=1]{figures/cv2D} 
-%    }
-% 	\subfigure[Control volume in 3D]
-% 	{
-% 		\label{fig:cell3D}
+	\subfigure[Control volume in 2D]
+ 	{
+ 		\label{fig:cell2D}
+    	\includegraphics[scale=1]{figures/cv2D} 
+    }
+    \quad
+ 	\subfigure[Control volume in 3D]
+ 	{
+ 		\label{fig:cell3D}
     	\includegraphics[scale=1]{figures/cv3D}  
-%    }
- 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$.}
+    }
+ 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$. The positions of the face centre $f$ and cell centre $P$ are evaluated as the arithmetic means of their respective nodal coordinates.}
  	\label{fig:cell}
 \end{figure}
 %
@@ -251,11 +252,12 @@ two-dimensional problems are treated as planar, where the surface integration re
 therefore, no subdivision is required.
 Each cell volume P is decomposed into tetrahedral
 (in 3D) or triangular (in 2D) subelements, with volume quadrature points $\mathbf{x}_{\Omega,q}$ defined within each subelement.
-A key advantage of this geometric framework is its unified treatment of arbitrary polyhedral topologies—all control 
+For all geometric entities, Gaussian quadrature rules are employed.
+Specifically, Gauss–Legendre quadrature is used for line integrals,
+Dunavant’s symmetric Gaussian quadrature rules \cite{Dunavant1985} are applied for triangular subelements,
+and Shunn and Ham’s symmetric quadrature rules \cite{Shunn2012} are adopted for volume integration over tetrahedral subelements.
+A key advantage of this geometric framework is its unified treatment of arbitrary polyhedral topologies, all control 
 volumes are handled consistently using the same reconstruction and integration procedures. 
-%The discretization of the governing equations over a control volume P results in an algebraic stencil coupling 
-%the centroid value $\mathbf{u}_P$ with the centroid values $\mathbf{u}_N$ of neighboring cells.
-\textcolor{red}{Integration rules publications - cite them - maybe appendix?}
 
 Before proceeding with the discretization of the volume and surface integrals, we introduce the following sets of cell faces.
 The set of internal faces is denoted by $\mathcal{F}_P^{\text{int}}$, and the set of boundary faces by $\mathcal{F}_P^{\text{bnd}}$.
@@ -288,7 +290,7 @@ vector $\bb{T}_{b,g}$ represents the prescribed traction at the traction boundar
 $N_{f,q}$ is the number of face quadrature points and
 $\alpha_q$ is quadrature weight. Subscript $_{f,q}$ indicates that quantity is calculated at quadrature point location $\bb{x}_{f,q}$.
 For non-triangular faces, face quadrature weights are scaled by the ratio of each triangle’s area to the total face area,
-computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential, 
+computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential here, 
 as inconsistency can degrade overall accuracy.
 
 The stress tensor at a quadrature point $\bb{x}_{f,q}$, denoted $(\bb{\sigma}_s)_{f,q}$, is computed as a function of the displacement gradient according to the adopted mechanical constitutive law.
@@ -340,14 +342,14 @@ The cell partition is resolved at the quadrature weight calculation level, where
 %------------------------------------------------------------------------------
 %
 The evaluation of the surface term (diffusive flux) requires estimates of the solution gradient at the quadrature points $\bb{x}_{f,q}$ of a face.
-The most common approach is to average the gradients reconstructed from each side of a quadrature point, either using arithmetic averaging \textcolor{red}{!!!!}\cite{test} or interpolation with geometrically weighted coefficients\cite{test}\textcolor{red}{!!!!}.
+The most common approach is to average the gradients reconstructed from each side of a quadrature point, either using arithmetic averaging \cite{Nishikawa2011,Nishikawa2025a} or interpolation with geometrically weighted coefficients \cite{Cardiff2025,Cardiff2017,Cardiff2018}.
 In the present work, the solution gradient is evaluated directly at the quadrature points, eliminating the need for such interpolation.
 However, as in the aforementioned averaging-based approaches, the discretisation of the diffusive flux may lead to numerical instabilities, manifested as zero-energy (checkerboard-type) modes.
 To suppress these high-frequency oscillations, an appropriate stabilisation (damping) must be introduced.
 
 The most widely used stabilization technique in the finite-volume framework is the Rhie–Chow type stabilization \cite{Rhie1983}, which is second-order accurate \cite{Cardiff2025}.
 Since this limits the overall convergence rate to second order, it is not suitable for the present high-order discretisation.
-Instead, we employ an $\alpha$-damping scheme \cite{Nishikawa2010}, which preserves the designed high-order convergence of the method \cite{ Nishikawa2011}.
+Instead, we employ an $\alpha$-damping scheme \cite{Nishikawa2010}, which preserves the designed high-order convergence of the method \cite{ Nishikawa2011, Nishikawa2025a}.
 This damping is introduced in the form of an additional traction term $\bb{t}_s$, defined as a function of the solution jump between the values extrapolated from the centroids of the two cells sharing a common face:
 \begin{equation}
 \bb{t}_s = \alpha \frac{\bar{K}}{|\bb{d}_{PN} \cdot \bb{n}_f|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)
@@ -478,16 +480,32 @@ Following these studies, the shape parameter $k = 6$ is adopted herein for both 
 \subsubsection{Interpolation Stencil}
 %------------------------------------------------------------------------------
 %
-slika lijevo (internal + boudnary molecule)
-Slika desno cell centred molecule
-Slka ispod za simetriju kako je implementirana
-There exists an optimal size nxI of points in the stencil such as
-Nmin 6 nxI 6 Nmax. The minimum number of points correspond to
-the dimension of the polynomial basis, it is given by
+The minimum stencil size $|\mathcal{S}|_{\text{min}}$ is determined by the dimension of the polynomial basis and the interpolation order, and is given by:
 \begin{equation}
-\frac{p+1p+2}{2}, \qquad \frac{(p+1)( p+2)( p+3)}{6}
+\begin{split}
+\text{for 2D:}\quad & |\mathcal{S}|_{\text{min}} = \frac{(p+1)(p+2)}{2}, \\ 
+\text{for 3D:}\quad & |\mathcal{S}|_{\text{min}} = \frac{(p+1)(p+2)(p+3)}{6},
+\end{split}
 \end{equation}
+%
+The actual stencil size $|S|$ used for computations is set as:
+%
+\begin{equation}
+|\mathcal{S}| = |\mathcal{S}|_{\text{min}} + n^+
+\end{equation}
+where $n^{+}$ is a user-defined number of surplus points. The choice of $n^{+}$ represents a trade-off: an excessively large stencil introduces numerical dissipation and increases computational cost, whereas a small stencil may lead to unstable interpolation \cite{Khelladi2011}.
+Based on those findings presented in \cite{Castrillo2022,Castrillo2024}, $n^{+}$ is set to $10$ for all two-dimensional cases, and to $45$, $55$, and $65$ for $p = 1$, $p = 2$, and $p = 3$ in three-dimensional cases, respectively. These values are consistent with those reported in the literature. In particular, \cite{Tsoutsanis2023} noted that within the $k-$exact least-squares framework, the stencil size is typically chosen in the range $1.5\,|\mathcal{S}|_{\text{min}} \leq |\mathcal{S}| \leq 3\,|\mathcal{S}|_{\text{min}}$.
 
+The stencil is constructed using a nearest-neighbour approach, where the set $\mathcal{S}$ comprises the cells closest to the reference point (face or cell centre), enclosed within a sphere of radius $r_s$. To reduce computational cost, all quadrature points on a given face share the same stencil, and likewise, all quadrature points within a cell use a common stencil. The construction of the internal-face stencil $\mathcal{S}_f$ is illustrated in Figure \ref{fig:faceStencil}.
+
+Stencil construction is adapted for boundary faces according to the imposed boundary condition (see Figure \ref{fig:faceBoundaryStencil}):
+\begin{itemize}
+\item Traction boundary – no stencil is defined, since interpolation is not applied.
+\item Displacement boundary – the stencil, denoted $\mathcal{S}_b^{\text{disp}}$, is constructed in the same manner as for internal faces.
+\item Symmetry boundary – the stencil, denoted $\mathcal{S}_b^{\text{symm}}$, is divided equally: half of the points correspond to the physical domain, while the remaining half are mirrored ghost points that replicate both the position and state variables.
+\end{itemize}
+
+Alternative stencil construction strategies that account for the local cell distribution may also be employed \cite{Khelladi2011,Tsoutsanis2023}; however, they poses greater implementation complexity and in some cases higher computational cost. Chosen approach represents a efficient and robust choice for solid mechanics applications, particularly for problems involving moving meshes.
 %
 \begin{figure}[h]
  	\centering
@@ -499,15 +517,12 @@ the dimension of the polynomial basis, it is given by
  	\subfigure[Stencil for boundary face $b$ quadrature points $\bb{x}_{b,q}$ in the case of \newline
  	displacement $\mathcal{S}^{\text{disp}}_b$ and symmetry $\mathcal{S}^{\text{symm}}_b$ boundary type. ]
  	{
- 		\label{fig:cellStencil}
+ 		\label{fig:faceBoundaryStencil}
     	\includegraphics[scale=1]{figures/stencilSymm}  
     }
- 	\caption{Interpolation stencil for internal and boundary face.}
+ 	\caption{Interpolation stencils for internal $f$ and boundary $b$ face quadrature points, $\bb{x}_{f,q}$ and $\bb{x}_{b,q}$, respectively.}
  	\label{fig:stencil}
 \end{figure}
-
-
-
 %
 %
 %------------------------------------------------------------------------------
@@ -519,7 +534,7 @@ the dimension of the polynomial basis, it is given by
 
 %
 %------------------------------------------------------------------------------
-\subsubsection{Gradient Calculation}
+\subsubsection{Computing Gradient}
 %------------------------------------------------------------------------------
 %
 
@@ -604,7 +619,7 @@ Note that the non-orthogonal correction, which is normally required to preserve 
 Including it would enlarge the stencil (molecule) and compromise the compactness achieved with the central-difference approximation.
 As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself. 
 
-For the JFNK solver, the PETSc library (version 3.22.2) \cite{PETSc} is used, where the interfaces for evaluating the approximate Jacobian (matrix $\bb{P}$) and the high-order residual ($\boldsymbol{R}(\bb{u})$) are implemented within the \texttt{solids4foam} toolbox \cite{Cardiff2018, Tukovic2018}, which is built on OpenFOAM-v2312 \cite{Weller1998}.
+For the JFNK solver, the PETSc library (version 3.22.2) \cite{PETSc} is used, where the interfaces for evaluating the approximate Jacobian (matrix $\bb{P}$) and the high-order residual ($\boldsymbol{R}(\bb{u})$) are implemented within the \texttt{solids4foam} toolbox \cite{Cardiff2018, Tukovic2018, Cardiff2025a}, which is built on OpenFOAM-v2312 \cite{Weller1998}.
 An extended discussion with additional implementation details is provided in the authors’ previous work \cite{Cardiff2025}, where the JFNK solver is coupled with a second-order residual evaluation.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -639,7 +654,8 @@ An extended discussion with additional implementation details is provided in the
 %321 model problems in 2-D with known exact solutions, and the specific exact solutions for
 %322 the single-variable model problems examined are presented in Appendix B. The schemes
 %323 are also tested using the supersonic vortex problem discussed earlier.
-
+Dati napomenu zasto su neki cejsecvi izvrceni sa puno mreza, citirati zadnji niskihavin rad gdje se jasno vide oscilacije.
+Do koje tocnosti se rjesavalo.
 root mean square error
 \begin{equation}
 L_2 = \frac{1}{N_{\text{c}}}\sum_{i=1}^{N_{\text{c}}} |\Delta \phi_i|,
@@ -653,8 +669,6 @@ Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x
 \begin{equation}
 \sigma_{ekv}=\sqrt{\frac{1}{2}\left[  (\sigma_{xx}-\sigma_{yy})^2+(\sigma_{yy}-\sigma_{zz})^2+(\sigma_{zz}-\sigma_{xx})^2 \right]+3\left(\sigma_{xy}^2+\sigma_{yz}^2+\sigma_{zx}^2\right)}
 \end{equation}
-
-
 %
 %------------------------------------------------------------------------------
 \subsection{Case 1: Order Verification via the Manufactured Solution Procedure}
@@ -971,6 +985,9 @@ Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This resu
 \subsection{Stabilisation scheme effects}
 
 \subsection{Effects of poor interpolation conditioning}
+
+\subsection{Different choice for approximate Jacobian}
+
 
 Plate hole sa hex mrezom tu staviti i objasniti sto se desava u 2D-u sa kondicijskim brojem interpolacije
 
