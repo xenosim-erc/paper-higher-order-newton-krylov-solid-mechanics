@@ -428,6 +428,7 @@ A truncated Taylor expansion of the displacement field, denoted by $\bar{\boldsy
  +  \frac{1}{2}\left(\frac{\partial^2 \bb{u}}{\partial x \partial z}\right)_{\tilde{\bb{x}}}(x-\tilde{x})(z-\tilde{z})
  + \dots
 \end{split}
+\label{eq:te}
 \end{equation}
 %
 The expansion is truncated at polynomial order $p$, which corresponds to $N_t$ terms, where $N_t = \dfrac{(d+p)!}{(d!\,p!)}$ in $d$ spatial dimensions.
@@ -472,7 +473,7 @@ Defining $\mathbf{A}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathbf{Q}(\
 The rows of $\bar{\mathbf{A}}$ correspond to the interpolation coefficients used in 
 Eqs.~\eqref{eq:interp} and \eqref{eq:derInterp}.  
 The inversion of $\bar{\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.  
-This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}$ to positive values, and employing a QR factorization via Householder transformations, see \cite{Castrillo2022, Castrillo2023}.
+This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}$ to positive values, and employing a QR factorization via Householder transformations \cite{strang2012}, see \cite{Castrillo2022, Castrillo2023}.
 %
 
 %
@@ -538,11 +539,19 @@ Alternative stencil construction strategies that account for the local cell dist
 \label{sec:bc}
 %------------------------------------------------------------------------------
 %
-jedbazyba za tracttion ne treba posebnu obradu - vidi jednazbu surface intehgrals gdje se direktno uzima u obzir
-Boundary conditions are imposed in a weak sense, i.e. thorugh modifications of the least square systems by introcudin penalty constraints.
-Note that this work does not consider curved boundaries. This is left for future work and is expected that is enchanched which will not remedy interior accuracy of discretisation bla bla
+Boundary conditions are imposed through modifications of the local polynomial reconstruction, except for traction boundaries, 
+where the known tractions at the quadrature points are directly integrated and added to the surface term in Equation \eqref{eq:divStressDiscret}. 
 
-Note that this work does not consider curved boundary treatement, this is left for future work as it require special care
+At displacement boundaries, the prescribed displacement is enforced in a weak sense by introducing a penalty contribution into the polynomial reconstruction.
+This is achieved by extending the stencil of each boundary quadrature point with an additional ghost point, collocated with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$. 
+The inclusion of this ghost point effectively augments the reconstruction matrices $\mathbf{W}$ and $\mathbf{Q}$. 
+Since the Taylor expansion in Equation \eqref{eq:te} is centred at the same location, the associated polynomial basis vector simplifies to
+$\mathbf{q}^{\mathrm{T}} = [1,\,0,\,0,\,0,\,\dots]$, and its weight in $\mathbf{W}$ is typically set to unity.
+Increasing this weight enhances the local satisfaction of the prescribed displacement but does not affect the overall convergence rate.
+
+At symmetry boundaries, the entire interior stencil is reflected across the symmetry plane. The polynomial basis vectors for these mirrored points are computed using their reflected coordinates. This approach guarantees enforcement of symmetry constraints; zero tangential component of boundary traction $(\mathbf{I}-2\bb{n}_b\otimes\bb{n}_b)\cdot \bb{T}_{b,q}= 0$, and zero normal component of displacement $\bb{n}_b \cdot \bb{u}_b = 0$.
+ 
+Achieving high-order convergence near boundaries requires careful attention to geometric representation. When curved surfaces are approximated by planar faces, the resulting geometric discretisation is second-order accurate, which inherently limits the overall convergence rate of the method. High-order accuracy can be recovered either by introducing isoparametric boundary representations or by maintaining flat faces while introducing some sort of correction \cite{Ref19, Ref20}. Curved boundary treatment within has not yet been tackled in literature (for finite volume solid mechanics) and is therefore left for future work, as it presents a challenging problem deserving dedicated study.
 %
 %------------------------------------------------------------------------------
 \subsubsection{Computing Gradients}
@@ -557,7 +566,13 @@ and the interpolation coefficients obtained from the matrix $\mathbf{\bar{A}}$ a
 \end{equation}
 %
 where $\bb{c}_{\bb{x}_N}^T = \left[ \,c_{x_N}, \; c_{y_N},\; c_{z_N} \right]$ is interpolation vector (see Equation \eqref{eq:derInterp}).
-The same procedure is applied at displacement boundaries using the stencil $\mathcal{S}_b^{\text{disp}}$. 
+The same procedure is applied at displacement boundaries using the stencil $\mathcal{S}_b^{\text{disp}}$  extended by ghost point:
+%
+\begin{equation}
+(\nabla \bb{u})_{b,q} = \left(\sum_{N \,\in\,  \mathcal{S}_b^{\text{disp}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N \right)+ \bb{c}_{\bb{b}_N} \otimes \bb{u}_{b,q},
+\end{equation}
+%
+where $\bb{u}_{b,q}$ is prescribed displacement at boundary quadrature point. Coefficient vector $\bb{c}_{\bb{b}_N}$ is extracted from corresponding location from the same matrix $\mathbf{\bar{A}}$ as for $\bb{c}_{\bb{x}_N}$ coefficients.  
 For symmetry boundary, the contribution of the mirrored (ghost) points is also included, giving: 
 %
 \begin{equation}
@@ -690,7 +705,7 @@ An extended discussion with additional implementation details is provided in the
 %321 model problems in 2-D with known exact solutions, and the specific exact solutions for
 %322 the single-variable model problems examined are presented in Appendix B. The schemes
 %323 are also tested using the supersonic vortex problem discussed earlier.
-Dati napomenu zasto su neki cejsecvi izvrceni sa puno mreza, citirati zadnji niskihavin rad gdje se jasno vide oscilacije.
+Dati napomenu zasto su neki cejsecvi izvrceni sa puno mreza, citirati zadnji niskihavin rad gdje se jasno vide oscilacije \cite{Nishikawa2025a}.
 Do koje tocnosti se rjesavalo.
 
 alpha = 0.1 stabilizacija.
