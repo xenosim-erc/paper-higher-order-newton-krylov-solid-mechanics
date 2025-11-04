@@ -13,7 +13,7 @@
 %%%% Standard Packages
 %%<additional latex packages, if required can be included here>
 
-\setlength{\parskip}{0.15\baselineskip}
+%\setlength{\parskip}{0.15\baselineskip}
 
 \usepackage{graphicx}%
 \usepackage{amsmath,amssymb,amsfonts,bm}%
@@ -307,7 +307,7 @@ For the case of engineering (Cauchy) stress, it is given by:
 \end{equation}
 where $\mu$ and $\lambda$ are the Lamé parameters.
 Expressions for other constitutive laws are provided in Appendix \ref{app:mechLaws}.
-The computation of the displacement gradient $(\nabla \bb{u})_{f,q}$ is shown in Section \ref{sec:ho_scheme}.
+The computation of the displacement gradient $(\nabla \bb{u})_{f,q}$ is shown in Section \ref{sec:grad}.
 %
 %------------------------------------------------------------------------------
 \subsection{Volume Integrals}
@@ -439,7 +439,7 @@ The truncated expansion can then be written compactly using a polynomial basis $
 %
 where
 %
-\begin{equation}
+\begin{equation}\label{eq:qAnda}
 \begin{split}
 &\mathbf{q}^T(\bb{x}-\tilde{\bb{x}}) = \left[1, (x-\tilde{x}), (y-\tilde{y}), (z-\tilde{z}), \frac{1}{2}(x-\tilde{x})^2, \dots \right],\\
 & \bar{\mathbf{a}}(\tilde{\bb{x}}) = \left[(\bb{u})_{\tilde{\bb{x}}}, \left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}},
@@ -464,14 +464,15 @@ Minimizing Equation \eqref{eq:ls} with respect to $\bar{\mathbf{a}}(\tilde{\bold
 %
 where $\mathbf{M}(\tilde{\bb{x}})=\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})\mathbf{Q}^T(\tilde{\bb{x}})$, $\mathbf{Q}(\tilde{\bb{x}})$ is the $N_t \times |\mathcal{S}|$ matrix whose $N-$th column is $\mathbf{q}^T(\bb{x}-\tilde{\bb{x}})$ and $\mathbf{W}(\tilde{\bb{x}})$ is a diagonal weighting matrix of size $|\mathcal{S}| \times |\mathcal{S}|$.
 Defining $\mathbf{A}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})$, the system becomes:
-\begin{equation}
+%
+\begin{equation}\label{eq:lsA}
 \mathbf{\bar{a}}(\tilde{\bb{x}}) = \mathbf{\bar{A}}(\tilde{\bb{x}})\mathbf{u}, 
 \end{equation}
 %
 The rows of $\bar{\mathbf{A}}$ correspond to the interpolation coefficients used in 
 Eqs.~\eqref{eq:interp} and \eqref{eq:derInterp}.  
 The inversion of $\bar{\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.  
-This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}$ to positive values, and employing a QR decomposition for improved numerical stability, see \cite{Castrillo2022, Castrillo2023}.
+This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}$ to positive values, and employing a QR factorization via Householder transformations, see \cite{Castrillo2022, Castrillo2023}.
 %
 
 %
@@ -509,7 +510,7 @@ Stencil construction is adapted for boundary faces according to the imposed boun
 \begin{itemize}
 \item Traction boundary – no stencil is defined, since interpolation is not applied.
 \item Displacement boundary – the stencil, denoted $\mathcal{S}_b^{\text{disp}}$, is constructed in the same manner as for internal faces.
-\item Symmetry boundary – the stencil, denoted $\mathcal{S}_b^{\text{symm}}$, is divided equally: half of the points correspond to the physical domain, while the remaining half are mirrored ghost points that replicate both the position and state variables.
+\item Symmetry boundary – the stencil, denoted $\mathcal{S}_b^{\text{symm}} := \mathcal{S}_b^{\text{symm,p}} \cup \mathcal{S}_b^{\text{symm,g}}$, is divided equally: half of the points correspond to the physical domain $\mathcal{S}_b^{\text{symm,p}}$, while the remaining half are mirrored ghost points $\mathcal{S}_b^{\text{symm,g}}$ that replicate both the position and state variables.
 \end{itemize}
 
 Alternative stencil construction strategies that account for the local cell distribution may also be employed \cite{Khelladi2011,Tsoutsanis2023}; however, they poses greater implementation complexity and in some cases higher computational cost. Chosen approach represents a efficient and robust choice for solid mechanics applications, particularly for problems involving moving meshes.
@@ -537,42 +538,43 @@ Alternative stencil construction strategies that account for the local cell dist
 \label{sec:bc}
 %------------------------------------------------------------------------------
 %
+jedbazyba za tracttion ne treba posebnu obradu - vidi jednazbu surface intehgrals gdje se direktno uzima u obzir
+Boundary conditions are imposed in a weak sense, i.e. thorugh modifications of the least square systems by introcudin penalty constraints.
+Note that this work does not consider curved boundaries. This is left for future work and is expected that is enchanched which will not remedy interior accuracy of discretisation bla bla
 
-
+Note that this work does not consider curved boundary treatement, this is left for future work as it require special care
 %
 %------------------------------------------------------------------------------
 \subsubsection{Computing Gradients}
+\label{sec:grad}
 %------------------------------------------------------------------------------
 %
-Nishikawa2025 - for face quadrature points we use and store only first derivatives.
-\begin{equation}
+For all quadrature points on internal faces, Equation \eqref{eq:lsA} is evaluated, 
+and the interpolation coefficients obtained from the matrix $\mathbf{\bar{A}}$ are stored for use in computing the displacement gradient:
+%
+\begin{equation}\label{eq:faceQuadGrad}
 (\nabla \bb{u})_{f,q} = \sum_{N \,\in\,  \mathcal{S}_f}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N,
 \end{equation}
-
 %
-where $\bb{c}_{\bb{x}_N}^T = \left[ \,c_{x_N}, \; c_{y_N},\; c_{z_N} \right]$ is interpolation vector, i.e. see Equation \eqref{eq:derInterp}.
-The same procedure is used at displacement boundaries with stencil $\mathcal{S}_b^{\text{disp}}$, while for symmetry boundary special care is taken to include ghost points:
-%
-\begin{equation}
-(\nabla \bb{u})_{b,q} = \sum_{N \,\in\,  \mathcal{S}_b^{\text{disp}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N,
-\end{equation}
+where $\bb{c}_{\bb{x}_N}^T = \left[ \,c_{x_N}, \; c_{y_N},\; c_{z_N} \right]$ is interpolation vector (see Equation \eqref{eq:derInterp}).
+The same procedure is applied at displacement boundaries using the stencil $\mathcal{S}_b^{\text{disp}}$. 
+For symmetry boundary, the contribution of the mirrored (ghost) points is also included, giving: 
 %
 \begin{equation}
 (\nabla \bb{u})_{b,q} = 
-\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm+}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N + 
-\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm+}}}  \bb{c}_{\bb{x}_N} \otimes (\mathbf{I}-2\bb{n}_b \otimes \bb{n}_b)\bb{u}_N,
+\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm,p}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N + 
+\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm,g}}}  \bb{c}_{\bb{x}_N} \otimes ( \bb{R}_b \cdot \bb{u}_N),
 \end{equation}
+%
+where $ \bb{R}_b = (\mathbf{I}-2\bb{n}_b \otimes \bb{n}_b)$ is reflection tensor \cite{Demirdzic2022}. 
+Note that only first derivatives are stored at face quadrature points, as higher derivatives are not required by the constitutive equations.
+In the present solution procedure, the displacements $\bb{u}_N$ are known, making the gradient evaluation straightforward. 
+However, if $\bb{u}_N$ are treated as unknowns, the interpolation coefficients must be incorporated into the left-hand-side system matrix, as shown in \cite{Castrillo2022,Castrillo2024} and Appendix \ref{app:P}.
 
-
-- gradient na face quadrature point
-the same is for boundary, where 
-- gradient at face quadrature point for symmetry point
--gradient at face quadrature point for diosplacement point
-podjelit za simetriju na podskup fizicke i podskup ghost
-
-- u slucaju implicitne diskretizacije sume se rasporeduje u stiffnes matrix, u paperu here onda se izracuna i ide kao gotov produkt u vector R
-
-Napisi sto se desava u slucaju stabilicaije, sve se racuna za cell centre sa molekulom za cell centre
+The stabilization scheme requires the evaluation of first- and higher-order derivatives at cell centres when computing Equation \eqref{eq:alphaJump}. 
+For this purpose, each cell is associated with a stencil $\mathcal{S}_P$, constructed in the same manner as the face stencil. 
+At each cell centre, the gradient is computed according to Equation \eqref{eq:faceQuadGrad}, while the Hessian is evaluated for $p = 2$, and the third-order derivative tensor for $p = 3$.
+The formulation and computation of the Hessian and the third-order derivative tensor are described in Appendix \ref{app:derivatives}.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %      
@@ -648,7 +650,7 @@ The approximate Jacobian, for cell $P$, corresponds to the discretised diffusion
 \end{split}
 \end{equation}
 %
-where $\bb{\Delta}_{f}=\bb{d_{PN}}/(\bb{d}_{PN} \cdot \bb{n}_f)$ is \emph{over-relaxed orthogonal} vector \cite{Demirdzic2015} and $\bb{R}_b=\mathbf{I}-2\bb{n}_b \otimes\bb{n}_b$ is reflection tensor \cite{Demirdzic2022}.
+where $\bb{\Delta}_{f}=\bb{d_{PN}}/(\bb{d}_{PN} \cdot \bb{n}_f)$ is \emph{over-relaxed orthogonal} vector \cite{Demirdzic2015}.
 Note that the non-orthogonal correction, which is normally required to preserve accuracy when discretising the diffusion term on skewed meshes, is omitted here.
 Including it would enlarge the stencil (molecule) and compromise the compactness achieved with the central-difference approximation.
 As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself. 
@@ -690,6 +692,9 @@ An extended discussion with additional implementation details is provided in the
 %323 are also tested using the supersonic vortex problem discussed earlier.
 Dati napomenu zasto su neki cejsecvi izvrceni sa puno mreza, citirati zadnji niskihavin rad gdje se jasno vide oscilacije.
 Do koje tocnosti se rjesavalo.
+
+alpha = 0.1 stabilizacija.
+
 root mean square error
 \begin{equation}
 L_2 = \frac{1}{N_{\text{c}}}\sum_{i=1}^{N_{\text{c}}} |\Delta \phi_i|,
@@ -2042,8 +2047,54 @@ Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress t
 + \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}}   \bb{n}_{b} \cdot  \sum_{q=1}^{q=N_{f,q}}\bb{T}_{b,q} \Gamma_b,
 \end{split}
 \end{equation}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\section{High-order Derivatives} 
+\label{app:derivatives}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The reconstruction of higher-order derivatives is performed for each component of the displacement vector field $\bb{u} = [u_x,\,u_y,\,u_z]^{\mathrm{T}}$.
+Specifically, the Hessian $(\nabla \nabla \bb{u})$ and the third-order derivative tensor $(\nabla \nabla \nabla \bb{u})$ appearing in Equation \eqref{eq:alphaJump} are obtained by independently reconstructing the corresponding scalar derivatives of $u_x$, $u_y$, and $u_z$.
 
+For a scalar field $u$ representing one displacement component, the Hessian at the cell centre $P$ is reconstructed as a weighted sum of the neighbouring cell values contained in the stencil $\mathcal{S}_P$:
+\begin{equation}
+(\nabla \nabla \bb{u})_P^{u}
+= \sum_{N \in \mathcal{S}_P} \bb{c}_{{\bb{x}\bb{x}}_N} \phi_N,
+\label{eq:hessianComponent}
+\end{equation}
+%
+where $\bb{c}_{{\bb{x}\bb{x}}_N}$ is a symmetric second-order coefficient tensor:
+%
+\begin{equation}
+\bb{c}_{{\bb{x}\bb{x}}_N} =
+\begin{bmatrix}
+c_{xx_N} & c_{xy_N} & c_{xz_N} \\
+c_{xy_N} & c_{yy_N} & c_{yz_N} \\
+c_{xz_N} & c_{yz_N} & c_{zz_N}
+\end{bmatrix}.
+\label{eq:thirdTensor}
+\end{equation}
+Coefficients in tensor $\bb{c}_{{\bb{x}\bb{x}}_N}$ are derived from the rows of the reconstruction matrix $\mathbf{\bar{A}}$ corresponding to the second-order monomials.
+The complete displacement Hessian $(\nabla \nabla \bb{u})$ is assembled from the Hessians of its three scalar components.
 
+For $p = 3$, the third-order derivative tensor $(\nabla \nabla \nabla u)_P$ for each displacement component is computed as:
+%
+\begin{equation}
+(\nabla \nabla \nabla \bb{u})_P^u
+= \sum_{N \in \mathcal{S}_P} \mathbf{c}_{\bb{x}\bb{x}\bb{x}_N} u_N,
+\label{eq:thirdTensor}
+\end{equation}
+where $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N}$ is a symmetric third-order coefficient tensor $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N} =\big[c_{xxx_N},c_{xxy_N},c_{xxz_N},c_{xyy_N},c_{xyz_N},c_{xzz_N},c_{yyy_N},c_{yyz_N},c_{yzz_N},c_{zzz_N}\big]^{\mathrm{T}}$ 
+derived from the rows of the reconstruction matrix $\mathbf{\bar{A}}$.
+
+To mitigate ill-conditioning in the reconstruction procedure, the polynomial basis $\mathbf{q}$ in Equation \eqref{eq:qAnda} is scaled using the characteristic stencil size $h = 2r_s$:
+\begin{equation}
+\mathbf{q}^T(\bb{x}-\tilde{\bb{x}}) = \left[1, \frac{(x-\tilde{x})}{h}, \frac{(y-\tilde{y})}{h}, \frac{(z-\tilde{z})}{h}, \frac{1}{2}\frac{(x-\tilde{x})^2}{h^2}, \dots \right].
+\end{equation}
+Accordingly, the monomials and their corresponding coefficients in Equations \eqref{eq:hessianComponent} and \eqref{eq:thirdTensor} are scaled by $h^{-2}$ for the second-order (Hessian) terms and by $h^{-3}$ for the third-order derivative tensor.
+\textcolor{red}{check is $1/2$ going into q or a matrix}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -2054,8 +2105,7 @@ Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress t
 %
 For the unsteady problem considered in this study, the second-order backward differentiation formula (BDF2) is employed for time integration. The inertia term (Equation~\eqref{eq:inertiaTerm}) is discretized using a single quadrature point per cell, located at the cell centre $P$, with the acceleration at that point computed as:
 %
-\begin{equation} \label{eq:inertia2}
- 	\left(\dfrac{\partial^2 \boldsymbol{u}_P}{\partial t^2}\right)_P
+\begin{equation} \label{eq:inertia2}. 	\left(\dfrac{\partial^2 \boldsymbol{u}_P}{\partial t^2}\right)_P
  	\approx
  	\dfrac{3\boldsymbol{v}_P^{[t+1]} - 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t} 
  	\approx
