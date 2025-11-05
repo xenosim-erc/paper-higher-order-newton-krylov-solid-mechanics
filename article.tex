@@ -37,6 +37,7 @@
 \usepackage{siunitx}
 \usepackage{float}
 \usepackage{comment}
+\usepackage[percent]{overpic}
 
 \geometry
 {
@@ -681,35 +682,9 @@ An extended discussion with additional implementation details is provided in the
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Test cases list (pros/cons having some case)
-%
-% MMS 
-%     - 2D to show order of convergence in 2D. The behaviour is not the same as in 3D
-%     - To show order of convergence
-% Cantilever beam 
-%     -to show that convergence is same with traction boundaries. Only 2D case. 
-% Spherical cavity
-%     - realistic 3D without source term which is overhead in mms
-% Elliptic plate 
-%     - to show parallel performance
-% Cook's membarne
-%    - Can be modelled with large (NeoHookean) and small deformations
-%    - Can be used to show problems we have in 2D with hex mesh?
-% Pressurised cylinder
-%    - Can be modelled with large (Rivlin) and small deformations
-% Idealised ventricle
-%    - realstic 3D with large deformations
-% Plate hole (maybe to replace with plateEllipticHole)
-%The comparison of the performance of the reconstruction schemes discussed in
-%319 the preceding section is done based on the convergence of the 𝐿- and 𝐿T norms of error
-%320 in the reconstructed solution at flux integration points. This evaluation is carried out using
-%321 model problems in 2-D with known exact solutions, and the specific exact solutions for
-%322 the single-variable model problems examined are presented in Appendix B. The schemes
-%323 are also tested using the supersonic vortex problem discussed earlier.
-
 The performance of the proposed high-order solver is verified using several benchmark cases.
 These are employed to assess both the solution accuracy and the formal order of convergence, and to provide a direct comparison against a standard second-order discretisation.
-The comparison is evaluated in terms of solution accuracy, computational cost (CPU time), and memory requirements.
+The comparison is evaluated in terms of solution accuracy, computational cost, and memory requirements.
 In addition, the influence of the stabilisation factor, different choices of preconditioning matrices, and other numerical aspects of the method are examined.
 
 The benchmark cases are carefully selected to cover a broad range of features, including both two- and three-dimensional problems, small- and large-strain regimes,
@@ -717,7 +692,7 @@ and various material models.
 The convergence behaviour is studied on a fine-grained sequence of mesh refinements to detect potential oscillatory convergence trends, which may arise in high-order finite-volume formulations \cite{Nishikawa2025a}.
 
 In all simulations, the convergence criterion corresponds to a three-order-of-magnitude reduction in the residual, and a line-search procedure is employed to stabilise the solution update \cite{Cardiff2025}.
-The number of quadrature points per tetrahedral, triangular, or line element is kept to the minimum required for exact integration of the underlying polynomial stress distribution.
+The number of quadrature points per tetrahedral, triangular, or line element is kept to the minimum required for exact integration of the stress distribution.
 For example, triangular elements with $p=1$ and $p=2$ reconstructions require one integration point, whereas $p=3$ uses three.
 The interpolation stencil size for all cases is used as specified in Section \ref{sec:stencil}.
 %
@@ -783,27 +758,36 @@ where $a_x = 1\,\mu$m, $a_y = 1\,\mu$m, and $a_z = 1\,\mu$m.
 where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
 \end{itemize}
 The Cartesian coordinates are given by $x$, $y$ and $z$.
-The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in authors previous publication \citep{Cardiff2025} or obtained by manufactured solution procedure.
+The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in \citep{Cardiff2025} or obtained by manufactured solution procedure.
 
 \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
  	{
- 		\label{fig:mms_solution}
-    		\includegraphics[scale=0.8]{figures/mms/2D/mms_dispErrors_ho-hex} 
+ 	    \begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_hex_struct}
+  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+    	\end{overpic}
     }
  	\subfigure[Tetrahedral structured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/2D/mms_dispErrors_ho-tet-struct}  
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-tet_struct}
+  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+    	\end{overpic}
     }
-    	\subfigure[Tetrahedral unstructured mesh]
+    \subfigure[Tetrahedral unstructured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/2D/mms_dispErrors_ho-tet-unstruct}  
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-tet_unstruct_v2}
+  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+    	\end{overpic}
     }
- 	\caption{Manufactured solution cube (2D case): error convergence for displacement magnitude}
- 	\label{fig:xx}
+    \subfigure[Polyhedral structured mesh]
+ 	{
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-poly_struct}
+  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+    	\end{overpic}
+    }
+ 	\caption{Manufactured solution cube (2D case): error convergence for displacement magnitude.}
+ 	\label{fig:mms2dDisp}
  \end{figure}
  
  
@@ -935,9 +919,11 @@ The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimension
  	\caption{Cantilever beam case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors. Results for $N=3$ are not shown because stress error is around $\sim$ $10^{-12}$}
  	\label{fig:uu}
  \end{figure}
-
+%
+%------------------------------------------------------------------------------
 \subsubsection{Case 3: Internally pressurised thick-walled cylinder}
-
+%------------------------------------------------------------------------------
+%
 In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner radius $R_i = 7$ m, outer radius $R_o = 18.625$ m, and loaded internally with pressure $p = 100$ MPa is analysed. Two types of material are considered:
 \begin{itemize}
 \item[i.] Small strain, linear-elastic \cite{Bijelonja2006}: $E=10$ GPa, $\nu=0.3$.
@@ -983,9 +969,18 @@ The problem is considered plane stress, with the 2-D computational domain compri
  	\label{fig:plateHole-disp}
  \end{figure}
 
+%
+%------------------------------------------------------------------------------
 \subsubsection{Case 4: Cooks membrane}
+%------------------------------------------------------------------------------
+%
 
+
+%
+%------------------------------------------------------------------------------
 \subsubsection{Case 4: Plate hole}
+%------------------------------------------------------------------------------
+%
 % Case can be also found in:
 % Finite volume method for stress analysis in complex domain
 % Application of the nite volume method and unstructured meshes to linear elasticity
@@ -1048,830 +1043,52 @@ Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This resu
  \end{figure}
  
  
- 
+%
+%------------------------------------------------------------------------------
 \subsubsection{Case 5: Elliptic plate}
+%------------------------------------------------------------------------------
+%
+
+%
+%------------------------------------------------------------------------------
 \subsubsection{Case 6: Spherical cavity}
+%------------------------------------------------------------------------------
+%
+
+%
+%------------------------------------------------------------------------------
 \subsubsection{Case 7: Idealised ventricle}
+%------------------------------------------------------------------------------
+%
 
+%
+%------------------------------------------------------------------------------
 \subsection{Error-cost relationship}
-
+%------------------------------------------------------------------------------
+%
 An additional clarification regarding the notation used in the next sections is needed. The abbreviations are as follows: “$S4F^{seg}$” stands for solids4foam segregated solver whereas “$S4F^{snes}$” is the same solver with JFNK algorithm. Both solvers are second-order accurate, meaning that their accuracy is comparable with high-order discretisation with p=1.
+%
+%------------------------------------------------------------------------------
 \subsection{Stabilisation scheme effects}
+%------------------------------------------------------------------------------
+%
 
+%
+%------------------------------------------------------------------------------
 \subsection{Effects of poor interpolation conditioning}
+%------------------------------------------------------------------------------
+%
 
+
+%
+%------------------------------------------------------------------------------
 \subsection{Different choice for approximate Jacobian}
-
+%------------------------------------------------------------------------------
+%
 
 Plate hole sa hex mrezom tu staviti i objasniti sto se desava u 2D-u sa kondicijskim brojem interpolacije
 
 \subsection{Code parallelisation}
-%- analytical solution on boundaries
-%Case 3: Elliptic plate (kako izvuc rezultate?)
-
-
-
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% \subsection{Newton-Type Solution Methods}
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% To facilitate the comparison between the classic segregated solution algorithm and the proposed Jacobian-free Newton-Krylov algorithm, the governing linear momentum conservation (Equations \ref{eqn:momentum_lingeom}, \ref{eqn:momentum_TL} and \ref{eqn:momentum_UL}) is expressed in the general form:
-%% \begin{eqnarray} \label{eqn:residual}
-%% 	    \bb{R}(\bb{u}) = \bb{0}
-%% \end{eqnarray}
-%% where $\bb{R}$ represents the \emph{residual} (imbalance) of the equation, which is a function of the primary unknown field.
-%% For example, in the linear geometry case, the residual is given as
-%% \begin{eqnarray}
-%%     \bb{R}(\bb{u})
-%%     \;=\;
-%%     \oint_{\Gamma} \bb{n} \cdot \bb{\sigma}_s(\bb{u}) \,  d\Gamma
-%%     + \int_{\Omega}  \rho \bb{g} \, d\Omega
-%%     -  \int_{\Omega} \rho \frac{\partial^2 \bb{u} }{\partial t^2} \, d\Omega
-%%     \;=\; \bb{0}
-%% \end{eqnarray}
-%% where the dependence of the stress tensor on the solution vector is made explicitly clear: $\bb{\sigma}_s(\bb{u})$.
-
-
-
-%% In Newton-type methods, a Taylor expansion about a current point $\bb{u}_k$ can be used to solve Equation \ref{eqn:residual} \cite{Knoll2004}:
-%% \begin{eqnarray}
-%% 	\bb{R}(\bb{u}_{k+1}) = \bb{R}(\bb{u}_{k}) \;+\;  \bb{R}'(\bb{u}_{k}) (\bb{u}_{k+1} - \bb{u}_{k}) \;+\; \text{H.O.T.} = \bb{0}
-%% \end{eqnarray}
-%% Neglecting the higher-order terms ($\text{H.O.T.}$) yields the strict Newton method in terms of an iteration over a sequence of linear systems: 
-%% \begin{eqnarray} \label{eq:NewtonRaphson}
-%% 	\bb{J}(\bb{u}_k) \delta \bb{u} &=& -\bb{R}(\bb{u}_k), \notag \\
-%% 	\bb{u}_{k+1} &=& \bb{u}_k + s \, \delta \bb{u}, \notag \\
-%% 	\quad
-%% 	k &=& 0,1,...
-%% %    \label{eq:NewtonRaphsonA}
-%% %    \overbrace{\left[ \frac{\partial \mathcal{R}(\bb{u})}{\partial \bb{u}} \right]_n}^{\mathcal{J}} \Delta \bb{u} = -\mathcal{R}(\bb{u})_n \\
-%% %    \label{eq:NewtonRaphsonB}
-%% %    \bb{u}_{n+1} = \bb{u}_{n} + \alpha \Delta \bb{u}
-%% \end{eqnarray}
-%% where $\bb{J} \equiv \bb{R}' \equiv \partial \bb{R}/\partial \bb{u}$ is the Jacobian matrix.
-%% Starting the Newton procedure requires the specification of $\bb{u}_0$.
-%% %is iteratively solved by linearisation about the current value of the solution, leading to a linear system and iterative update of the solution vector:
-%% %\begin{eqnarray}
-%% %    \label{eq:NewtonRaphsonA}
-%% %    \overbrace{\left[ \frac{\partial \mathcal{R}(\bb{u})}{\partial \bb{u}} \right]_n}^{\mathcal{J}} \Delta \bb{u} = -\mathcal{R}(\bb{u})_n \\
-%% %    \label{eq:NewtonRaphsonB}
-%% %    \bb{u}_{n+1} = \bb{u}_{n} + \alpha \Delta \bb{u}
-%% %\end{eqnarray}
-%% %where subscript $n$ indicates the outer (Newton) iteration index.
-%% The scalar $s > 0$ can be chosen to improve convergence, for example, using a line search or under-relaxation/damping procedure, and is equal to unity in the classic Newton-Raphson approach.
-%% Iterations are performed over this system until the residual $\bb{R}(\bb{u}_k)$ and solution correction $\delta \bb{u}$ are sufficiently small, with appropriate normalisation.
-
-%% %\hl{$\Delta u$: we are using in two ways: increment and correction. Fix this!}
-%% %\hl{KnollKeyes give a nice concise description of Newton: check}
-
-%% For problems with $N$ scalar equations and $N$ scalar unknowns, the residual $\bb{R}$ and solution $\bb{u}$ vectors have dimensions of $N \times 1$. %, while the Jacobian matrix has dimensions of $N \times N$.
-%% %In contrast, for vector problems, like the solid mechanics problems considered in this work, the residual and solution vectors have dimensions of $N_d N \times 1$ and the Jacobian matrix has dimensions of $N_d N \times N_d N$, where $N_d$ is the geometric dimension of the problem, e.g. $N_d = 2$ for 2-D and $N_d = 3$ for 3-D.
-%% The components of the $N \times N$ Jacobian are
-%% \begin{eqnarray} \label{eq:J}
-%% 	{J}_{ij} = \frac{\partial {R}_i (\bb{u})}{\partial u_j}
-%% \end{eqnarray}
-
-%% The current work focuses on vector problems, where the governing momentum equation is formulated in terms of the unknown displacement solution vector.
-%% In this case, Equation \ref{eq:J} refers to the individual scalar components of the residual, solution, and Jacobian.
-%% That is, for 3-D analyses, the residual takes the form
-%% \begin{eqnarray}
-%% 	\bb{R}(\bb{u}) = \left\{ R_1^x, R_1^y, R_1^z, R_2^x, R_2^y, R_2^z, ..., R_n^z \right\}
-%% \end{eqnarray}
-%% and the solution takes the form
-%% \begin{eqnarray}
-%% 	\bb{u} = \left\{ u_1^x, u_1^y, u_1^z, u_2^x, u_2^y, u_2^z, ..., u_n^z \right\}
-%% \end{eqnarray}
-%% In practice, it is often more practical and efficient to form and store the residual, solution and Jacobian in a \emph{blocked} manner, where the residual and solution can be considered as vectors of vectors.
-%% Similarly, the Jacobian can be formed in terms of sub-matrix block coefficients.
-
-%% In the strict Newton procedure, the residuals converge at a quadratic rate when the current solution is close to the true solution; that is, the iteration error decreases proportionally to the square of the error at the previous iteration.
-%% Once the method gets sufficiently close to the true solution, the number of correct digits in the approximation roughly doubles with each iteration. 
-%% However, quadratic convergence is only possible when using the exact Jacobian.
-%% In contrast, a quasi-Newton method uses an approximation to the Jacobian, sacrificing strict quadratic convergence in an attempt to produce an overall more computationally efficient procedure.
-%% From this perspective, the segregated solution algorithm commonly employed in finite volume solid mechanics can be viewed as a quasi-Newton method, where an approximate Jacobian replaces the exact Jacobian: 
-%% \begin{eqnarray} \label{eq:Seg}
-%%     \bb{\tilde{J}}(\bb{u}_k) \;\delta \bb{u} = -\bb{R}(\bb{u}_k)
-%% \end{eqnarray}
-%% In this case, the approximate Jacobian $\bb{\tilde{J}}$ comes from the compact stencil discretisation of a simple diffusion (Laplacian) term inertia terms.
-%% A benefit of this approach is that the inter-component coupling is removed from the Jacobian, allowing the solution of three smaller scalar systems rather than one larger vector system in 3-D (or two smaller systems in 2-D).
-
-%% A fully explicit procedure can also be viewed from this perspective by selecting a \emph{diagonal} approximate Jacobian $\bb{\tilde{D}}$ (only the inertia term), making the solution of the linear system trivial:
-%% \begin{eqnarray} \label{eq:exp}
-%%     \bb{\tilde{D}}(\bb{u}_k) \;\delta \bb{u} = -\bb{R}(\bb{u}_k)
-%% \end{eqnarray}
-
-
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% \subsection{Cell-Centred Finite Volume Discretisation}
-%% \label{sec:discretisation}
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% In this work, a nominally second-order cell-centred finite volume discretisation is employed.
-%% % based on previously described work, for example, \citep{Cardiff2017, Batistic2022, Tukovic2013, Jasak2000}.
-%% %Consequently, only a summary of the discretisation is presented below.
-%% The solution domain is discretised in both space and time.
-%% The total simulation period is divided into a finite number of time increments, denoted as $\Delta t$, and the discretised governing momentum equation is solved iteratively in a time-marching fashion.
-%% %The spatial domain is partitioned into a finite number of contiguous convex polyhedral cells.
-%% The spatial domain is partitioned into a finite set $\mathcal{P}$ of contiguous convex polyhedral cells, where each cell is denoted by $P \in \mathcal{P}$.
-%% The number of cells in the mesh is indicated by $|\mathcal{P}|$.
-%% A representative cell $P$ is shown in Figure~\ref{fig:cell}.
-%% The set of all faces of cell $P$ is denoted by $\mathcal{F}_P$. This set is further subdivided into two disjoint subsets:
-%% \begin{itemize}
-%%     \item \textbf{Internal Faces} ($\mathcal{F}^{\text{int}}_P$): Faces that are shared with neighbouring cells.
-%%     \item \textbf{Boundary Faces} ($\mathcal{F}^{\text{bnd}}_P$): Faces that lie on the boundary of the spatial domain.
-%%     The boundary faces of cell $P$ are further classed into three disjoint sets, $\mathcal{F}^{\text{bnd}}_P \coloneqq \mathcal{F}^{\text{disp}}_P \cup \mathcal{F}^{\text{trac}}_P \cup \mathcal{F}^{\text{symm}}_P$, representing boundary faces where displacement ($\mathcal{F}^{\text{disp}}_P$), traction ($\mathcal{F}^{\text{trac}}_P$) and symmetry ($\mathcal{F}^{\text{symm}}_P$) conditions are prescribed.
-%%        % \quad \text{with} \quad \mathcal{F}^{\text{disp}}_P \cap \mathcal{F}^{\text{trac}}_P = \mathcal{F}^{\text{disp}}_P \cap \mathcal{F}^{\text{symm}}_P = \mathcal{F}^{\text{trac}}_P \cap \mathcal{F}^{\text{symm}}_P = \emptyset.$
-%% \end{itemize}
-%% Each internal face $f_i \in \mathcal{F}^{\text{int}}_P$ corresponds to a neighbouring cell $N_{f_i} \in \mathcal{N}_P$, where $\mathcal{N}_P$ is the set of all neighbouring cells of $P$. The outward unit normal vector associated with an internal face $f_i$ is denoted by $\mathbf{n}_{f_i}$, while the outward unit normal vector associated with a boundary face $b_i$ is denoted by $\mathbf{n}_{b_i}$.
-%% The vector $\mathbf{d}_{f_i}$ connects the centroid of cell $P$ with the centroid of the neighbouring cell $N_{f_i}$, whereas the vector $\mathbf{d}_{b_i}$ connects the centroid of cell $P$ with the centroid of boundary face ${b_i}$.
-%% For convenience, we will also define the set of all faces of cell $P$ excluding those on a traction boundary as $\mathcal{F}_P^{\text{non-trac}} \coloneqq \mathcal{F}_P^{\text{int}} \cup \mathcal{F}_P^{\text{disp}} \cup \mathcal{F}_P^{\text{symm}}$.
-%% %The proposed solution discretisation follows closely the approach of \citet{cardiff_lagrangian_2017}; consequently, only an overview of the final discretised form of equations and adopted solution algorithm are given below.
-%% \begin{figure}[htbp]
-%% 	\centering
-%% %	\subfigure[Magnitude of the manufactured displacement solution]
-%% %	{
-%% %		\label{fig:mms_solution}
-%%    		\includegraphics[width=\textwidth]{figures/cell} 
-%% %   	}
-%% %	\subfigure[Polyhedral mesh with $1\,000$ cells]
-%% %	{
-%% %		\label{fig:mms_mesh}
-%% %   		\includegraphics[height=0.45\textwidth]{figures/mms_mesh}  
-%% %   	}
-%% 	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N_{f_i}$, which share a face $f_i$.}
-%% 	\label{fig:cell}
-%% \end{figure}
-
-
-%% %The conservation equation (Equations \ref{eqn:momentum_lingeom}, \ref{eqn:momentum_TL}, or \ref{eqn:momentum_UL}) is applied to each cell $\mathcal{P}$ and discretised in terms of the displacement at the centroid of the cell $\bb{u}_P$ and the displacements at the centroids of the neighbouring cells $\bb{u}_{N_{f_i}} \in N_i$.
-%% The conservation equation (Equations \ref{eqn:momentum_lingeom}, \ref{eqn:momentum_TL}, or \ref{eqn:momentum_UL}) is applied to each cell $P$ and discretised in terms of the displacement at the centroid of the cell $\boldsymbol{u}_P$ and the displacements $\boldsymbol{u}_{N_{f_i}}$ at the centroids of the neighbouring cells.
-%% % $\boldsymbol{u}_{N_{f_i}} \in \mathcal{U}_{\mathcal{N}_P}$, where $\mathcal{U}_{\mathcal{N}_P}$ represents the set of such displacements.
-%% Proceeding with the discretisation, the volume and surface integrals in the governing equation are approximated by algebraic equations as described below.
-
-
-%% \subsubsection{Volume Integrals}
-%% To discretise the volume integrals, the integrand $\bb{\phi}$ is assumed to locally vary according to a truncated Taylor series expansion about the centroid of cell $P$:
-%% \begin{eqnarray}
-%% 	\bb{\phi}(\bb{x})  \approx \bb{\phi}_P + (\bb{x} - \bb{x}_P) \cdot \nabla \bb{\phi}_P
-%% \end{eqnarray}
-%% where subscript $P$ indicates a value at the centroid of the cell $P$.
-%% %assuming a linear variation of the integrand across the cell, the mid-point rule approximates the integral in terms of the cell centre value.
-%% Consequently, volume integrals over a cell $P$ can be approximated to second-order accuracy as
-%% \begin{eqnarray} \label{eq:volume_integral}
-%% 	\int_{\Omega_P} \bb{\phi} \, d \Omega_P
-%% 		&\approx& \int_{\Omega_P}  \left[ \bb{\phi}_P + (\bb{x} - \bb{x}_P) \cdot \nabla \bb{\phi}_P \right] d \Omega_P \notag \\
-%% %		&\approx& \int_{\mathrm{\Omega}}  \bb{\phi}_P d\mathrm{\Omega}  + \int_{\mathrm{\Omega}}  (\bb{x} - \bb{x}_P) \cdot \nabla \bb{\phi}_P d\mathrm{\Omega} \notag \\
-%% 		&\approx& \bb{\phi}_P \Omega_P
-%% \end{eqnarray}
-%% where $\Omega_P$ is the volume of cell $P$ and $\int_{\Omega_P} (\bb{x} - \bb{x}_P) d\Omega_P \equiv 0$ by definition of the cell centroid.
-%% This approximation corresponds to the midpoint rule and one point quadrature.
-
-%% Using Equation \ref{eq:volume_integral}, the inertia term (e.g. left-hand side term of Equation \ref{eqn:momentum_lingeom}) becomes
-%% \begin{eqnarray} \label{eq:inertia}
-%% 	\int_{\Omega_P} \rho \frac{\partial \bb{u} }{\partial t}  d \Omega_P
-%% %	\;&\approx&\;
-%% %	\int_{\mathrm{\Omega}} \rho \left[ \frac{\partial \bb{u} }{\partial t}_P + (\bb{x} - \bb{x}_P) \cdot \nabla \frac{\partial \bb{u} }{\partial t}_P \right] d\mathrm{\Omega} \notag \\
-%% 	\;&\approx&\;
-%% 	\rho_P \left(\frac{\partial^2 \bb{u} }{\partial t^2}\right)_P  \Omega_P
-%% \end{eqnarray}
-%% Similarly, the body force term (e.g. the second term on the right-hand side of Equation \ref{eqn:momentum_lingeom}) becomes:
-%% \begin{eqnarray}
-%% 	\int_{\Omega_P} \, \rho \, \bb{g} \,  d \Omega_P
-%% 	\;&\approx&\;
-%% 	\rho_P \, \bb{g}\,  \Omega_P
-%% \end{eqnarray}
-%% %where subscript $P$ indicates a quantity at the cell centre.
-%% The discretisation of the acceleration in Equation \ref{eq:inertia} can be achieved using one of many finite difference schemes, e.g. first-order Euler, second-order backwards, or second-order Newmark-beta.
-%% In the current work, the second-order backwards (BDF2) scheme is used:
-%% %\begin{eqnarray}
-%% %	 \left(\frac{\partial^2 \bb{u} }{\partial t^2}\right)_P
-%% %	 &\approx& \frac{3\bb{v}_{t+1} - 4\bb{v}_{t} + \bb{v}_{t-1}}{2\Delta t} \notag \\
-%% %	&\approx& \frac{3\left( \frac{3\bb{u}_{t+1} - 4\bb{u}_{t} + \bb{u}_{t-1}}{2\Delta t} \right) - 4\bb{v}_{t} + \bb{v}_{t-1}}{2\Delta t}
-%% %\end{eqnarray}
-%% \begin{eqnarray} \label{eq:inertia2}
-%% 	\left(\frac{\partial^2 \boldsymbol{u}_P}{\partial t^2}\right)_P
-%% 	&\approx& \frac{3\boldsymbol{v}_P^{[t+1]} - 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t} \notag \\
-%% 	&\approx&
-%% 	\frac{3\left( 
-%% 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t} 
-%% 		\right) 
-%% 	- 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t}
-%% \end{eqnarray}
-%% where $\Delta t$ is the time increment -- assumed constant here.
-%% Superscript $[t]$ indicates the time level, with $\bb{u}_P^{[t+1]}$ corresponding to the unknown displacement at the current time step.
-%%  The velocity vector $\bb{v} = \partial \bb{u}/\partial t$ at the current time step is also updated using the BDF2 scheme as
-%%  \begin{eqnarray}
-%% 	\boldsymbol{v}_P^{[t+1]}	&\approx&
-%% 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t} 
-%% \end{eqnarray}
-%% Consequently, the displacement and velocity at the two previous time steps must be stored, or alternatively, the displacement at the previous four time steps.
-
-
-%% \subsubsection{Surface Integrals}
-%% The surface integral term can be discretised using one-point quadrature at each face $f_i$ as
-%% %\begin{eqnarray} \label{eq:surface_integral}
-%% %	\oint_{\Gamma_P} \bb{\phi} \, d \Gamma_P
-%% %		&=& \sum_{f_i \in \mathcal{F}_P} \int_{\Gamma_{f_i}} \bb{\phi} \,  d \Gamma_{f_i} \notag \\
-%% %%		&\approx& \sum_{f_i \in \mathcal{F}_P} \int_{\Gamma_{f_i}}  \left[ \bb{\phi}_{f_i} + (\bb{x} - \bb{x}_{f_i}) \cdot \nabla \bb{\phi}_{f_i} \right] d \Gamma_{f_i} \notag \\
-%% %%		&\approx& \int_{\mathrm{\Omega}}  \bb{\phi}_P d\mathrm{\Omega}  + \int_{\mathrm{\Omega}}  (\bb{x} - \bb{x}_P) \cdot \nabla \bb{\phi}_P d\mathrm{\Omega} \notag \\
-%% %		&\approx& \sum_{f_i \in \mathcal{F}_P} \bb{\phi}_{f_i} |\bb{\Gamma}_{f_i} |
-%% %\end{eqnarray}
-%% \begin{eqnarray} \label{eq:divStressDiscret}
-%% 	\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}  \; d\Gamma_P
-%% 	&=& \sum_{f_i \in \mathcal{F}_P} \int_{\Gamma_{f_i}} \bb{n} \cdot \bb{\sigma}  \,  d \Gamma_{f_i} \notag \\
-%% 	&\approx&
-%% %	\sum_{f_i \in \mathcal{F}_P^{\text{int}} \cup \mathcal{F}_P^{\text{disp}} \cup \mathcal{F}_P^{\text{symm}}} \bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i}
-%% %	\sum_{f_i \in \mathcal{F}_P^{\text{non-trac}}} \bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i}
-%% 	\sum_{f_i \in \mathcal{F}_P^{\text{int}}} \bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i}
-%% 	+ \sum_{d_i \in \mathcal{F}_P^{\text{disp}}} \bb{\Gamma}_{d_i} \cdot \bb{\sigma}_{P}
-%% 	+ \sum_{s_i \in \mathcal{F}_P^{\text{symm}}} \bb{\Gamma}_{s_i} \cdot \bb{\sigma}_{s_i}
-%% 	+ \sum_{t_i \in \mathcal{F}_P^{\text{trac}}} |\bb{\Gamma}_{t_i}| \bar{\bb{T}}_{t_i}
-%% \end{eqnarray}
-%% where $\Gamma_P$ indicates the surface of cell $P$, $\bb{\Gamma}_{f_i}$ indicates the area vector of face $f_i$, and vector $\bar{\bb{T}}_{t_i}$ represents the prescribed traction on the traction boundary face $t_i$.
-%% %where $\Gamma_P$ indicates the surface of cell $P$, and $\bb{\Gamma}_{f_i}$ indicates the area vector of face $f_i$.
-
-%% It is noted that the displacement is assumed to vary linearly within each cell; hence, the displacement gradient and stress are constant within each cell.
-%% In the current work, a unique definition of stress $\bb{\sigma}_{f_i}$ at each cell face $f_i$ is given as a weighted-averaged of values in the two cells ($\bb{\sigma}_P $, $\bb{\sigma}_{N_{f_i}}$) straddling the face \citep{Jasak1996}:
-%% %The stress $\bb{\sigma}_{f_i}$ at an internal face is calculated by linear interpolation from the adjacent cell centres \citep{Jasak1996}:
-%% \begin{eqnarray} \label{eq:stressInterp}
-%% 	\bb{\sigma}_{f_i} &=& w_{f_i} \bb{\sigma}_P + (1 - w_{f_i}) \bb{\sigma}_{N_{f_i}}
-%% \end{eqnarray}
-%% %where $\bb{\sigma}_{f_i}$ is the stress at an interface face $f_i$, 
-%% where the interpolation weight is defined as $w_{f_i} = (\bb{n}_{f_i} \cdot [\bb{x}_{N_{f_i}} - \bb{x}_{f_i}])/(\bb{n}_{f_i} \cdot [\bb{x}_{N_{f_i}} - \bb{x}_{P} ])$; however, achieving second-order accuracy of the displacement field is independent of the value of the weights, and, for example, $w_{f_i} = \nicefrac{1}{2}$ would also be sufficient.
-
-%% The stress $\bb{\sigma}_{s_i}$ at a symmetry boundary face is calculated as
-%% \begin{eqnarray} \label{eq:symm}
-%% 	\bb{\sigma}_{s_i}
-%% 		&=& \frac{1}{2} \left (\bb{\sigma}_P + \bb{R}_{s_i} \cdot \bb{\sigma}_{P} \right) \notag \\
-%% 		&=& \left (\textbf{I} - \bb{n}_{s_i} \otimes \bb{n}_{s_i} \right) \cdot \bb{\sigma}_P
-%% \end{eqnarray}
-%% where $\bb{R}_{s_i} \cdot \bb{\sigma}_{P}$ represents the mirror reflection of $\bb{\sigma}_P$ across the symmetry boundary face $s_i$.
-%% The reflection tensor is $\bb{R}_{s_i} = \textbf{I} - 2 \bb{n}_{s_i} \otimes \bb{n}_{s_i}$ \citep{Demirdzic2022}, with $\bb{n}_{s_i}$ indicating the unit normal of the symmetry boundary face $s_i$.
-%% From Equation \ref{eq:symm}, it is clear that shear stresses are zero on a symmetry plane boundary face.
-%% Note from Equation \ref{eq:divStressDiscret} that the stress on displacement boundary faces is assumed to be equal to the stress $\bb{\sigma}_P$ at the centroid of cell $P$.
-
-%% %The surface integrals are discretised in a similar fashion to the volume integrals, where the integrand $\bb{\phi}$ is assumed to vary locally according to a truncated Taylor series expansion about a face centroid $\bb{x}_{f_i}$:
-%% %\begin{eqnarray}
-%% %	\bb{\phi}(\bb{x})  \approx \bb{\phi}_{f_i} + (\bb{x} - \bb{x}_{f_i}) \cdot \left(\nabla \bb{\phi} \right)_{f_i}
-%% %\end{eqnarray}
-%% %where subscript $f_i$ indicates a value at the centroid of the face $f_i$.
-%% %Consequently, surface integrals about a cell $P$ can be approximated to second-order accuracy as
-%% %\begin{eqnarray} \label{eq:surface_integral}
-%% %	\oint_{\Gamma_P} \bb{\phi} \, d \Gamma_P
-%% %		&=& \sum_{f_i \in \mathcal{F}_P} \int_{\Gamma_{f_i}} \bb{\phi} \,  d \Gamma_{f_i} \notag \\
-%% %		&\approx& \sum_{f_i \in \mathcal{F}_P} \int_{\Gamma_{f_i}}  \left[ \bb{\phi}_{f_i} + (\bb{x} - \bb{x}_{f_i}) \cdot \nabla \bb{\phi}_{f_i} \right] d \Gamma_{f_i} \notag \\
-%% %%		&\approx& \int_{\mathrm{\Omega}}  \bb{\phi}_P d\mathrm{\Omega}  + \int_{\mathrm{\Omega}}  (\bb{x} - \bb{x}_P) \cdot \nabla \bb{\phi}_P d\mathrm{\Omega} \notag \\
-%% %		&\approx& \sum_{f_i \in \mathcal{F}_P} \bb{\phi}_{f_i} |\bb{\Gamma}_{f_i} |
-%% %\end{eqnarray}
-%% %where $\Gamma_P$ indicates the surface of cell $P$, and $\bb{\Gamma}_{f_i}$ indicates the area vector of face $f_i$.
-%% %$N_f$ represents the set of neighbouring cells which share a face with cell $P$, 
-
-%% %Consequently, by assuming $\bb{\phi}$ represents $\bb{n} \cdot \bb{\sigma}$ in Equation \ref{eq:surface_integral}, the surface integral term (first term on the right-hand side of Equation \ref{eqn:momentum_lingeom}), corresponding to the divergence of stress, can be discretised as
-%% %%by assuming that the stress varies linearly across the face, allowing the mid-point rule to be used:
-%% %\begin{eqnarray} \label{eq:divStressDiscret}
-%% %	\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}  \; d\Gamma_P
-%% %	\approx 
-%% %%	\sum_{f_i \in \mathcal{F}_P^{\text{int}} \cup \mathcal{F}_P^{\text{disp}} \cup \mathcal{F}_P^{\text{symm}}} \bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i}
-%% %%	\sum_{f_i \in \mathcal{F}_P^{\text{non-trac}}} \bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i}
-%% %	\sum_{f_i \in \mathcal{F}_P^{\text{int}}} \bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i}
-%% %	+ \sum_{d_i \in \mathcal{F}_P^{\text{disp}}} \bb{\Gamma}_{d_i} \cdot \bb{\sigma}_{P}
-%% %	+ \sum_{s_i \in \mathcal{F}_P^{\text{symm}}} \bb{\Gamma}_{s_i} \cdot \bb{\sigma}_{s_i}
-%% %	+ \sum_{t_i \in \mathcal{F}_P^{\text{trac}}} |\bb{\Gamma}_{t_i}| \bar{\bb{T}}_{t_i}
-%% %\end{eqnarray}
-%% %where vector $\bar{\bb{T}}_{t_i}$ represents the prescribed traction on the traction boundary face $t_i$.
-%% %For faces $f_i$ in Equation \ref{eq:divStressDiscret} that are on traction boundary faces $b_i \in \mathcal{F}_P^{\text{trac}} \subset \mathcal{F}_P$, 
-%% %the traction $\bar{\bb{t}}_{b_i}$ is known and is directly enforced; that is, $\bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i} = |\bb{\Gamma}_{f_i}| \bb{n}_{f_i} \cdot \bb{\sigma}_{f_i} =  |\bb{\Gamma}_{f_i}| \bar{\bb{t}}_{b_i}$.
-%% %subscript $f$ indicates a quantity at the centre of a cell face, and 
-%% %The stress $\bb{\sigma}_{f_i}$ at an internal face is calculated by linear interpolation from the adjacent cell centres \citep{Jasak1996}:
-%% %\begin{eqnarray} \label{eq:stressInterp}
-%% %	\bb{\sigma}_{f_i} &=& w_{f_i} \bb{\sigma}_P + (1 - w_{f_i}) \bb{\sigma}_{N_{f_i}}
-%% %\end{eqnarray}
-%% %where the interpolation ratio is defined as $w_{f_i} = (\bb{n}_{f_i} \cdot [\bb{x}_{N_{f_i}} - \bb{x}_{f_i}])/(\bb{n}_{f_i} \cdot [\bb{x}_{N_{f_i}} - \bb{x}_{P} ])$; however, using a value of $\nicefrac{1}{2}$ would also be sufficient to achieve second-order accuracy of the displacement field.
-%% %For faces $f_i$ in Equation \ref{eq:divStressDiscret} that are on traction boundary faces $b_i \in \mathcal{F}_P^{\text{trac}} \subset \mathcal{F}_P$, the traction $\bar{\bb{t}}_{b_i}$ is known and is directly enforced; that is, $\bb{\Gamma}_{f_i} \cdot \bb{\sigma}_{f_i} = |\bb{\Gamma}_{f_i}| \bb{n}_{f_i} \cdot \bb{\sigma}_{f_i} =  |\bb{\Gamma}_{f_i}| \bar{\bb{t}}_{b_i}$.
-%% %Vector $\bb{d}_{f}$ connects cell centre $P$ with cell centre $N_f$, $\bb{d}_f = \bb{x}_{N_f} - \bb{x}_P$, and $\bb{n}_{f}$ is the outward-facing unit normal to the face $f$.
-%% %Similarly, the stress $\bb{\sigma}_{s_i}$ at a symmetry boundary face is calculated as
-%% %\begin{eqnarray} \label{eq:symm}
-%% %	\bb{\sigma}_{s_i}
-%% %		&=& \frac{1}{2} \left (\bb{\sigma}_P + \bb{R}_{s_i} \cdot \bb{\sigma}_{P} \right) \notag \\
-%% %		&=& \left (\textbf{I} - \bb{n}_{s_i} \otimes \bb{n}_{s_i} \right) \cdot \bb{\sigma}_P
-%% %\end{eqnarray}
-%% %where $\bb{R}_{s_i} \cdot \bb{\sigma}_{P}$ represents the mirror reflection of $\bb{\sigma}_P$ across the symmetry boundary face $s_i$.
-%% %The reflection tensor is $\bb{R}_{s_i} = \textbf{I} - 2 \bb{n}_{s_i} \otimes \bb{n}_{s_i}$ \citep{Demirdzic2022}, with $\bb{n}_{s_i}$ indicating the unit normal of the symmetry boundary face $s_i$.
-%% %From Equation \ref{eq:symm}, it is clear that shear stresses are zero on a symmetry plane boundary face.
-%% %Note from Equation \ref{eq:divStressDiscret} that the stress on displacement boundary faces is assumed equal to the stress $\bb{\sigma}_P$ at the centroid of cell $P$.
-
-%% The cell-centred stress $\bb{\sigma}_P$ is calculated as a function of the displacement gradient according to the chosen mechanical law, for example, as shown in Appendix \ref{app:mechLaws}.
-%% The presented discretisation is second-order accurate in space for displacement if the cell-centred displacement gradients (and the stress) are at least first-order accurate in space, even if the cell faces are not flat.
-%% To achieve this, the cell-centred displacement gradients are determined using a weighted first-neighbours least squares method \citep{Jasak1996},
-%% \begin{eqnarray} \label{eq:leastSquaresGrad}
-%% 	\left(\bb{\nabla}\bb{u}\right)_P
-%% %		&=&\sum_{f_i \in \mathcal{F}^{\text{int}}_P} \omega_{f_i}^2 \bb{G}^{-1}_P \cdot \bb{d}_{f_i} \left(\bb{u}_{N_{f_i}} - \bb{u}_P \right) \notag \\
-%% %		&&+ \sum_{b_i \in \mathcal{F}^{\text{disp}}_P} \omega_{b_i}^2 \bb{G}^{-1}_P \cdot \bb{d}_{b_i} \left(\bb{u}_{b_i} - \bb{u}_P \right) \notag \\
-%% %		&&+ \sum_{b_i \in \mathcal{F}^{\text{symm}}_P} \omega_{b_i}^2 \bb{G}^{-1}_P \cdot \bb{d}_{b_i}^{\text{symm}} \left(\bb{R}_{b_i} \cdot \bb{u}_P - \bb{u}_P \right)
-%% %		&=&\sum_{f_i \in \mathcal{F}^{\text{int}}_P} \left( \nicefrac{1}{|\bb{d}_{f_i}|^2} \right) \bb{G}^{-1}_P \cdot \bb{d}_{f_i} \left(\bb{u}_{N_{f_i}} - \bb{u}_P \right) \notag \\
-%% %		&&+ \sum_{b_i \in \mathcal{F}^{\text{disp}}_P} \left( \nicefrac{1}{|\bb{d}_{b_i}|^2} \right) \bb{G}^{-1}_P \cdot \bb{d}_{b_i} \left(\bb{u}_{b_i} - \bb{u}_P \right) \notag \\
-%% %		&&+ \sum_{b_i \in \mathcal{F}^{\text{symm}}_P} \left( \nicefrac{1}{|\bb{d}_{b_i}^{\text{symm}}|^2} \right) \bb{G}^{-1}_P \cdot \bb{d}_{b_i}^{\text{symm}} \left(\bb{R}_{b_i} \cdot \bb{u}_P - \bb{u}_P \right) \\
-%% %		&=&\sum_{f_i \in \mathcal{F}^{\text{int}}_P} \frac{\bb{G}^{-1}_P \cdot \bb{d}_{f_i}}{\bb{d}_{f_i} \cdot \bb{d}_{f_i}}  \otimes \left(\bb{u}_{N_{f_i}} - \bb{u}_P \right) \notag \\
-%% %		&&+ \sum_{d_i \in \mathcal{F}^{\text{disp}}_P} \frac{ \bb{G}^{-1}_P \cdot \bb{d}_{d_i} }{\bb{d}_{d_i} \cdot \bb{d}_{d_i}} \otimes \left(\bb{u}_{d_i} - \bb{u}_P \right) \notag \\
-%% %		&&+ \sum_{s_i \in \mathcal{F}^{\text{symm}}_P} \frac{\bb{G}^{-1}_P \cdot \bb{d}_{s_i}}{\bb{d}_{s_i} \cdot \bb{d}_{s_i}} \otimes \left(\bb{R}_{s_i} \cdot \bb{u}_P - \bb{u}_P \right)
-%% 		&=&\sum_{f_i \in \mathcal{F}^{\text{int}}_P} w_{f_i} |\bb{\Gamma}_{f_i}| \frac{\bb{G}^{-1}_P \cdot \bb{d}_{f_i}}{\bb{d}_{f_i} \cdot \bb{d}_{f_i}}  \otimes \left(\bb{u}_{N_{f_i}} - \bb{u}_P \right) \notag \\
-%% 		&&+ \sum_{d_i \in \mathcal{F}^{\text{disp}}_P} w_{f_i} |\bb{\Gamma}_{d_i}| \frac{ \bb{G}^{-1}_P \cdot \bb{d}_{d_i} }{\bb{d}_{d_i} \cdot \bb{d}_{d_i}} \otimes \left(\bb{u}_{d_i} - \bb{u}_P \right) \notag \\
-%% 		&&+ \sum_{s_i \in \mathcal{F}^{\text{symm}}_P} w_{f_i} |\bb{\Gamma}_{s_i}| \frac{\bb{G}^{-1}_P \cdot \bb{d}_{s_i}}{\bb{d}_{s_i} \cdot \bb{d}_{s_i}} \otimes \left(\bb{R}_{s_i} \cdot \bb{u}_P - \bb{u}_P \right)
-%% \end{eqnarray}
-%% which is exact for linear functions.
-%% %where the least squares weights are $\omega_{f_i} = 1/|\bb{d}_{f_i}|$ and  $\omega_{b_i} = 1/|\bb{d}_{b_i}|$.
-%% The vector $\bb{u}_{b_i}$ indicates the displacement at the centroid of boundary face ${b_i}$, while vector $\bb{d}_{d_i}$ connects the centroid of cell $P$ to the centroid of displacement boundary face $d_i$.
-%% The quantity $\bb{R}_{s_i} \cdot \bb{u}_P$ represents the mirror reflection of $\bb{u}_P$ across the symmetry boundary face $s_i$.
-%% % where the reflection tensor is $\bb{R}_{s_i} = \textbf{I} - 2 \bb{n}_{s_i} \otimes \bb{n}_{s_i}$ \citep{Demirdzic2022}.
-%% The vector $\bb{d}_{s_i}$ connects the centroid $\bb{x}_P$ of cell $P$ with its mirror reflection $\bb{R}_{s_i}  \cdot \bb{x}_P$ through boundary face $s_i$.
-%% Traction boundary faces are excluded in Equation \ref{eq:leastSquaresGrad}, as the displacement is unknown there; this is in contrast to the default approach in OpenFOAM \citep{Jasak2011}.
-%% The $\bb{G}_P$ tensor for cell $P$ is calculated as
-%% \begin{eqnarray}
-%% 	 \bb{G}_P &=&
-%% %	 \sum_{{f_i} \in \mathcal{F}^{\text{int}}_P} \omega_{f_i}^2 \bb{d}_{f_i} \bb{d}_{f_i}
-%% %	 +  \sum_{{b_i} \in \mathcal{F}^{\text{disp}}_P} \omega_{b_i}^2 \bb{d}_{b_i} \bb{d}_{b_i}
-%% %	 +  \sum_{{b_i} \in \mathcal{F}^{\text{symm}}_P} \omega_{b_i}^2 \bb{d}_{b_i}^{\text{symm}} \bb{d}_{b_i}^{\text{symm}}
-%% %	 \sum_{{f_i} \in \mathcal{F}^{\text{int}}_P} \frac{\bb{d}_{f_i} \otimes \bb{d}_{f_i}}{\bb{d}_{f_i} \cdot \bb{d}_{f_i}}
-%% %	 +  \sum_{{d_i} \in \mathcal{F}^{\text{disp}}_P} \frac{\bb{d}_{d_i} \otimes \bb{d}_{d_i}}{\bb{d}_{d_i} \cdot \bb{d}_{d_i}}
-%% %	 +  \sum_{{s_i} \in \mathcal{F}^{\text{symm}}_P} \frac{\bb{d}_{s_i} \otimes \bb{d}_{s_i}}{\bb{d}_{s_i} \cdot \bb{d}_{s_i}}
-%% 	 \sum_{{f_i} \in \mathcal{F}^{\text{int}}_P} (1 - w_{f_i}) |\bb{\Gamma}_{f_i}|  \frac{\bb{d}_{f_i} \otimes \bb{d}_{f_i}}{\bb{d}_{f_i} \cdot \bb{d}_{f_i}} \notag \\
-%% 	 &&+  \sum_{{d_i} \in \mathcal{F}^{\text{disp}}_P} (1 - w_{d_i}) |\bb{\Gamma}_{d_i}|  \frac{\bb{d}_{d_i} \otimes \bb{d}_{d_i}}{\bb{d}_{d_i} \cdot \bb{d}_{d_i}} \notag \\
-%% 	 && +  \sum_{{s_i} \in \mathcal{F}^{\text{symm}}_P} (1 - w_{s_i}) |\bb{\Gamma}_{s_i}|  \frac{\bb{d}_{s_i} \otimes \bb{d}_{s_i}}{\bb{d}_{s_i} \cdot \bb{d}_{s_i}}
-%% \end{eqnarray}
-%% As the $w |\bb{\Gamma}| \ \bb{G}^{-1}_P \cdot \bb{d}/(\bb{d}\cdot \bb{d})$ vectors in Equation \ref{eq:leastSquaresGrad} are purely a function of the mesh, they can be computed once (or each time the mesh moves) and stored.
-%% Equation \ref{eq:leastSquaresGrad} approximates the cell-centre gradients to at least a first-order accuracy, increasing to second-order accuracy on certain smooth grids \citep{Syrakos2023};
-%% first-order accurate gradients are sufficient to preserve second-order accuracy of the cell-centre displacements.
-
-%% As noted, boundary conditions are enforced through the discretised surface integral terms at the boundary faces. % (Equations \ref{eq:divStressDiscret} and \ref{eq:RhieChow}).
-%% If required, the displacement $\bb{u}_{t_i}$ on a traction boundary face $t_i$ can be calculated by extrapolation from the centre of cell $P$ as
-%% \begin{eqnarray}
-%% 	\bb{u}_{t_i} = \bb{u}_P + \bb{d}_{t_i} \cdot \left(\bb{\nabla} \bb{u} \right)_P
-%% \end{eqnarray}
-%% where $\bb{d}_{t_i}$ represents the vector from the centroid of cell $P$ to the centroid of the traction boundary face $t_i$.
-%% Similarly, if required, the displacement $\bb{u}_{s_i}$ at a symmetry plane face $s_i$ is calculated using the same approach as Equation \ref{eq:symm}:
-%% \begin{eqnarray} 
-%% 	\bb{u}_{s_i}
-%% 		&=&  \frac{1}{2} \left( \bb{u}_P + \bb{R}_{s_i} \cdot \bb{u}_P \right) \notag \\
-%% 		&=& \left (\textbf{I} - \bb{n}_{s_i} \otimes \bb{n}_{s_i} \right) \cdot \bb{u}_P
-%% \end{eqnarray}
-
-
-
-
-%% \subsubsection{Rhie-Chow Stabilisation}
-%% %The discretisation is complete but, i
-%% To quell zero-energy solution modes (i.e. checkerboarding oscillations), a Rhie-Chow-type stabilisation term \cite{Rhie1983} is added to the residual (Equation \ref{eqn:residual}).
-%% % to quell such oscillations.
-%% %The term introduces numerical diffusion to the discretisation, which reduces at a third-order rate.
-%% % based on the earlier approach of Rhie and Chow \citet{demirdzic_numerical_1995}.
-%% %One issue encountered with the finite volume method is that the discretisation of the governing conservation of momentum equation ( can be unstable and is known to suffer from checker-boarding errors .
-%% %In order to rectify these issues, the Rhie-Chow stabilisation term \cite{rhie_numerical_1983} as introduced into solid mechanics by  is added to the discretised divergence of the stress in equation \ref{eqn:MomentumImplicitExplicit}.
-%% %In the current approach, 
-%% The Rhie-Chow stabilisation term  $\mathcal{D}_P^{\text {Rhie-Chow }}$ for a cell $P$ takes the following form:
-%% \begin{eqnarray} \label{eq:RhieChow}
-%% 	\mathcal{D}_P^{\text {Rhie-Chow}}
-%% 	&=& \sum_{f_i \in \mathcal{F}^{\text{int}}_P} \alpha \bar{K}_{f_i} \left[
-%% 		\left|\bb{\Delta}_{f_i} \right| \frac{ \bb{u}_{N_{f_i}} - \bb{u}_P}{\left|\bb{d}_{f_i}\right|}	- \bb{\Delta}_{f_i} \cdot \left(\bb{\nabla} \bb{u} \right)_{f_i}
-%% 		\right]    \left|\bb{\Gamma}_{f_i}\right| \notag \\
-%% 	&&+ \sum_{d_i \in \mathcal{F}^{\text{disp}}_P} \alpha \bar{K}_{d_i} \left[
-%% 		\left|\bb{\Delta}_{d_i} \right| \frac{ \bar{\bb{u}}_{d_i} - \bb{u}_P}{\left|\bb{d}_{d_i}\right|}	- \bb{\Delta}_{d_i} \cdot \left(\bb{\nabla} \bb{u} \right)_{P}
-%% 		\right]    \left|\bb{\Gamma}_{d_i}\right| \notag \\
-%% 	&&+ \sum_{s_i \in \mathcal{F}^{\text{symm}}_P} \alpha \bar{K}_{s_i} \left[
-%% 		\left|\bb{\Delta}_{s_i} \right| \frac{ \bb{R}_{s_i} \cdot \bb{u}_{P} - \bb{u}_P}{\left|\bb{d}_{s_i}\right|} - \bb{\Delta}_{s_i} \cdot \left(\bb{\nabla} \bb{u} \right)_{s_i}
-%% 		\right]    \left|\bb{\Gamma}_{s_i}\right|
-%% \end{eqnarray}
-%% %which comes from the difference between Equations \ref{eq:diffusion} and \ref{eq:diffusion_exp}.
-%% where $\alpha > 0$ is a user-defined parameter for globally scaling the amount of stabilisation.
-%% Parameter $\bar{K}$ is a stiffness-type parameter that gives the stabilisation an appropriate scale and dimension.
-%% Here, $\bar{K} = \frac{4}{3}\mu + \kappa = 2\mu + \lambda$ following previous work \cite{Jasak2000, Cardiff2017, Cardiff2018}, where $\mu$ is the shear modulus (first Lam\'{e} parameter), $\kappa$ is the bulk modulus, and $\lambda$ is the second Lam\'{e} parameter.
-%% Vector $\bar{\bb{u}}_{d_i}$ represents the prescribed displacement at the centroid of displacement boundary face $d_i$.
-%% %where $N_f$ represents the set of faces $f$ in cell $P$, and neighbouring cell centre $N_f$ shares face $f$ with the cell $P$.
-%% %Vector $\bb{n}_{f}$ is the outward-facing unit normal to the face $f$.
-%% The quantities $\bb{\Delta} = \nicefrac{\bb{d}}{\bb{d} \cdot \bb{n}}$ are termed the \emph{over-relaxed orthogonal} vectors \cite{Jasak1996}.
-%% The displacement gradient $\left(\bb{\nabla} \bb{u} \right)_{f_i}$ at the internal face $f_i$ is calculated by interpolation from adjacent cell centres (like in Equation \ref{eq:stressInterp}).
-%% Similarly, the displacement gradient $\left(\bb{\nabla} \bb{u} \right)_{s_i}$ at a symmetry boundary face $s_i$ is averaged from cell $P$ and its mirror reflection across face $s_i$, as in Equation \ref{eq:symm}.
-%% Note that the displacement gradient at the displacement boundary $d_i$ is assumed to be equal to the displacement gradient at the centroid of cell $P$.
-%% In addition, no stabilisation term is applied on a traction boundary face $t_i$.
-%% %and increases in magnitude as the deviation between the $\bb{d}_{f}$ and $\bb{n}_{f}$ vectors increases, 
-%% %In this way, the amount of stabilisation increases on distorted meshes.
-%% %\hl{Should we mention Nishikawa alpha scheme?} \hl{Very similar: but scales differently with mesh distortion}
-%% %and non-orthogonal correction vector $\bb{k}_f=\bb{n}_f-\bb{\Delta}_f$, where $\bb{n}_f$ is the outward-facing unit normal to the face $f$.
-%% %Vector $\bb{d}_f$ connects the centre of cell $P$ with the centre of cell $N_f$ in the updated configuration.
-%% %The first term on the right-hand side is treated implicitly, while the second term - representing non-orthogonal corrections at the face - is treated in a deferred correction manner.
-%% %The Rhie-Chow stabilisation term, first used for finite volume solid mechanics by  \citet{Demirdzic1995}, consists of the numerical difference between a diffusion (Laplacian) term calculated using compact and larger computational stencils.
-
-%% Within the square braces on the right-hand side of Equation \ref{eq:RhieChow}, the first terms represent a compact stencil (two-node) approximation of the face normal gradient, while the second terms represent a larger stencil approximation.
-%% These two terms cancel out in the limit of mesh refinement (or if the solution varies linearly); otherwise, they produce a stabilisation effect that tends to smooth the solution fields.
-%% The magnitude of the stabilisation is shown in Appendix \ref{app:RhieChow} to reduce at a second-order rate (not a third-order rate as stated previously \citep{Demirdzic1995}), and hence does not affect the overall scheme's second-order accuracy.
-%% It is informative to note that the first term in the square bracket in Equation \ref{eq:RhieChow} can be expressed, assuming $(\bb{d}_{f_i} \cdot \bb{n}_{f_i}) > 0$, as
-%% \begin{eqnarray} \label{eq:RhieChow2}
-%% 	\alpha \left[ \left|\bb{\Delta}_{f_i} \right| \frac{ \bb{u}_{N_{f_i}} - \bb{u}_P}{\left|\bb{d}_{f_i}\right|}	-  \bb{\Delta}_{f_i} \cdot \left(\bb{\nabla} \bb{u} \right)_{f_i} \right]
-%% 	&=&
-%% 	\alpha \left| \frac{\bb{d}_{f_i}}{\bb{d}_{f_i} \cdot \bb{n}_{f_i}} \right| \frac{ \bb{u}_{N_{f_i}} - \bb{u}_P}{\left|\bb{d}_{f_i}\right|}
-%% 	-  \alpha \frac{\bb{d}_{f_i}}{\bb{d}_{f_i} \cdot \bb{n}_{f_i}} \cdot \left(\bb{\nabla} \bb{u} \right)_{f_i} \notag \\
-%% 	&=&
-%% 	\frac{\alpha}{\bb{d}_{f_i} \cdot \bb{n}_{f_i}} \left[ \left( \bb{u}_{N_{f_i}} - \bb{u}_P \right) -  \bb{d}_{f_i} \cdot \left(\bb{\nabla} \bb{u} \right)_{f_i} \right]
-%% \end{eqnarray}
-%% Noting that $\left(\bb{\nabla} \bb{u} \right)_{f_i} = \left[ \left(\bb{\nabla} \bb{u} \right)_{N_{f_i}} + \left(\bb{\nabla} \bb{u} \right)_P \right]/2$, Equation \ref{eq:RhieChow2} can be expressed as
-%% \begin{eqnarray}
-%% 	\alpha \left[ \left|\bb{\Delta}_{f_i} \right| \frac{ \bb{u}_{N_{f_i}} - \bb{u}_P}{\left|\bb{d}_{f_i}\right|}	-  \bb{\Delta}_{f_i} \cdot \left(\bb{\nabla} \bb{u} \right)_{f_i} \right]
-%% 	&=&
-%% 	\frac{\alpha}{\bb{d}_{f_i} \cdot \bb{n}_{f_i}} \left( \bb{u}_{N_{f_i}}^* - \bb{u}_P^* \right)
-%% \end{eqnarray}
-%% where
-%% \begin{eqnarray}
-%% 	\bb{u}_P^* &=& \bb{u}_P + (\bb{d}_{f_i}/2) \cdot \left(\bb{\nabla} \bb{u} \right)_P  \\
-%% 	\bb{u}_{N_{f_i}}^* &=& \bb{u}_{N_{f_i}} - (\bb{d}_{f_i}/2) \cdot \left(\bb{\nabla} \bb{u} \right)_{N_{f_i}}
-%% \end{eqnarray}
-
-%% So, this Rhie-Chow stabilisation can take the form of a \emph{jump} term; that is, it is a function of the jump in solution between neighbouring cells.
-%% The two states, $\bb{u}_P^*$ and $\bb{u}_{N_{f_i}}^*$, are evaluated halfway between $P$ and $N_{f_i}$, and it may not be at a face centre; however, as noted by \citet{Nishikawa2010}, this will not affect the second-order accuracy of the method; consequently, the user is free to choose the value of $\alpha$ for stabilisation and accuracy purposes.
-%% % but it doesn't matter because this team is only stabilisation and it vanishes in the grid refinement.
-%% %As long as it vanishes for linear functions, second-order accuracy is preserved. It means that the parameter alpha can be chosen solely for the purpose of stabilization. 
-
-
-%% %All dependent variables must be specified at the initial time.
-
-
-%% %\subsubsection{Boundary Conditions}
-%% %Boundary faces $f_i \in \mathcal{F}_{\text{bnd},P}$ are classified based on boundary conditions into displacement-type, traction-type, and symmetry-type faces.
-%% %\hl{Comment on traction boundaries} \hl{extrapolate to get value or use constitutive law}
-%% %Boundary conditions must be applied to the faces that coincide with the boundary of the solution domain.
-%% %The discretised expressions on boundary faces are modified to account for either the known displacement components in Dirichlet conditions or the known traction for Neumann conditions.
-%% %In the current approach, boundary face 
-
-%% %Three types of boundary condition are considered here: prescribed displacement, prescribed traction, and symmetry planes.
-%% %
-%% %Two terms must be approximated on a boundary face $b$:
-%% %\begin{eqnarray} \label{eq:BCtermsLap}
-%% %	\int_{\mathrm{\Gamma}_{b}} K_{imp} \bb{n}_{b} \cdot \left[ \nabla\left(\Delta\bb{u}\right) \right]_b d\mathrm{\Gamma}_{b}
-%% %\end{eqnarray}
-%% %which comes from Equation \ref{eq:diffusion}, and 
-%% %\begin{eqnarray} \label{eq:BCtermsStress}
-%% %	\int_{\mathrm{\Gamma_b}}(j_b \bb{f}^{-\text{T}}_b \cdot \bb{n}_b) \cdot \boldsymbol{\sigma}_b \ d\mathrm{\Gamma_b}
-%% %\end{eqnarray}
-%% %which comes from Equation \ref{eq:surfaceStress}, where subscript $b$ indicates a quantity at a boundary face in the updated configuration.
-%% %
-%% %Equation \ref{eq:BCtermsLap} must be discretised both implicitly and explicitly (deferred correction), as per Equation \ref{eqn:MomentumImplicitExplicit}, while Equation \ref{eq:BCtermsStress} is discretised explicitly.
-%% %The Rhie-Chow term is set to zero on boundary faces, and all geometric terms ($\bb{n}_{b}$, $\mathrm{\Gamma}_{b}$) are calculated on the updated configuration.
-
-%% %Five classes of boundary conditions are employed in the current work (prescribed displacement, prescribed traction, symmetry plane, axisymmetric/wedge, frictional contact) as described below.
-%% %An additional boundary condition where the normal component of the displacement is prescribed and the shear traction is zero is also used; the discretisation of this condition employs the prescribed displacement condition in the boundary normal direction and the traction condition in the tangential direction.
-%% %\begin{itemize}
-%% %	\item Prescribed displacement,
-%% %	\item Prescribed traction,
-%% %	\item Symmetry,
-%% %	\item Axisymmetric (wedge),
-%% %	\item Frictional contact.
-%% %\end{itemize}
-%% %This enforcement of these five conditions is described below.
-
-%% %\paragraph{Prescribed displacement}
-%% %The displacement boundary condition, a Dirichlet condition, may be constant in time or time-varying and fixes the value of $\bb{u}$ at the centre of a boundary face.
-%% %The corresponding displacement increment at the boundary face $\Delta \bb{u}_b = \bb{u}^{[m+1]}_b - \bb{u}^{m}_b$ is substituted into the calculation of the surface normal gradient term in Equation \ref{eq:BCtermsLap}.
-%% %The resulting contribution of a boundary face $b$ to the discretised Laplacian term becomes:
-%% %\begin{eqnarray} \label{eq:diffusionBC}
-%% %%	\underbrace{
-%% %	\int_{\mathrm{\Gamma}_{b}}
-%% %	 K_{imp} \bb{n}_{b} \cdot \left[ \nabla\left(\Delta\bb{u}\right) \right]_b d\mathrm{\Gamma}_{b}
-%% %%	 }_{\text {implicit}}
-%% %	&\approx&
-%% %	K_{imp}^b \left|\boldsymbol{\Delta}_{b} \right|\left(\frac{\Delta \bb{u}_{b} - \Delta \bb{u}_P}{\left|\bb{d}_b\right|}\right)\left|\bb{\Gamma}_{b}\right| \notag \\
-%% %	    &&+ K_{imp}^b \; \bb{k}_{b} \cdot
-%% %	    \left[
-%% %	    \boldsymbol{\nabla} \left(\mathrm{\Delta}\bb{u}\right)
-%% %	    \right]_P
-%% %	    \left|\bb{\Gamma}_{b}\right|
-%% %\end{eqnarray}
-%% %where $\bb{d}_b$ connects the cell centre $\bb{C}_P$ with the boundary face centre $\bb{C}_b$ in the updated configuration, and the non-orthogonal correction vector $\bb{k}_{b} = (\textbf{I} - \bb{n}_b \bb{n}_b) \cdot \bb{d}_b$.
-
-
-
-%% %\paragraph{Prescribed traction}
-%% %The traction boundary condition, constant in time or time-varying, is implemented by replacing $\bb{n}_f \cdot \bb{\sigma}_f$ on boundary faces with the known prescribed traction $\bb{t}_b$.
-%% %Following calculation of the cell-centred displacements, displacements on traction boundary faces $\bb{u}_b$ is calculated by extrapolation from the adjacent cell centre:
-%% %\begin{eqnarray}
-%% %	\bb{u}_b = \bb{u}_P + (\bb{x}_b - \bb{x}_P) \cdot \left(\bb{\nabla} \bb{u} \right)_P
-%% %\end{eqnarray}
-%% %where subscript $b$ indicates a value at the centre of a boundary face, and $P$ indicates a value at the centre of the adjacent cell.
-
-
-
-%% %\paragraph{Symmetry plane}
-%% %On a symmetry plane normal component of displacement is zero, and the tangential gradient of displacement is zero.
-%% %For boundary faces on a symmetry plane, the mirror reflection $\left(\bb{\Delta} \bb{u}\right)_N$ of the cell-centre displacement increment $\left(\bb{\Delta} \bb{u}\right)_P$ can be obtained as
-%% %\begin{eqnarray}
-%% %	\left(\bb{\Delta} \bb{u}\right)_N &=& \bb{R}_m \cdot \left(\bb{\Delta} \bb{u}\right)_P \notag \\
-%% %		&=& \left(\textbf{I} - 2 \bb{n}_b \bb{n}_b \right) \cdot \left(\bb{\Delta} \bb{u}\right)_P
-%% %\end{eqnarray}
-%% %where $\bb{R}_m$ is termed the reflection tensor.
-%% %The discretisation in Equation \ref{eq:diffusion} takes the same form, but the neighbour cell-centre values are replaced by the mirror reflected values for boundary faces on the symmetry plane.
-%% %The $\bb{d}_b$ vector at a symmetry plane boundary face is calculated as
-%% %\begin{eqnarray}
-%% %	 \bb{d}_b &=& \bb{R}_m \cdot \bb{C}_P - \bb{C}_P
-%% %\end{eqnarray}
-%% %%where $\bb{C}_P$ is the positional vector of the centre of cell $P$.
-%% %This means that symmetry planes are orthogonal by definition, and the non-orthogonal correction (second term on the right-hand side of Equation \ref{eq:diffusion}) drops out.
-%% %
-%% %In the current work, the cell-centre values are corrected for skewness errors, resulting in the following contribution to the Laplacian term at a symmetry boundary face (Equation \ref{eq:diffusionBC}):
-%% %\begin{eqnarray}
-%% %	\int_{\mathrm{\Gamma}_{u_b}}	 K_{imp} \bb{n}_{b} \cdot\nabla\left(\Delta\bb{u}\right) d\mathrm{\Gamma}_{b}
-%% %	&=&
-%% %	K_{imp}^b \left|\boldsymbol{\Delta}_{b} \right| \left( \frac{\bb{\Delta} \bb{u}_N^* - \Delta \bb{u}_P^*}{\left|\bb{d}_b\right|} \right) \left|\bb{\Gamma}_{b}\right|
-%% %\end{eqnarray}
-%% %where the skew-corrected cell-centre values are
-%% %\begin{eqnarray}
-%% %	 \bb{\Delta} \bb{u}_P^* &=&
-%% %	 	\bb{\Delta} \bb{u}_P + \left[ (\textbf{I} - \bb{n}_b \bb{n}_b) \cdot \bb{d}_b \right] \cdot \left[ \bb{\nabla} \left(\bb{\Delta} \bb{u}\right) \right]_P \\
-%% %	 \bb{\Delta} \bb{u}_N^* &=&
-%% %	 	\bb{R}_m \cdot \left(\bb{\Delta} \bb{u}\right)_P^*
-%% %\end{eqnarray}
-%% %
-%% %Displacement increment values on the symmetry planes are calculated as
-%% %\begin{eqnarray}
-%% %	\left(\bb{\Delta} \bb{u}\right)_b = \frac{\left(\bb{\Delta} \bb{u}\right)_P^* + \left(\bb{\Delta} \bb{u}\right)_N^*}{2}
-%% %\end{eqnarray}
-%% %%where cell-centred values corrected for mesh skewness errors are
-%% %
-%% %Further details on the implementation of symmetry planes in segregated cell-centred finite volume formulations can be found in \citet{Demirdzic2022}.
-
-
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% \section{Solution Algorithms}\label{sec:sol_alg}
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% %- Seg approach summary
-%% %- JFNK approach summary
-%% %	- implementation via PETSc. Newton with line search, GMRes with MG preconditioner.
-
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% \subsection{Segregated Solution Algorithm} 
-%% \label{sec:seg_alg}
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% The classic segregated solution algorithm can be viewed as a quasi-Newton method, where an approximate Jacobian is derived from the inertia term and a compact-stencil discretisation of a diffusion term (from the stabilisation term):
-%% %The surface forces Laplacian term (first term on the right-hand side of Equation \ref{eqn:MomentumImplicitExplicit}) is discretised using central differencing with over-relaxed non-orthogonal correction \cite{demirdzic_finite_1993, jasak_application_2000, cardiff_development_2014, cardiff_large_2014, cardiff_lagrangian_2017}:
-%% \begin{eqnarray} \label{eq:diffusion}
-%% 	\tilde{\bb{J}} &=& \frac{\partial}{\partial \bb{u}} \left[ \oint_{\Gamma_P} \alpha \bar{K} \, \bb{n} \cdot \bb{\nabla} \bb{u} \; d\Gamma_P
-%% 	 \; -\;  \int_{\Omega_P} \rho \frac{\partial^2 \bb{u} }{\partial t^2} \, d\Omega_P \right]
-%% \end{eqnarray}
-%% The inertia term is discretised as described in Equations \ref{eq:inertia} and \ref{eq:inertia2}, while the diffusion term is discretised in the same manner as the compact-stencil component of the Rhie-Chow stabilisation term:
-%% \begin{eqnarray}
-%% 	\oint_{\Gamma_P} \alpha \bar{K} \, \bb{n} \cdot \bb{\nabla} \bb{u} \; d\Gamma_P &\approx&
-%% 		\sum_{f_i \in \mathcal{F}^{\text{int}}_P}  \alpha \bar{K}
-%% 		\left|\bb{\Delta}_{f_i} \right| \frac{ \bb{u}_{N_{f_i}} - \bb{u}_P}{\left|\bb{d}_{f_i}\right|}    \left|\bb{\Gamma}_{f_i}\right| \notag \\
-%% 	&&+  \sum_{d_i \in \mathcal{F}^{\text{disp}}_P}  \alpha \bar{K}
-%% %		\left|\bb{\Delta}_{d_i} \right| \left( \ \frac{ \bar{\bb{u}}_{d_i} - \bb{u}_P}{\left|\bb{d}_{d_i}\right|}  \right) 
-%% 		\left|\bb{\Delta}_{d_i} \right| \frac{ \bar{\bb{u}}_{d_i}  - \bb{u}_P}{\left|\bb{d}_{d_i}\right|} 
-%% 		\left|\bb{\Gamma}_{d_i}\right| \notag \\
-%% 	&&+ \sum_{s_i \in \mathcal{F}^{\text{symm}}_P}  \alpha \bar{K}
-%% 		\left|\bb{\Delta}_{s_i} \right| \frac{ \bb{R}_{s_i} \cdot \bb{u}_{P} - \bb{u}_P}{\left|\bb{d}_{s_i}\right|}
-%% 		\left|\bb{\Gamma}_{s_i}\right|
-%% \end{eqnarray}
-%% When a diffusion term is typically discretised using the cell-centre finite volume method, non-orthogonal corrections are included in a deferred correction manner to preserve the order of accuracy on distorted grids.
-%% However, in the current quasi-Newton method form, the approximate Jacobian's exact value does not affect the final converged solution, but only the convergence behaviour.
-%% Consequently, non-orthogonal corrections are not included in the approximate Jacobian here. However, grid distortion is appropriately accounted for in the calculation of the residual.
-%% Nonetheless, as a result, it is expected that the convergence behaviour of the segregated approach may degrade as mesh non-orthogonality increases.
-%% %Similarly, the prescribed displacements from the $\mathcal{F}^{\text{disp}}_P$ boundary faces does not affect the Jacobian.
-
-%% The linearised system (Equation \ref{eq:Seg}) is formed for each cell in the domain, resulting in a system of algebraic equations:
-%% \begin{eqnarray} \label{eq:SegSys}
-%%     \left[ \bb{\tilde{J}} \right]  \; \left[ \delta \bb{u} \right] = - \left[\bb{R}(\bb{u}_k)\right]
-%% \end{eqnarray}
-%% where $\left[ \bb{\tilde{J}} \right]$ is a symmetric, $M \times M$ stiffness matrix, where $M = 3|\mathcal{P}|$ in 3-D and $M = 2|\mathcal{P}|$ in 2-D.
-%% If $\Delta t < \infty$ or $\mathcal{F}^{\text{disp}}_P \neq \emptyset$, matrix $\left[ \bb{\tilde{J}} \right]$ is strongly diagonally dominant; otherwise, it is weakly diagonally dominant.
-%% The block ($3\times3$ for 3-D, $2\times2$ for 2-D) diagonal coefficient for cell $P$ (row $P$, column $P$) can be expressed as
-%% \begin{eqnarray}
-%% 	 \left[ \tilde{\bb{J}}\right]_{PP} &=&
-%% 		- \sum_{f_i \in \mathcal{F}^{\text{int}}_P}  \alpha \bar{K}
-%% 		\frac{ \left|\bb{\Delta}_{f_i} \right| }{\left|\bb{d}_{f_i}\right|}    \left|\bb{\Gamma}_{f_i}\right| \textbf{I} 
-%% 	    \quad-  \sum_{d_i \in \mathcal{F}^{\text{disp}}_P}  \alpha \bar{K}
-%% %		\left|\bb{\Delta}_{d_i} \right| \left( \ \frac{ \bar{\bb{u}}_{d_i} - \bb{u}_P}{\left|\bb{d}_{d_i}\right|}  \right) 
-%% 		 \frac{ \left|\bb{\Delta}_{d_i} \right| }{\left|\bb{d}_{d_i}\right|} 
-%% 		\left|\bb{\Gamma}_{d_i}\right| \textbf{I} \notag \\
-%% 	 &&\quad - \sum_{s_i \in \mathcal{F}^{\text{symm}}_P} \alpha \bar{K}
-%% 		 \frac{ \left|\bb{\Delta}_{s_i} \right|}{\left|\bb{d}_{s_i}\right|}
-%% 		\left|\bb{\Gamma}_{s_i}\right|  \bb{n}_{s_i} \otimes \bb{n}_{s_i} 
-%% 	\quad - \quad \frac{9}{4}  \frac{\rho_P \Omega_P}{\Delta t^2} \textbf{I}
-%% \end{eqnarray}
-%% while the off-diagonal coefficients (row $P$, column $Q$) can be expressed as
-%% \begin{eqnarray}
-%% 	\left[\tilde{\bb{J}}\right] _{PQ} &=&
-%% 		\alpha \bar{K} \frac{ \left|\bb{\Delta}_{f_{PQ}} \right| }{\left|\bb{d}_{f_{PQ}}\right|} \left|\bb{\Gamma}_{f_{PQ}}\right| \textbf{I} 
-%% \end{eqnarray}
-%% where subscript $PQ$ indicates a quantity associated with the internal face $f$ shared between cells $P$ and $Q$.
-%% %where $N_f$ represents the set of faces $f$ in cell $P$, and neighbouring cell centre $N_f$ shares face $f$ with the cell $P$.
-%% %The over-relaxed orthogonal vector $\bb{\Delta}_f = \frac{\bb{d}_f}{\bb{d}_f \cdot \bb{n}_f}$ 
-%% %The non-orthogonal correction vector $\bb{k}_f=\bb{n}_f-\bb{\Delta}_f$.
-%% % where $\bb{n}_f$ is the outward-facing unit normal to the face $f$.
-%% %Vector $\bb{d}_f$ connects the centre of cell $P$ with the centre of cell $N_f$ in the updated configuration.
-%% %The first term on the right-hand side is treated implicitly, while the second term - representing non-orthogonal corrections at the face - is treated in a deferred correction manner.
-
-%% % since their implicit inclusion would require a coupled solution approach
-
-
-%% %The block row in the Jacobian corresponding to cell $P$ can be expressed as
-%% %\begin{eqnarray} \label{eq:lin_sys_seg_cellP}
-%% %	\tilde{\bb{J}}_P 	&=& \bb{A}_P \cdot  \bb{u}_P +  \sum_{f_i \in \mathcal{F}^{\text{int}}_P}  \bb{A}_{N_{f_i}} \cdot  \bb{u}_{N_{f_i}}
-%% %\end{eqnarray}
-%% %where the block diagonal coefficient is
-%% %\begin{eqnarray}
-%% %	\bb{A}_P
-%% %	&\approx& -\sum_{f_i \in \mathcal{F}^{\text{int}}_P}  \bar{K} \frac{ \left|\bb{\Delta}_{f_i} \right| }{\left|\bb{d}_{f_i}\right|} \left|\bb{\Gamma}_{f_i}\right| \textbf{I} \notag \\
-%% %	&&-\sum_{d_i \in \mathcal{F}^{\text{disp}}_P}  \bar{K} \frac{  \left|\bb{\Delta}_{d_i} \right|}{\left|\bb{d}_{d_i}\right|} \left|\bb{\Gamma}_{d_i}\right| \textbf{I} \notag \\
-%% %	&&- \sum_{s_i \in \mathcal{F}^{\text{symm}}_P}  \bar{K} \frac{ \left|\bb{\Delta}_{s_i} \right|  }{\left|\bb{d}_{s_i}\right|} \left|\bb{\Gamma}_{s_i}\right| \bb{n}_{s_i} \otimes \bb{n}_{s_i}
-%% %	\notag \\
-%% %\end{eqnarray}
-%% %and each off-diagonal coefficient is
-%% %\begin{eqnarray}
-%% %	\bb{A}_{N_{f_i}} 	&\approx&  \bar{K} \frac{ \left|\bb{\Delta}_{f_i} \right| }{\left|\bb{d}_{f_i}\right|} \left|\bb{\Gamma}_{f_i}\right| \textbf{I}
-%% %\end{eqnarray}
-
-
-%% By design, matrix $\left[ \bb{\tilde{J}} \right]$  contains no inter-component coupling, i.e., each block coefficient is diagonal; consequently, three equivalent smaller linear systems can be formed in 3-D (or two linear systems in 2-D) and solved for the Cartesian components of the displacement correction, e.g.
-%% \begin{eqnarray} \label{eq:SegSysX}
-%% %     \bb{\tilde{J}}_x(\bb{u}_n)  \;  \Delta \bb{u}_x = - \mathcal{R}_x(\bb{u}_n) \label{eq:segX} \\
-%% %     \bb{\tilde{J}}_y(\bb{u}_n)  \;  \Delta \bb{u}_y = - \mathcal{R}_y(\bb{u}_n) \label{eq:segY} \\
-%% %     \bb{\tilde{J}}_z(\bb{u}_n)  \;  \Delta \bb{u}_z = - \mathcal{R}_z(\bb{u}_n) \label{eq:segZ}
-%%      \left[ \bb{\tilde{J}}_x \right]  \;  \left[ \Delta \bb{u}_x \right] = - \left[ \mathcal{R}_x(\bb{u}_k) \right] \label{eq:segX} \\
-%%      \left[ \bb{\tilde{J}}_y \right]  \;  \left[ \Delta \bb{u}_y \right] = - \left[ \mathcal{R}_y(\bb{u}_k) \right] \label{eq:segY} \\
-%%      \left[ \bb{\tilde{J}}_z \right]  \;  \left[ \Delta \bb{u}_z \right] = - \left[ \mathcal{R}_z(\bb{u}_k) \right] \label{eq:segZ}
-%% \end{eqnarray}
-%% where $ \bullet_x$ represents the components in the $x$ direction, $ \bullet_y$ represents the components in the $y$ direction, and $ \bullet_z$ represents the components in the $z$ direction.
-%% Matrices $\left[ \bb{\tilde{J}}_x \right]$, $ \left[ \bb{\tilde{J}}_y\right]$ and $\left[ \bb{\tilde{J}}_z\right]$ have the size $|\mathcal{P}| \times |\mathcal{P}|$.
-%% An additional benefit from a memory and assembly perspective, is that matrices $\left[ \bb{\tilde{J}}_x \right]$, $ \left[ \bb{\tilde{J}}_y\right]$ and $\left[ \bb{\tilde{J}}_z\right]$ are identical, except for the effects from including boundary conditions ($\mathcal{F}^{\text{symm}}_P$ terms).
-%% From an implementation perspective, this allows a single scalar matrix to be formed and stored, where the boundary condition contributions are inserted before solving a particular component.
-
-%% The \emph{inner} linear sparse systems (Equations \ref{eq:segX}, \ref{eq:segY} and \ref{eq:segZ}) can be solved using any typical direct or iterative linear solver approach; however, an incomplete Cholesky pre-conditioned conjugate gradient method \cite{Jacobs1986} is often preferred as the diagonally dominant characteristic leads to good convergence characteristics.
-%% Algebraic multigrid can also be used to accelerate convergence.
-%% %In non-linear problems, this system of equations is solved multiple times with updated coefficients in a fixed-point iteration scheme. 
-%% %As noted in previous articles on segregated methods, the inner system need not be solved to a tight tolerance as coefficients and source terms are approximated from the previous increment; a reduction in the residuals of one order of magnitude is typically sufficient. The outer iterations are performed until the predefined tolerance, typically $1 \times 10^{-6}$, has been achieved \cite{cardiff_lagrangian_2017}. 
-%% %In the current updated Lagrangian approach, the mesh is moved to the deformed configuration at the end of each time step rather than after each outer iteration.
-%% %Since the displacements are calculated at the cell centres, a linear least-squared method is employed here \cite{cardiff_lagrangian_2017} to interpolate the displacement increments to the mesh vertices, allowing the mesh to be moved.
-%% %In this method, a linear least squares plane is fit through a vertex and its immediately adjacent cell centres. For boundary vertices, boundary face-centre values are also included in the fitting.
-%% %
-%% %The procedures have been implemented and publicly shared within the solids4foam toolbox \citep{Cardiff2018, Tukovic2018} of the open-source OpenFOAM software.
-
-%% In literature, the segregated solution algorithm is typically formulated in terms of the total displacement vector (or its difference between time steps) as the primary unknown; in contrast, in the quasi-Newton interpretation presented here, the primary unknown is the correction to the displacement vector, which goes to zero at convergence.
-%% In the total displacement approach, the matrix is the same, and the only difference is the formulation of the right-hand side, which is calculated as the difference between the residual and the matrix times the previous solution.
-%% Equivalence of both approaches can be seen by adding $\left[ \bb{\tilde{J}} \right]  \; \left[ \bb{u} \right]_k$ to both sides of Equation \ref{eq:SegSys}:
-%% \begin{eqnarray} \label{eq:SegSys}
-%%     \left[ \bb{\tilde{J}} \right]  \; \left[ \delta \bb{u} \right] + \left[ \bb{\tilde{J}} \right]  \; \left[ \bb{u} \right]_k  = - \left[\bb{R}(\bb{u}_k)\right] + \left[ \bb{\tilde{J}} \right]  \; \left[ \bb{u} \right]_k \notag \\
-%%     \left[ \bb{\tilde{J}} \right]  \; \left[ \bb{u} \right]_{k+1} = \left[ \bb{\tilde{J}} \right]  \; \left[ \bb{u} \right]_k - \left[\bb{R}(\bb{u}_k)\right] \
-%% \end{eqnarray}
-%% where $\left[ \bb{u} \right]_k$ is the solution field at the previous iteration, and noting that $\left[ \bb{u} \right]_{k+1} = \left[ \bb{u} \right]_k + \left[ \delta \bb{u} \right]$.
-%% In practice, the $\left[ \bb{\tilde{J}} \right]  \; \left[ \bb{u} \right]_k$ term on the right-hand side can be evaluated directly in terms of the discretised temporal and diffusion terms, without the need for matrix multiplication.
-%% In the current work, the standard total displacement segregated formulation is employed.
-%% %It is not expected that either formulation displays performance advantages.
-
-%% As a final comment, the $\alpha$ scaling factor in the stabilisation term (Equation \ref{eq:RhieChow}) need not take the same value as in the approximate Jacobian (Equation \ref{eq:diffusion}).
-%% In the current work, $\alpha$ is taken as unity in the approximate Jacobian, while the variation of its value in the residual calculation is examined in Section \ref{sec:RhieChowResults}.
-
-%% %\hl{Comment: we can solve 31 or 34-36; we are using 31 in PETSc, while the native OF code uses 34-36}
-%% %\hl{We should comment on this}
-%% %The current procedure is implemented and publicly shared in the solids4foam toolbox of OpenFOAM.
-%% %\hl{Add a section about code sharing: appendix?}
-%% %\hl{Comment: we have two implementations of segregated: native OpenFOAM (solves Eqs 16-18) and PETSc SNES (solves Eq 15)}
-%% %\hl{Do we need to comment on this? Maybe we should use only PETSc SNES for a fair comparison}
-%% %\hl{Or we could use both on the verification case and then stick with just one afterwards}
-
-
-
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% \subsection{Jacobian-free Newton-Krylov Algorithm}
-%% \label{sec:JFNK_alg}
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-
-%% %\hl{cite KnollKeyes2004}
-
-%% As noted in the introduction, the Jacobian-free Newton-Krylov method avoids the need to explicitly construct the Jacobian matrix by approximating its action on a solution vector using the finite difference method, repeated here:
-%% \begin{eqnarray} \label{eq:JF}
-%% 	\bb{J} \bb{v} \approx \frac{\bb{R}(\bb{u} + \epsilon \bb{v}) - \bb{R}(\bb{u})}{\epsilon}
-%% \end{eqnarray}
-
-%% %\hl{1}
-%% %Derive Jv for 2x2 system.
-%% The derivation of this approximation can be shown for a $2 \times 2$ system as \cite{Knoll2004}:
-%% \begin{eqnarray}
-%% 	\frac{\bb{R}(\mathbf{u} + \epsilon \mathbf{v}) - \mathbf{R}(\mathbf{u})}{\epsilon}
-%% 	&=&
-%% 	\begin{pmatrix}
-%% 	\dfrac{R_1 (u_1 + \epsilon v_1, u_2 + \epsilon v_2) - R_1 (u_1, u_2)}{\epsilon}\\
-%% 	\dfrac{R_2 (u_1 + \epsilon v_1, u_2 + \epsilon v_2) - R_2 (u_1, u_2)}{\epsilon}
-%% 	\end{pmatrix} \notag \\
-%% 	&\approx&
-%% 	\begin{pmatrix}
-%% 	\dfrac{R_1 (u_1,u_2) + \epsilon v_1 \dfrac{\partial R_1}{\partial u_1} + \epsilon v_2 \dfrac{\partial R_1}{\partial u_2} - R_1 (u_1, u_2)}{\epsilon}\\
-%% 	\dfrac{R_2 (u_1, u_2) + \epsilon v_1 \dfrac{\partial R_2}{\partial u_1} + \epsilon v_2 \dfrac{\partial R_2}{\partial u_2}  - R_2 (u_1, u_2)}{\epsilon}
-%% 	\end{pmatrix} \notag \\
-%% 	&\approx&
-%% 	\begin{pmatrix}
-%% 	v_1 \dfrac{\partial R_1}{\partial u_1} +  v_2 \dfrac{\partial R_1}{\partial u_2} \\
-%% 	v_1 \dfrac{\partial R_2}{\partial u_1} + v_2 \dfrac{\partial R_2}{\partial u_2}
-%% 	\end{pmatrix} \notag \\
-%% 	&\approx&
-%% 	\bb{J} \bb{v}
-%% \end{eqnarray}
-%% where a first-order truncated Taylor series expansion about $\bb{u}$ was used to approximate $\bb{R} (\bb{u} + \epsilon \bb{v})$.
-%% %\hl{1b}
-%% %Choosing $\epsilon$ is important.
-%% As noted above, choosing an appropriate value for $\epsilon$ is non-trivial, and care must be taken to balance truncation error (reduced by decreasing $\epsilon$) and round-off error (increased by decreasing $\epsilon$).
-
-
-%% %\hl{2}
-%% %- preconditioner => important
-%% %- changes the JFNK approx.
-%% %- precon affects the JF approx
-
-%% %The literature indicates that the choice of preconditioner for the inner linearised system has a major impact on the efficiency and robustness of the overall solution procedure.
-%% The purpose of preconditioning the Jacobian-free Newton-Krylov method is to reduce the number of inner linear solver iterations.
-%% The current work uses the GMRES linear solver for the inner system.
-%% %Left or right preconditioning, may be employed in a Jacobian-free context, and there are pros and cons to both.
-%% Using right preconditioning, the finite difference approximation of Equation \ref{eq:JF} becomes
-%% \begin{eqnarray}
-%% %	(\bb{J} \bb{P}^{-1}) (\bb{P} \delta \bb{u}) = -\bb{R}(\bb{u})
-%% 	\bb{J} \bb{P}^{-1} \bb{v}
-%% 	\approx
-%% 	\frac{\bb{R}(\bb{u} + \epsilon \bb{P}^{-1} \bb{v}) - \bb{R}(\bb{u})}{\epsilon}
-%% \end{eqnarray}
-%% where $\bb{P}$ is the preconditioning matrix or process.
-%% In practice, only the action of $\bb{P}^{-1}$ on a vector is required, and $\bb{P}^{-1}$ need not be explicitly formed.
-%% Concretely, the preconditioner needs to approximately solve the linear system $\bb{y} = \bb{P}^{-1} \bb{v}$.
-%% %Thus, while we may refer to the matrix P, operationally the algorithm only requires the action of $P^{-1}$ on a vector.
-
-%% %\hl{3}
-%% %- we use approx J to form precon
-%% %- many precon used in lit, we will consider ILU($k$) and MG, where MG is expected to be better, but also LU since direct solvers are popular in FE solid mechanics
-%% In the current work, we propose to use the compact-stencil approximate Jacobian from the segregated algorithm $\tilde{\bb{J}}$ as the preconditioning matrix $\bb{P}$ for the preconditioned Jacobian-free Newton-Krylov method.
-%% %\hl{Comment on literature: used before but not yet for solids}.
-%% This preconditioning approach can be considered a ``physics-based" preconditioner in the classifications of \citet{Knoll2004}.
-%% The approach is conceptually similar to approximating a higher-order large-stencil scheme Jacobian by a compact-stencil lower-order scheme.
-%% A benefit of the proposed approach is that existing segregated frameworks can re-use their existing matrix assembly and storage implementations.
-%% Concretely, the Jacobian-free Newton-Krylov method requires only a procedure for forming this preconditioning matrix and a procedure for explicitly evaluating the residual.
-%% Both routines are easily implemented - and are likely already available - in an existing segregated framework.
-%% The only additional required procedure is an interface to an existing Jacobian-free Newton-Krylov implementation.
-%% %"The motivation behind this approach is that there exist numerous, legacy algorithms to solve nonlinear systems, both IVPs and BVPs. These algorithms typically were developed with some insight into the time scales or physical behavior of the problem. As a benefit of this insight, a reduced implicit system, or a sequence of segregated explicit or implicit systems may be solved in place of the fully coupled system. "
-%% In the current work, the PETSc package (version 3.22.2) \cite{PETSc} is used as the nonlinear solver, driven by a finite volume solver implemented in the solids4foam toolbox \citep{Cardiff2018, Tukovic2018} for OpenFOAM toolbox \citep{Weller1998} (version OpenFOAM-v2312).
-%% The codes are publicly available at \url{https://github.com/solids4foam/solids4foam} on the \texttt{feature-petsc-snes} branch, and the cases and plotting scripts are available at \url{https://github.com/solids4foam/solid-benchmarks}.
-
-%% Several preconditioners are available in the literature, incomplete Cholesky or ILU($k$) being popular; however, multigrid methods offer the greatest potential for large-scale problems.
-%% As noted by \citet{Knoll2004}, algorithmic simplifications within a multigrid procedure, which may result in loss of convergence for multigrid as a solver, have a much weaker effect when multigrid is used as a preconditioner.
-%% In this work, three preconditioners are considered:
-%% \begin{enumerate}
-%% 	\item ILU($k$): incomplete lower-upper decomposition with fill-in $k$. %The segregated solver uses ILU(0), that is, ILU with zero fill-in.
-%% 	\item Multigrid: the HYPRE Boomerang \citep{hypre} multigrid implementation.
-%% 	\item LU: the MUMPS \citep{MUMPS:1, MUMPS:2} lower-upper decomposition direct solver.
-%% \end{enumerate}
-
-
-%% %\hl{4 - globalisation}
-%% A challenge with Newton-type methods, including Jacobian-free versions, is poor convergence when far from the true solution, and divergence is often a real possibility.
-%% Globalisation refers to steering an initial solution towards the quadratic convergence range of the Newton method.
-%% Several strategies are possible, and it is common to combine approaches \cite{Knoll2004}.
-%% In the current work, a line search procedure is used to select the $s$ parameter in the solution update step (the second line in Equations \ref{eq:NewtonRaphson}).
-%% Line search methods assume the Newton update direction is correct and aim to find a scalar $s > 0$ that decreases the residual $\bb{R}(\bb{u}_k + s \delta \bb{u}) < \bb{R}(\bb{u}_k)$.
-%% %The scalar $s$ is typically $\leq 1$, but extrapolation ($>1$) is also possible for accelerating convergence, albeit at the expense of robustness.
-%% In addition to a line search approach, a \emph{transient continuation} globalisation approach is used in the current work, where the displacement $\bb{u}_P$ for cell $P$ at time $t + \Delta t$ is predicted at the start of a new time (or loading) step, based on a truncated second-order Taylor series expansion:
-%% \begin{eqnarray} \label{eq:predictor}
-%% %	\bb{u}^{[t+\Delta t]} = \bb{u}^{[t]} + \Delta t \left(\frac{\partial \bb{u}}{\partial t}\right)^{[t]} + \frac{1}{2} \Delta t^2 \left( \frac{\partial^2 \bb{u}}{\partial t^2} \right)^{[t]}
-%% 	\bb{u}^{[t+\Delta t]}_P = \bb{u}^{[t]}_P + \Delta t \, \bb{v}^{[t]}_P + \frac{1}{2} \Delta t^2 \left( \frac{\partial \bb{v}}{\partial t} \right)^{[t]}_P
-%% \end{eqnarray}
-%% where $\bb{v}^{[t]}_P$ is the velocity of cell $P$ at time $t$, and $\left( \frac{\partial \bb{v}}{\partial t} \right)^{[t]}_P$ is the acceleration.
-%% %$\left( \frac{\partial^2 \bb{u}}{\partial t^2} \right)_t$ 
-%% In this way, for highly nonlinear problems, the user can decrease the time step size $\Delta t$ as a globalisation approach to improve the performance of the Newton method.
-%% The predictor step in Equation \ref{eq:predictor} has been chosen to be consistent with the discretisation of the inertia term (Equation \ref{eq:inertia2}).
-
-
-%% %\hl{5 - oversolving}
-%% %Comment on over-solving => also applies to the segregated system.
-%% %This could be a parameter we look at.
-%% A final comment on the Jacobian-free Newton-Krylov solution algorithm is the potential importance of \emph{oversolving}.
-%% Here, oversolving refers to solving the linear system to a tolerance that is too tight during the early Newton iterations, essentially wasting time when the solution is far from the true solution.
-%% In addition, some authors %\cite{See164_and_176_in_Knoll2004}
-%% \cite{Knoll2004} have shown Newton convergence to be worse when the earlier iterations are solved to too tight a tolerance.
-%% The concept of oversolving also applies to segregated solution procedures and has been well-known since the early work of Demird\v{z}i\'{c} and co-workers \cite{Demirdzic1995}, where the residuals are typically reduced by one order of magnitude in the inner linear system.
-%% %The optimal choice of residual reduction for a Jacobian-free Newton-Krylov finite volume solid mechanics procedure is explored in Section \ref{sec:test_cases}. \hl{Check: do we examine this?}
-%% In the current work, the residual is reduced by a factor of 0.9 in the segregated approach and by three orders in the Jacobian-free Newton-Krylov approach.
-%% %\hl{Try for EW plastic: $-snes_ksp_ew -snes_ksp_ew_version 2 -snes_ksp_ew_rtol0 1e-4$}
-
-%% %Knoll2004:
-%% %The forcing term and the issue of ‘‘oversolving’’ a Newton step has recently gained interest [164,176]. The concept of ‘‘oversolving’’ implies that at early Newton iterations c is too small. Then one may obtain an accurate linear solution to an inaccurate Newton correction. This may result in a poor Newton update and degradation in the Newton convergence. In [164,176] it has been demonstrated that in some situations the Newton convergence may actually suffer if c is too small in early Newton iterations.
-
-
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% \subsection{Checking Convergence}
-%% %%--------------------------------------------------------------------------------------------------------------------%%
-%% The current work adopts three checks for determining whether convergence has been achieved within each time (or loading) step, closely following the default strategy in the PETSc toolbox:
-%% \begin{itemize}
-%%     \item Norm of the residual $|\bb{R}(\bb{u})|$:
-%%     \begin{itemize}
-%%         \item \emph{Absolute}: Convergence is declared when $|\bb{R}(\bb{u})|$ falls below an absolute tolerance $a_{\text{tol}}$, taken here as $1\times 10^{-50}$. This acts as a failsafe in situations where the \emph{relative} criterion (below) is ineffective because the initial solution already nearly satisfies the governing equation.
-%%         \item \emph{Relative}: Convergence is declared when $|\bb{R}(\bb{u})|$ falls below $r_{\text{tol}} \times |\bb{R}(\bb{u}_0)|$, with $|\bb{R}(\bb{u}_0)|$ denoting the residual norm at the start of the time (or loading) step. In this work, $r_{\text{tol}} = 10^{-6}$.
-%%     \end{itemize}
-%%     \item Norm of the solution correction $|\delta \bb{u}|$: Convergence is declared when the norm of the change in the solution between successive iterations is less than $s_{\text{tol}} \times |\bb{u}|$.
-%% \end{itemize}
-
-%% Although applying the same tolerances for the segregated and Jacobian-free Newton-Krylov solution procedures may seem reasonable, care must be taken with $s_{\text{tol}}$. The Jacobian-free Newton-Krylov method typically makes a small number of large corrections to the solution, whereas the segregated procedure often makes a large number of small corrections. Consequently, if the same $s_{\text{tol}}$ value were used, the segregated procedure might be declared convergent prematurely. To avoid this, $s_{\text{tol}}$ is set to zero in the present work, meaning convergence is based solely on residual reduction. Nonetheless, setting $s_{\text{tol}} > 0$ could yield a more robust procedure capable of handling potential stalling.
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions} \label{sec:conclusion}
@@ -2163,94 +1380,24 @@ Consequently, the displacement and velocity at the two previous time steps must 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\section{Body Force for the Method of Manufactured Solutions Case} 
-\label{app:mms}
+\section{List of things to check/discuss/improve in the paper} 
+\label{app:time}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-The body force for the manufactured solution case is \citep{Mazzanti2024}:
-\begin{align}
-\bb{f}_b = 
-    \begin{pmatrix}
-    \lambda
-    \left[
-        8 a_y \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
-        \quad + 4 a_z \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \\
-        \quad \left. - 16 a_x \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
-    \right] \\
-    + \mu
-    \left[
-        8 a_y \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
-        \quad + 4 a_z \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \\
-        \quad \left. - 5 a_x \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
-    \right] \\
-    - 32 a_x \mu_ \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
-    \\
-    \lambda
-    \left[
-        8 a_x \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
-        \quad + 2 a_z \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
-        \quad \left. - 4 a_y \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
-    \right] \\
-    + \mu
-    \left[
-        8 a_x \pi^2 \cos(4\pi x) \cos(2\pi y) \sin(\pi z) \right. \\
-        \quad + 2 a_z \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
-        \quad \left. - 17 a_y \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
-    \right] \\
-    - 8 a_y \mu_ \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
-    \\
-    \lambda
-    \left[
-        4 a_x \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \right. \\
-        \quad + 2 a_y \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
-        \quad \left. - a_z \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
-    \right] \\
-    + \mu
-    \left[
-        4 a_x \pi^2 \cos(4\pi x) \cos(\pi z) \sin(2\pi y) \right. \\
-        \quad + 2 a_y \pi^2 \cos(2\pi y) \cos(\pi z) \sin(4\pi x) \\
-        \quad \left. - 20 a_z \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
-    \right] \\
-    - 2 a_z \mu_ \pi^2 \sin(4\pi x) \sin(2\pi y) \sin(\pi z)
-    \end{pmatrix}
-\end{align}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Meshes Used with the Method of Manufactured Solutions}
-\label{app:meshes}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\begin{figure}[htbp]
-%	\centering
-%	\subfigure[Regular tetrahedral mesh with $4\,374$ cells]
-%	{
-%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_tet}  
-%   	}
-%	\subfigure[Regular polyhedral mesh with $1\,000$ cells]
-%	{
-%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_poly}  
-%   	}
-%	\subfigure[Regular hexahedral mesh with $1\,000$ cells]
-%	{
-%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_hex}  
-%   	}
-%	\subfigure[Distorted hexahedral mesh with $1\,000$ cells]
-%	{
-%   		\includegraphics[width=0.45\textwidth]{figures/mms_mesh_hex_distorted}  
-%   	}
-%	\caption{Meshes used in the method of manufactured solutions case}
-%	\label{fig:mms_all}
-%\end{figure}
-
-
-
-
-
+\begin{itemize}
+\item[•] The number of integration points is mentioned in section 5, maybe we should mention that before that section?
+\item[•] Only for quadrature point sum i'm using different notation, i should use $q \in \mathcal{N}_q$ or something like that. Also in that case it make sense to describe what is going into $q \in \mathcal{N}_q$ and how weights are scaled? Now i explain this only by text.
+\item[•] High-order derivatives appendix is not going into details how product $d : \nabla \nabla \bb{u}$ and $d :: \nabla \nabla \nabla \bb{u}$ is calculated.
+\item[•] Time scheme is mentioned in dynamic example and not before in text.
+\item[•] add that alpha is used in ucns3
+\end{itemize}
+%
+%
 \end{appendices}
-
-
-\bibliography{bibliography}% common bib file
-
-
+%
+%
+\bibliography{bibliography}
+%
+%
 \end{document}
