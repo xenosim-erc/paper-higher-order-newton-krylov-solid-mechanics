@@ -487,6 +487,7 @@ Following these studies, the shape parameter $k = 6$ is adopted herein for both 
 %
 %------------------------------------------------------------------------------
 \subsubsection{Interpolation Stencil}
+\label{sec:stencil}
 %------------------------------------------------------------------------------
 %
 The minimum stencil size $|\mathcal{S}|_{\text{min}}$ is determined by the dimension of the polynomial basis and the interpolation order, i.e. $|\mathcal{S}|_{\text{min}} = N_t$:
@@ -546,12 +547,12 @@ At displacement boundaries, the prescribed displacement is enforced in a weak se
 This is achieved by extending the stencil of each boundary quadrature point with an additional ghost point, collocated with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$. 
 The inclusion of this ghost point effectively augments the reconstruction matrices $\mathbf{W}$ and $\mathbf{Q}$. 
 Since the Taylor expansion in Equation \eqref{eq:te} is centred at the same location, the associated polynomial basis vector simplifies to
-$\mathbf{q}^{\mathrm{T}} = [1,\,0,\,0,\,0,\,\dots]$, and its weight in $\mathbf{W}$ is typically set to unity.
+$\mathbf{q}^{\mathrm{T}} = [1,\,0,\,0,\,\dots,\, 0]$, and its weight in $\mathbf{W}$ is typically set to unity.
 Increasing this weight enhances the local satisfaction of the prescribed displacement but does not affect the overall convergence rate.
 
 At symmetry boundaries, the entire interior stencil is reflected across the symmetry plane. The polynomial basis vectors for these mirrored points are computed using their reflected coordinates. This approach guarantees enforcement of symmetry constraints; zero tangential component of boundary traction $(\mathbf{I}-2\bb{n}_b\otimes\bb{n}_b)\cdot \bb{T}_{b,q}= 0$, and zero normal component of displacement $\bb{n}_b \cdot \bb{u}_b = 0$.
  
-Achieving high-order convergence near boundaries requires careful attention to geometric representation. When curved surfaces are approximated by planar faces, the resulting geometric discretisation is second-order accurate, which inherently limits the overall convergence rate of the method. High-order accuracy can be recovered either by introducing isoparametric boundary representations or by maintaining flat faces while introducing some sort of correction \cite{Ref19, Ref20}. Curved boundary treatment within has not yet been tackled in literature (for finite volume solid mechanics) and is therefore left for future work, as it presents a challenging problem deserving dedicated study.
+Achieving high-order convergence near boundaries requires careful attention to geometric representation. When curved surfaces are approximated by planar faces, the resulting geometric discretisation is second-order accurate, which inherently limits the overall convergence rate of the method. High-order accuracy can be recovered either by introducing isoparametric boundary representations or by maintaining flat faces while introducing some sort of correction \cite{Ref19, Ref20}. Curved boundary treatment has not yet been tackled in literature (for finite volume solid mechanics) and is therefore left for future work, as it presents a challenging problem deserving dedicated study.
 %
 %------------------------------------------------------------------------------
 \subsubsection{Computing Gradients}
@@ -705,27 +706,45 @@ An extended discussion with additional implementation details is provided in the
 %321 model problems in 2-D with known exact solutions, and the specific exact solutions for
 %322 the single-variable model problems examined are presented in Appendix B. The schemes
 %323 are also tested using the supersonic vortex problem discussed earlier.
-Dati napomenu zasto su neki cejsecvi izvrceni sa puno mreza, citirati zadnji niskihavin rad gdje se jasno vide oscilacije \cite{Nishikawa2025a}.
-Do koje tocnosti se rjesavalo.
 
-alpha = 0.1 stabilizacija.
+The performance of the proposed high-order solver is verified using several benchmark cases.
+These are employed to assess both the solution accuracy and the formal order of convergence, and to provide a direct comparison against a standard second-order discretisation.
+The comparison is evaluated in terms of solution accuracy, computational cost (CPU time), and memory requirements.
+In addition, the influence of the stabilisation factor, different choices of preconditioning matrices, and other numerical aspects of the method are examined.
 
-root mean square error
+The benchmark cases are carefully selected to cover a broad range of features, including both two- and three-dimensional problems, small- and large-strain regimes,
+and various material models.
+The convergence behaviour is studied on a fine-grained sequence of mesh refinements to detect potential oscillatory convergence trends, which may arise in high-order finite-volume formulations \cite{Nishikawa2025a}.
+
+In all simulations, the convergence criterion corresponds to a three-order-of-magnitude reduction in the residual, and a line-search procedure is employed to stabilise the solution update \cite{Cardiff2025}.
+The number of quadrature points per tetrahedral, triangular, or line element is kept to the minimum required for exact integration of the underlying polynomial stress distribution.
+For example, triangular elements with $p=1$ and $p=2$ reconstructions require one integration point, whereas $p=3$ uses three.
+The interpolation stencil size for all cases is used as specified in Section \ref{sec:stencil}.
+%
+%------------------------------------------------------------------------------
+\subsection{Testing the Accuracy and Order of Accuracy}
+\label{case:mms}
+%------------------------------------------------------------------------------
+%
+This section presents all benchmark cases considered in the paper.
+The accuracy and convergence behaviour of the method are evaluated for interpolation orders $p = 1$, $p = 2$, and $p = 3$.
+For cases where an analytical solution is available, the solution error is quantified using the $L_2$ and $L_\infty$ norms,
+where the $L_2$ norm represents the root mean square error:
 \begin{equation}
 L_2 = \frac{1}{N_{\text{c}}}\sum_{i=1}^{N_{\text{c}}} |\Delta \phi_i|,
 \end{equation}
-and infinity norm representing the maximum absolute error
+and $L_\infty$ is infinity norm representing the maximum absolute error:
 \begin{equation}
 L_{\inf} = \max_{1 \leq i \leq N_{\text{c}}} |\Delta \phi_i|,
 \end{equation}
-where $\Delta \phi_i$ is the difference between expected and predicted solutions and $N_{\text{c}}$ is the overall number of computational points, i.e. cells.
+where $\Delta \phi_i$ is the difference between expected and predicted solutions at computational point and $N_{\text{c}}$ is the overall number of computational points, i.e. cells.
 Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x^2+u_y^2+u_z^2}$ and von Mises stress:
 \begin{equation}
-\sigma_{ekv}=\sqrt{\frac{1}{2}\left[  (\sigma_{xx}-\sigma_{yy})^2+(\sigma_{yy}-\sigma_{zz})^2+(\sigma_{zz}-\sigma_{xx})^2 \right]+3\left(\sigma_{xy}^2+\sigma_{yz}^2+\sigma_{zx}^2\right)}
+\sigma_{ekv}=\sqrt{\frac{1}{2}\left[  (\sigma_{xx}-\sigma_{yy})^2+(\sigma_{yy}-\sigma_{zz})^2+(\sigma_{zz}-\sigma_{xx})^2 \right]+3\left(\sigma_{xy}^2+\sigma_{yz}^2+\sigma_{zx}^2\right)}.
 \end{equation}
 %
 %------------------------------------------------------------------------------
-\subsection{Case 1: Order Verification via the Manufactured Solution Procedure}
+\subsubsection{Case 1: Order Verification via the Manufactured Solution Procedure}
 \label{case:mms}
 %------------------------------------------------------------------------------
 %
@@ -859,7 +878,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
  \end{figure}
 %
 %------------------------------------------------------------------------------
-\subsection{Case 2: Cantilever beam}
+\subsubsection{Case 2: Cantilever beam}
 %------------------------------------------------------------------------------
 %
 The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
@@ -917,7 +936,7 @@ The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimension
  	\label{fig:uu}
  \end{figure}
 
-\subsection{Case 3: Internally pressurised thick-walled cylinder}
+\subsubsection{Case 3: Internally pressurised thick-walled cylinder}
 
 In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner radius $R_i = 7$ m, outer radius $R_o = 18.625$ m, and loaded internally with pressure $p = 100$ MPa is analysed. Two types of material are considered:
 \begin{itemize}
@@ -964,9 +983,9 @@ The problem is considered plane stress, with the 2-D computational domain compri
  	\label{fig:plateHole-disp}
  \end{figure}
 
-\subsection{Case 4: Cooks membrane}
+\subsubsection{Case 4: Cooks membrane}
 
-\subsection{Case 4: Plate hole}
+\subsubsection{Case 4: Plate hole}
 % Case can be also found in:
 % Finite volume method for stress analysis in complex domain
 % Application of the nite volume method and unstructured meshes to linear elasticity
@@ -1030,12 +1049,13 @@ Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This resu
  
  
  
-\subsection{Case 5: Elliptic plate}
-\subsection{Case 6: Spherical cavity}
-\subsection{Case 7: Idealised ventricle}
+\subsubsection{Case 5: Elliptic plate}
+\subsubsection{Case 6: Spherical cavity}
+\subsubsection{Case 7: Idealised ventricle}
 
 \subsection{Error-cost relationship}
 
+An additional clarification regarding the notation used in the next sections is needed. The abbreviations are as follows: “$S4F^{seg}$” stands for solids4foam segregated solver whereas “$S4F^{snes}$” is the same solver with JFNK algorithm. Both solvers are second-order accurate, meaning that their accuracy is comparable with high-order discretisation with p=1.
 \subsection{Stabilisation scheme effects}
 
 \subsection{Effects of poor interpolation conditioning}
