@@ -736,7 +736,6 @@ A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is empl
 	\end{pmatrix}
 \end{eqnarray}
 \item[•] \textbf{3D - polynomial}
-
 \begin{eqnarray}
 	\bb{u} =
 	\begin{pmatrix}
@@ -759,107 +758,138 @@ where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
 \end{itemize}
 The Cartesian coordinates are given by $x$, $y$ and $z$.
 The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in \citep{Cardiff2025} or obtained by manufactured solution procedure.
-
+%
 \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
  	{
  	    \begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_hex_struct}
-  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_hex_struct-mesh}}
     	\end{overpic}
     }
  	\subfigure[Tetrahedral structured mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-tet_struct}
-  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_struct-mesh}}
     	\end{overpic}
     }
     \subfigure[Tetrahedral unstructured mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-tet_unstruct_v2}
-  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_unstruct_v2-mesh}}
     	\end{overpic}
     }
     \subfigure[Polyhedral structured mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-poly_struct}
-  			\put(50,13){\includegraphics[scale=0.017]{figures/mms_2D_dispErrors_hex_struct-mesh}}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_poly_struct-mesh}}
     	\end{overpic}
     }
  	\caption{Manufactured solution cube (2D case): error convergence for displacement magnitude.}
- 	\label{fig:mms2dDisp}
+ 	\label{fig:mms2D-disp}
  \end{figure}
- 
- 
+ % line width 2, Ambient 0.15. mesh number 6 is shown at diagrams
+ %
+ %
+ %
+ \begin{figure}[H]
+ 	\centering
+	\subfigure[Hexahedral mesh]
+ 	{
+ 	    \begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_hex_struct}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_hex_struct-mesh}}
+    	\end{overpic}
+    }
+ 	\subfigure[Tetrahedral structured mesh]
+ 	{
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_ho-tet_struct}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_struct-mesh}}
+    	\end{overpic}
+    }
+    \subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_ho-tet_unstruct_v2}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_unstruct_v2-mesh}}
+    	\end{overpic}
+    }
+    \subfigure[Polyhedral structured mesh]
+ 	{
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_ho-poly_struct}
+  			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_poly_struct-mesh}}
+    	\end{overpic}
+    }
+ 	\caption{Manufactured solution cube (2D case): error convergence for stress magnitude.}
+ 	\label{fig:mms2D-stress}
+ \end{figure}
+% 
+%
+% 
+%
 \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
  	{
- 		\label{fig:mms_solution}
-    		\includegraphics[scale=0.8]{figures/mms/2D/mms_stressErrors_ho-hex} 
+ 	    \begin{overpic}[scale=0.8]{figures/mms_3D_dispErrors_hex_struct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_hex_struct-mesh}}
+    	\end{overpic}
     }
  	\subfigure[Tetrahedral structured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/2D/mms_stressErrors_ho-tet-struct}  
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_3D_dispErrors_ho-tet_struct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_tet_struct-mesh}}
+    	\end{overpic}
     }
-    	\subfigure[Tetrahedral unstructured mesh]
+    \subfigure[Tetrahedral unstructured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/2D/mms_stressErrors_ho-tet-unstruct}  
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_3D_dispErrors_ho-tet_unstruct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_tet_unstruct_v2-mesh}}
+    	\end{overpic}
     }
- 	\caption{Manufactured solution cube (2D case): error convergence for stress magnitude}
- 	\label{fig:jj}
+    \subfigure[Polyhedral structured mesh]
+ 	{
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_3D_dispErrors_ho-poly_struct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_poly_struct-mesh}}
+    	\end{overpic}
+    }
+ 	\caption{Manufactured solution cube (3D case): error convergence for displacement magnitude.}
+ 	\label{fig:mms3D-disp}
  \end{figure}
-  
-
-\begin{figure}[H]
+%
+%
+%
+%
+ \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
  	{
- 		\label{fig:mms_solution}
-    		\includegraphics[scale=0.8]{figures/mms/3D/mms_dispErrors_ho-hex} 
+ 	    \begin{overpic}[scale=0.8]{figures/mms_3D_stressErrors_hex_struct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_hex_struct-mesh}}
+    	\end{overpic}
     }
  	\subfigure[Tetrahedral structured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/3D/mms_dispErrors_ho-tet-struct}  
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_3D_stressErrors_ho-tet_struct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_tet_struct-mesh}}
+    	\end{overpic}
     }
-     	\subfigure[Tetrahedral unstructured mesh]
+    \subfigure[Tetrahedral unstructured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/3D/mms_dispErrors_ho-tet-unstruct}  
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_3D_stressErrors_ho-tet_unstruct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_tet_unstruct_v2-mesh}}
+    	\end{overpic}
     }
-    \subfigure[Polyhedral mesh]
+    \subfigure[Polyhedral structured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/3D/mms_dispErrors_ho-poly}  
+ 	 	\begin{overpic}[scale=0.8]{figures/mms_3D_stressErrors_ho-poly_struct}
+  			\put(48,13){\includegraphics[scale=0.017]{figures/mms_3D_poly_struct-mesh}}
+    	\end{overpic}
     }
- 	\caption{Manufactured solution cube (3D case): error convergence for displacement magnitude}
- 	\label{fig:jj}
- \end{figure}
- 
- 
-\begin{figure}[H]
- 	\centering
-	\subfigure[Hexahedral mesh]
- 	{
- 		\label{fig:mms_solution}
-    		\includegraphics[scale=0.8]{figures/mms/3D/mms_stressErrors_ho-hex} 
-    }
- 	\subfigure[Tetrahedral structured mesh]
- 	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/3D/mms_stressErrors_ho-tet-struct}  
-    }
-    \subfigure[Polyhedral mesh]
- 	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/mms/3D/mms_stressErrors_ho-poly}  
-    }
- 	\caption{Manufactured solution cube (3D case): error convergence for stress magnitude}
- 	\label{fig:jj}
- \end{figure}
+ 	\caption{Manufactured solution cube (3D case): error convergence for stress magnitude.}
+ 	\label{fig:mms3D-stress}
+\end{figure}
+%
+%
+%
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 2: Cantilever beam}
