@@ -5,7 +5,7 @@
 %%\documentclass[sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
 %%\documentclass[sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
 %%\documentclass[sn-vancouver,Numbered]{sn-jnl}% Vancouver Reference Style
-%%\documentclass[sn-apa]{sn-jnl}% APA Reference Style 
+%%\documentclass[sn-apa]{sn-jnl}% APA Reference Style
 %%\documentclass[sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
 %%\documentclass[default]{sn-jnl}% Default
 %%\documentclass[default,iicol]{sn-jnl}% Default with double column layout
@@ -123,6 +123,7 @@ The implementations are openly released in the solids4foam toolbox for OpenFOAM,
 %Paper outline:
 %
 %Intro
+\textcolor{red}{Dodaj onaj clanak sa isogeometric}
 Potential structure of this section:
 
 	1.	Higher-order discretisation in computational solid mechanics remains relatively underexplored compared to fluid dynamics, despite its potential for improving accuracy and efficiency. Comment on 'why' we should care about higher order: potentially cheaper to achieve the same mesh error; potential to reduce the amount of data when running large models on HPC systems (where data is the bottleneck).
@@ -132,7 +133,7 @@ Potential structure of this section:
 	3.	The solution strategy is a crucial factor: segregated iterative solvers remain the standard in finite-volume solid mechanics but often suffer from slow convergence and limited robustness, and they are efficient for higher orders, as shown by Demirdzic.
 	Jacobian-free Newton–Krylov (JFNK) methods have emerged as a promising alternative, avoiding the need for explicit Jacobian construction while enabling quadratic convergence through Krylov subspace acceleration.
 	In addition, the JFNK approach is well-suited for integration into existing segregated frameworks.
-	Until the recent introduction of the Jacobian-free Newton–Krylov (JFNK) algorithm as an option for finite volume solid mechanics solvers, 
+	Until the recent introduction of the Jacobian-free Newton–Krylov (JFNK) algorithm as an option for finite volume solid mechanics solvers,
 the most common solution strategy was based on the segregated approach, which may be interpreted as a quasi-Newton method.
 Alternatively, some studies employed the Newton method for both linear material behaviour (special case of the Newton procedure) and for nonlinear materials.
 The primary barrier to the wider adoption of full Newton methods has been the complexity of the required linearization.
@@ -146,13 +147,13 @@ The present work addresses this critical limitation by adopting the JFNK algorit
 	5.	We demonstrate that the proposed approach significantly improves accuracy while retaining computational efficiency, and we show that compact-stencil Jacobians remain effective as preconditioners in the higher-order setting.
 
 	6.	The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on higher-order cell-centred finite-volume methods for solids, and to explore the synergy between such methods and Jacobian-free Newton–Krylov solution strategies.
-	
+
 	7. pokazano je da se moze splitat surface topologija cv-a na surface
-	
+
 	8. nemamo proracunske tocke na rubu
-	
+
 	9. dodali smo stabilizaciju i pokazali da je nuzna
-	
+
 	10. SA JFNK ne moramo konstruirati matricu sto moze biti vremenski zathejno i matematicki zajebano isto
 	skica molekule na symmetry planeu
 skica molekule na dirichlet boundariu
@@ -166,7 +167,7 @@ expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%      
+%
 \section{Mathematical Model}
 \label{sec:math_model}
 %
@@ -189,7 +190,7 @@ Through Nanson's formula it is possible to relate the first Piola–Kirchhoff st
 %
 \begin{equation} \label{eqn:nanson}
 \bb{P}=J \bb{\sigma} \bb{F}^{-\text{T}},
-\end{equation} 
+\end{equation}
 %
 where $\bb{F}$ is deformation gradient defined as $\textbf{I} + (\bb{\nabla}_o \bb{u})^{\text{T}}$ and $J$ is its determinant $J = \text{det}(\bb{F})$.
 \\
@@ -204,19 +205,19 @@ This work also considers linear geometry formulation, i.e. small strain assumpti
 %
 where $\bb{\sigma}_s$ is the engineering (small strain) stress tensor which coincide with Piola stress tensor.
 
-Constitutive relation for Cauchy $\bb{\sigma}$ stress in Equations \ref{eqn:nanson} and \ref{eqn:momentum_lingeom} is given by a chosen mechanical law. 
+Constitutive relation for Cauchy $\bb{\sigma}$ stress in Equations \ref{eqn:nanson} and \ref{eqn:momentum_lingeom} is given by a chosen mechanical law.
 Mechanical laws considered in this work (Hooke's law, St.\,Venant-Kirchhoff, Mooney–Rivlin, neo-Hookean, and Guccione) are briefly outlined in Appendix \ref{app:mechLaws}.
 The governing equations are complemented by boundary conditions, with three types considered here: prescribed displacement, prescribed traction, and symmetry.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%      
+%
 \section{High-order Finite Volume Discretisation}
 \label{sec:math_model}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-In this work, a finite volume discretization is employed to approximate the strong form of the governing equations. 
-The computational points are located at the cell centroids, where the solution is treated as point-valued rather than cell-averaged. 
+In this work, a finite volume discretization is employed to approximate the strong form of the governing equations.
+The computational points are located at the cell centroids, where the solution is treated as point-valued rather than cell-averaged.
 This type of discretization is commonly referred to as the deconvolution finite volume method \cite{Nishikawa2025, Nishikawa2021}.
 %
 %------------------------------------------------------------------------------
@@ -224,13 +225,13 @@ This type of discretization is commonly referred to as the deconvolution finite 
 %------------------------------------------------------------------------------
 %
 The spatial domain is partitioned into a finite set of contiguous convex polyhedral control volumes, each denoted by $P$.
-Representative control volumes in 2D and 3D settings is is shown in Figure \ref{fig:cell}. 
+Representative control volumes in 2D and 3D settings is is shown in Figure \ref{fig:cell}.
 The computational node associated with each cell $P$ is positioned at the cell centroid $\bb{x}_P$, the cell volume is denoted by $\Omega_P$,
 and the centroid of a neighboring control volume is denoted by $N$.
 Each control volume is bounded by a set of polygonal faces, which are categorized as follows:
 \begin{itemize}
 \item[•] Internal faces — shared between adjacent control volumes. The centroid of an internal face is denoted by $f$, its outward unit normal vector by $\bb{n}_f$, and its face area by $\Gamma_f$.
-\item[• ] Boundary faces — located on the boundary of the spatial domain. The centroid of a boundary face is denoted by $b$, its outward unit normal vector by $\bb{n}_b$, and its surface area by $\Gamma_b$. 
+\item[• ] Boundary faces — located on the boundary of the spatial domain. The centroid of a boundary face is denoted by $b$, its outward unit normal vector by $\bb{n}_b$, and its surface area by $\Gamma_b$.
 \end{itemize}
 %
 \begin{figure}[h]
@@ -238,25 +239,25 @@ Each control volume is bounded by a set of polygonal faces, which are categorize
 	\subfigure[Control volume in 2D]
  	{
  		\label{fig:cell2D}
-    	\includegraphics[scale=1]{figures/cv2D} 
+    	\includegraphics[scale=1]{figures/cv2D}
     }
     \quad
  	\subfigure[Control volume in 3D]
  	{
  		\label{fig:cell3D}
-    	\includegraphics[scale=1]{figures/cv3D}  
+    	\includegraphics[scale=1]{figures/cv3D}
     }
  	\caption{Representative convex polyhedral cell $P$ and neighbouring cell $N$. The positions of the face centre $f$ and cell centre $P$ are evaluated as the arithmetic means of their respective nodal coordinates.}
  	\label{fig:cell}
 \end{figure}
 %
-Accurate and robust flux integration is required over these arbitrary polyhedral volumes. 
-To facilitate this, each polygonal face $f$ is subdivided into triangular subfaces, 
+Accurate and robust flux integration is required over these arbitrary polyhedral volumes.
+To facilitate this, each polygonal face $f$ is subdivided into triangular subfaces,
 on which quadrature points $\bb{x}_{fg}$ are defined for numerical flux evaluation.
 The fan triangulation method is adopted for face decomposition to minimise number of integration points.
 %For robustness, centre-point decomposition is used whenever the fan triangulation produces degenerate or near-zero-area triangles.
-Although the computational mesh is always three-dimensional, 
-two-dimensional problems are treated as planar, where the surface integration reduces to line integration along edges, 
+Although the computational mesh is always three-dimensional,
+two-dimensional problems are treated as planar, where the surface integration reduces to line integration along edges,
 therefore, no subdivision is required.
 Each cell volume P is decomposed into tetrahedral
 (in 3D) or triangular (in 2D) subelements, with volume quadrature points $\mathbf{x}_{\Omega,q}$ defined within each subelement.
@@ -264,8 +265,8 @@ For all geometric entities, Gaussian quadrature rules are employed.
 Specifically, Gauss–Legendre quadrature is used for line integrals,
 Dunavant’s symmetric Gaussian quadrature rules \cite{Dunavant1985} are applied for triangular subelements,
 and Shunn and Ham’s symmetric quadrature rules \cite{Shunn2012} are adopted for volume integration over tetrahedral subelements.
-A key advantage of this geometric framework is its unified treatment of arbitrary polyhedral topologies, all control 
-volumes are handled consistently using the same reconstruction and integration procedures. 
+A key advantage of this geometric framework is its unified treatment of arbitrary polyhedral topologies, all control
+volumes are handled consistently using the same reconstruction and integration procedures.
 
 Before proceeding with the discretization of the volume and surface integrals, we introduce the following sets of cell faces.
 The set of internal faces is denoted by $\mathcal{F}_P^{\text{int}}$, and the set of boundary faces by $\mathcal{F}_P^{\text{bnd}}$.
@@ -283,22 +284,22 @@ The surface integral term is discretised by integrating over quadrature points o
 %
 \begin{equation}\label{eq:divStressDiscret}
 \begin{split}
-&\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_P  
+&\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_P
 =
-\sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f 
-\approx 
+\sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f
+\approx
 \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right]\Gamma_f \\
-& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{b,q} \right]\Gamma_b 
+& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{b,q} \right]\Gamma_b
 + \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}}   \bb{n}_{b} \cdot  \sum_{q=1}^{q=N_{f,q}}\bb{T}_{b,q} \Gamma_b,
 \end{split}
 \end{equation}
 %
-where $\Gamma_P$ indicates the surface of cell $P$, 
+where $\Gamma_P$ indicates the surface of cell $P$,
 vector $\bb{T}_{b,g}$ represents the prescribed traction at the traction boundary quadrature point,
 $N_{f,q}$ is the number of face quadrature points and
 $\alpha_q$ is quadrature weight. Subscript $_{f,q}$ indicates that quantity is calculated at quadrature point location $\bb{x}_{f,q}$.
 For non-triangular faces, face quadrature weights are scaled by the ratio of each triangle’s area to the total face area,
-computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential here, 
+computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential here,
 as inconsistency can degrade overall accuracy.
 
 The stress tensor at a quadrature point $\bb{x}_{f,q}$, denoted $(\bb{\sigma}_s)_{f,q}$, is computed as a function of the displacement gradient according to the adopted mechanical constitutive law.
@@ -338,7 +339,7 @@ To evaluate these integrals over arbitrary polyhedral cells, the control volume 
 Each tetrahedron is formed by connecting the cell centroid P with one of the triangular faces, as illustrated in Figure \ref{fig:volumeTerm}.
 \begin{figure}[h]
  	\centering
-    \includegraphics[scale=1]{figures/volumeTerm} 
+    \includegraphics[scale=1]{figures/volumeTerm}
  	\caption{Volume integration, cell decomposition into tetrahedral elements}
  	\label{fig:volumeTerm}
 \end{figure}
@@ -364,8 +365,8 @@ This damping is introduced in the form of an additional traction term $\bb{t}_s$
 \end{equation}
 %
 where $\alpha$ is scale factor and $\bar{K}$ a stiffness-type parameter that gives the stabilisation an appropriate scale and dimension.
-It is calculated using Lamé parameters $\bar{K} = 2\mu +\lambda$, following previous works \cite{Tukovic2013,Cardiff2017,Cardiff2018} where this value is used for Rhie-Chow stabilisation. 
-The vector $\bb{d}_{PN}$ connects the centroid of cell $P$ with that of its neighboring cell $N$, 
+It is calculated using Lamé parameters $\bar{K} = 2\mu +\lambda$, following previous works \cite{Tukovic2013,Cardiff2017,Cardiff2018} where this value is used for Rhie-Chow stabilisation.
+The vector $\bb{d}_{PN}$ connects the centroid of cell $P$ with that of its neighboring cell $N$,
 while the product $\bb{d}_{PN} \cdot \bb{n}_f$ serves as a skewness measure, increasing the damping on highly skewed cells \cite{Nishikawa2011}.
 The quantities $\bb{u}_{fN}^*$ and $\bb{u}_{fP}^*$ denote the displacements at the face center $f$,
  extrapolated from the cell centers using the derivatives evaluated at $N$ and $P$, respectively:
@@ -380,9 +381,9 @@ The second and third derivatives in Equation \eqref{eq:alphaJump} are employed o
 
 The damping contribution is added to the surface integral in Equation \eqref{eq:divStressDiscret}, for internal faces and boundary faces on which displacement is prescribed:
 \begin{equation}
-\sum_{f \,\in\, \mathcal{F}_P^{\text{int}} \cup \mathcal{F}_P^{\text{disp}}} \bb{t}_s \Gamma_f =  
-\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}}  \alpha \frac{\bar{K}}{|\bb{d}_{PN} \cdot \bb{n}_f|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)\Gamma_f 
-+ 
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}} \cup \mathcal{F}_P^{\text{disp}}} \bb{t}_s \Gamma_f =
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}}  \alpha \frac{\bar{K}}{|\bb{d}_{PN} \cdot \bb{n}_f|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)\Gamma_f
++
 \sum_{b \,\in\, \mathcal{F}_P^{\text{disp}}}  \alpha \frac{\bar{K}}{|\bb{d}_{Pb} \cdot \bb{n}_b|}(\bb{u}_{b}-\bb{u}_{fP}^*)\Gamma_b,
 \end{equation}
 where $\bb{u}_{b}$ is the prescribed displacement and $\bb{d}_{Pb}=\bb{x}_b - \bb{x}_P$. Note that the damping term is integrated using a single quadrature point per face, as there is no requirement for high accuracy in evaluating the stabilization contribution; it is only important that the added term converges with the desired order.
@@ -404,7 +405,7 @@ The same interpolation can be used to evaluate the first and higher-order spatia
 \begin{equation}\label{eq:derInterp}
 \left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}}=\sum_{N \in \mathcal{S}}c_{x_N} \bb{u}_N, \qquad
 \left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}}=\sum_{N \in \mathcal{S}}c_{y_N} \bb{u}_N, \qquad
-\left(\frac{\partial \bb{u}}{\partial z}\right)_{\tilde{\bb{x}}}=\sum_{N \in \mathcal{S}}c_{z_N} \bb{u}_N, 
+\left(\frac{\partial \bb{u}}{\partial z}\right)_{\tilde{\bb{x}}}=\sum_{N \in \mathcal{S}}c_{z_N} \bb{u}_N,
 \end{equation}
 %
 where $c_{x_N}$, $c_{y_N}$ and $c_{z_N}$ are the interpolation coefficients corresponding to the spatial derivatives in the $x-$, $y-$, and $z-$directions, respectively.
@@ -445,7 +446,7 @@ where
 \begin{split}
 &\mathbf{q}^T(\bb{x}-\tilde{\bb{x}}) = \left[1, (x-\tilde{x}), (y-\tilde{y}), (z-\tilde{z}), \frac{1}{2}(x-\tilde{x})^2, \dots \right],\\
 & \bar{\mathbf{a}}(\tilde{\bb{x}}) = \left[(\bb{u})_{\tilde{\bb{x}}}, \left(\frac{\partial \bb{u}}{\partial x}\right)_{\tilde{\bb{x}}},
- \left(\frac{\partial \bb{u}}{\partial y}\right)_{\tilde{\bb{x}}}, 
+ \left(\frac{\partial \bb{u}}{\partial y}\right)_{\tilde{\bb{x}}},
  \left(\frac{\partial \bb{u}}{\partial z}\right)_{\tilde{\bb{x}}},
  \left(\frac{\partial^2 \bb{u}}{\partial x^2}\right)_{\tilde{\bb{x}}},
  \dots  \right].
@@ -468,12 +469,12 @@ where $\mathbf{M}(\tilde{\bb{x}})=\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\b
 Defining $\mathbf{A}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})$, the system becomes:
 %
 \begin{equation}\label{eq:lsA}
-\mathbf{\bar{a}}(\tilde{\bb{x}}) = \mathbf{\bar{A}}(\tilde{\bb{x}})\mathbf{u}, 
+\mathbf{\bar{a}}(\tilde{\bb{x}}) = \mathbf{\bar{A}}(\tilde{\bb{x}})\mathbf{u},
 \end{equation}
 %
-The rows of $\bar{\mathbf{A}}$ correspond to the interpolation coefficients used in 
-Eqs.~\eqref{eq:interp} and \eqref{eq:derInterp}.  
-The inversion of $\bar{\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.  
+The rows of $\bar{\mathbf{A}}$ correspond to the interpolation coefficients used in
+Eqs.~\eqref{eq:interp} and \eqref{eq:derInterp}.
+The inversion of $\bar{\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.
 This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}$ to positive values, and employing a QR factorization via Householder transformations \cite{strang2012}, see \cite{Castrillo2022, Castrillo2023}.
 %
 
@@ -482,8 +483,8 @@ The weight function in Equation \eqref{eq:ls} is radially symmetric exponential 
 \begin{equation}\label{eq:weightFunc}
 w_N = \dfrac{e^{-\tilde{d}^2k^2}-e^{-k^2}}{1-e^{-k^2}},
 \end{equation}
-where $d=|\bb{\tilde{x}}-\bb{x}_N|$, $d_s=2r_s$ is the stencil diameter, $\tilde{d}=d/d_s$ and $r_s$ is the stencil radius, defined as the maximum distance $|\bb{\tilde{x}}-\bb{x}_N|$ in stencil $\mathcal{S}$. The weighting function in Equation \eqref{eq:weightFunc} has been previously used in the context of the Navier–Stokes equations 
-\cite{Khelladi2011, Ramirez2014} and solid mechanics problems \cite{Castrillo2022, Castrillo2023, Castrillo2024}.  
+where $d=|\bb{\tilde{x}}-\bb{x}_N|$, $d_s=2r_s$ is the stencil diameter, $\tilde{d}=d/d_s$ and $r_s$ is the stencil radius, defined as the maximum distance $|\bb{\tilde{x}}-\bb{x}_N|$ in stencil $\mathcal{S}$. The weighting function in Equation \eqref{eq:weightFunc} has been previously used in the context of the Navier–Stokes equations
+\cite{Khelladi2011, Ramirez2014} and solid mechanics problems \cite{Castrillo2022, Castrillo2023, Castrillo2024}.
 Following these studies, the shape parameter $k = 6$ is adopted herein for both 2D and 3D cases, as it was shown to provide optimal performance \cite{Castrillo2022, Castrillo2023, Castrillo2024}.
 %
 %------------------------------------------------------------------------------
@@ -494,7 +495,7 @@ Following these studies, the shape parameter $k = 6$ is adopted herein for both 
 The minimum stencil size $|\mathcal{S}|_{\text{min}}$ is determined by the dimension of the polynomial basis and the interpolation order, i.e. $|\mathcal{S}|_{\text{min}} = N_t$:
 \begin{equation}
 \begin{split}
-\text{for 2D:}\quad & |\mathcal{S}|_{\text{min}} = \frac{(p+1)(p+2)}{2}, \\ 
+\text{for 2D:}\quad & |\mathcal{S}|_{\text{min}} = \frac{(p+1)(p+2)}{2}, \\
 \text{for 3D:}\quad & |\mathcal{S}|_{\text{min}} =\frac{(p+1)(p+2)(p+3)}{6}.
 \end{split}
 \end{equation}
@@ -523,13 +524,13 @@ Alternative stencil construction strategies that account for the local cell dist
 	\subfigure[Stencil $\mathcal{S}_f$ for internal face $f$ quadrature  \newline  points $\bb{x}_{f,q}$]
  	{
  		\label{fig:faceStencil}
-    	\includegraphics[scale=1]{figures/faceStencil} 
+    	\includegraphics[scale=1]{figures/faceStencil}
     }\hspace*{-0.1cm}
  	\subfigure[Stencil for boundary face $b$ quadrature points $\bb{x}_{b,q}$ in the case of \newline
  	displacement $\mathcal{S}^{\text{disp}}_b$ and symmetry $\mathcal{S}^{\text{symm}}_b$ boundary type. ]
  	{
  		\label{fig:faceBoundaryStencil}
-    	\includegraphics[scale=1]{figures/stencilSymm}  
+    	\includegraphics[scale=1]{figures/stencilSymm}
     }
  	\caption{Interpolation stencils for internal $f$ and boundary $b$ face quadrature points, $\bb{x}_{f,q}$ and $\bb{x}_{b,q}$, respectively.}
  	\label{fig:stencil}
@@ -541,18 +542,18 @@ Alternative stencil construction strategies that account for the local cell dist
 \label{sec:bc}
 %------------------------------------------------------------------------------
 %
-Boundary conditions are imposed through modifications of the local polynomial reconstruction, except for traction boundaries, 
-where the known tractions at the quadrature points are directly integrated and added to the surface term in Equation \eqref{eq:divStressDiscret}. 
+Boundary conditions are imposed through modifications of the local polynomial reconstruction, except for traction boundaries,
+where the known tractions at the quadrature points are directly integrated and added to the surface term in Equation \eqref{eq:divStressDiscret}.
 
 At displacement boundaries, the prescribed displacement is enforced in a weak sense by introducing a penalty contribution into the polynomial reconstruction.
-This is achieved by extending the stencil of each boundary quadrature point with an additional ghost point, collocated with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$. 
-The inclusion of this ghost point effectively augments the reconstruction matrices $\mathbf{W}$ and $\mathbf{Q}$. 
+This is achieved by extending the stencil of each boundary quadrature point with an additional ghost point, collocated with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$.
+The inclusion of this ghost point effectively augments the reconstruction matrices $\mathbf{W}$ and $\mathbf{Q}$.
 Since the Taylor expansion in Equation \eqref{eq:te} is centred at the same location, the associated polynomial basis vector simplifies to
 $\mathbf{q}^{\mathrm{T}} = [1,\,0,\,0,\,\dots,\, 0]$, and its weight in $\mathbf{W}$ is typically set to unity.
 Increasing this weight enhances the local satisfaction of the prescribed displacement but does not affect the overall convergence rate.
 
 At symmetry boundaries, the entire interior stencil is reflected across the symmetry plane. The polynomial basis vectors for these mirrored points are computed using their reflected coordinates. This approach guarantees enforcement of symmetry constraints; zero tangential component of boundary traction $(\mathbf{I}-2\bb{n}_b\otimes\bb{n}_b)\cdot \bb{T}_{b,q}= 0$, and zero normal component of displacement $\bb{n}_b \cdot \bb{u}_b = 0$.
- 
+
 Achieving high-order convergence near boundaries requires careful attention to geometric representation. When curved surfaces are approximated by planar faces, the resulting geometric discretisation is second-order accurate, which inherently limits the overall convergence rate of the method. High-order accuracy can be recovered either by introducing isoparametric boundary representations or by maintaining flat faces while introducing some sort of correction \cite{Ref19, Ref20}. Curved boundary treatment has not yet been tackled in literature (for finite volume solid mechanics) and is therefore left for future work, as it presents a challenging problem deserving dedicated study.
 %
 %------------------------------------------------------------------------------
@@ -560,7 +561,7 @@ Achieving high-order convergence near boundaries requires careful attention to g
 \label{sec:grad}
 %------------------------------------------------------------------------------
 %
-For all quadrature points on internal faces, Equation \eqref{eq:lsA} is evaluated, 
+For all quadrature points on internal faces, Equation \eqref{eq:lsA} is evaluated,
 and the interpolation coefficients obtained from the matrix $\mathbf{\bar{A}}$ are stored for use in computing the displacement gradient:
 %
 \begin{equation}\label{eq:faceQuadGrad}
@@ -574,33 +575,33 @@ The same procedure is applied at displacement boundaries using the stencil $\mat
 (\nabla \bb{u})_{b,q} = \left(\sum_{N \,\in\,  \mathcal{S}_b^{\text{disp}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N \right)+ \bb{c}_{\bb{b}_N} \otimes \bb{u}_{b,q},
 \end{equation}
 %
-where $\bb{u}_{b,q}$ is prescribed displacement at boundary quadrature point. Coefficient vector $\bb{c}_{\bb{b}_N}$ is extracted from corresponding location from the same matrix $\mathbf{\bar{A}}$ as for $\bb{c}_{\bb{x}_N}$ coefficients.  
-For symmetry boundary, the contribution of the mirrored (ghost) points is also included, giving: 
+where $\bb{u}_{b,q}$ is prescribed displacement at boundary quadrature point. Coefficient vector $\bb{c}_{\bb{b}_N}$ is extracted from corresponding location from the same matrix $\mathbf{\bar{A}}$ as for $\bb{c}_{\bb{x}_N}$ coefficients.
+For symmetry boundary, the contribution of the mirrored (ghost) points is also included, giving:
 %
 \begin{equation}
-(\nabla \bb{u})_{b,q} = 
-\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm,p}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N + 
+(\nabla \bb{u})_{b,q} =
+\sum_{N \,\in\,  \mathcal{S}_b^{\text{symm,p}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N +
 \sum_{N \,\in\,  \mathcal{S}_b^{\text{symm,g}}}  \bb{c}_{\bb{x}_N} \otimes ( \bb{R}_b \cdot \bb{u}_N),
 \end{equation}
 %
-where $ \bb{R}_b = (\mathbf{I}-2\bb{n}_b \otimes \bb{n}_b)$ is reflection tensor \cite{Demirdzic2022}. 
+where $ \bb{R}_b = (\mathbf{I}-2\bb{n}_b \otimes \bb{n}_b)$ is reflection tensor \cite{Demirdzic2022}.
 Note that only first derivatives are stored at face quadrature points, as higher derivatives are not required by the constitutive equations.
-In the present solution procedure, the displacements $\bb{u}_N$ are known, making the gradient evaluation straightforward. 
+In the present solution procedure, the displacements $\bb{u}_N$ are known, making the gradient evaluation straightforward.
 However, if $\bb{u}_N$ are treated as unknowns, the interpolation coefficients must be incorporated into the left-hand-side system matrix, as shown in \cite{Castrillo2022,Castrillo2024} and Appendix \ref{app:P}.
 
-The stabilization scheme requires the evaluation of first- and higher-order derivatives at cell centres when computing Equation \eqref{eq:alphaJump}. 
-For this purpose, each cell is associated with a stencil $\mathcal{S}_P$, constructed in the same manner as the face stencil. 
+The stabilization scheme requires the evaluation of first- and higher-order derivatives at cell centres when computing Equation \eqref{eq:alphaJump}.
+For this purpose, each cell is associated with a stencil $\mathcal{S}_P$, constructed in the same manner as the face stencil.
 At each cell centre, the gradient is computed according to Equation \eqref{eq:faceQuadGrad}, while the Hessian is evaluated for $p = 2$, and the third-order derivative tensor for $p = 3$.
 The formulation and computation of the Hessian and the third-order derivative tensor are described in Appendix \ref{app:derivatives}.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%      
+%
 \section{Solution Algorithm}
 \label{sec:math_model}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-The nonlinear system arising from the finite volume discretization is solved using the Jacobian-free Newton–Krylov (JFNK) algorithm. 
+The nonlinear system arising from the finite volume discretization is solved using the Jacobian-free Newton–Krylov (JFNK) algorithm.
 The subsequent subsection describes the numerical formulation and implementation aspects of this approach.
 %
 %------------------------------------------------------------------------------
@@ -624,10 +625,10 @@ For the implicit discretisation of momentum balance, residual vector is the func
 The residual can be approximated using first-order Taylor expansion about current point $k$:
 %
 \begin{equation}
- 	\bb{R}(\bb{u}_{k+1}) \approx \bb{R}(\bb{u}_{k}) \;+\;  \bb{R}'(\bb{u}_{k}) (\bb{u}_{k+1} - \bb{u}_{k}), 
+ 	\bb{R}(\bb{u}_{k+1}) \approx \bb{R}(\bb{u}_{k}) \;+\;  \bb{R}'(\bb{u}_{k}) (\bb{u}_{k+1} - \bb{u}_{k}),
 \end{equation}
 %
-where $\bb{R}'$ is the Jacobian matrix $\bb{J}\equiv\bb{R}'\equiv\partial \bb{R} / \partial \bb{u}$. 
+where $\bb{R}'$ is the Jacobian matrix $\bb{J}\equiv\bb{R}'\equiv\partial \bb{R} / \partial \bb{u}$.
 Imposing $\bb{R}(\bb{u}_{k+1}) = \bb{0}$ yields the standard Newton update equation:
 %
 \begin{equation}
@@ -659,8 +660,8 @@ The approximate Jacobian, for cell $P$, corresponds to the discretised diffusion
  	\bb{P}_P = \oint_{\Gamma_P} \bar{K} \, \bb{n} \cdot \bb{\nabla} \bb{u} \; \text{d}\Gamma_P \approx
  		\sum_{f \in \mathcal{F}^{\text{int}}_P}  \bar{K} &
  		\left|\bb{\Delta}_{f} \right| \frac{ \bb{u}_{N} - \bb{u}_P}{\left|\bb{d}_{PN}\right|}    \Gamma_{f}
- 	+  \sum_{b \in \mathcal{F}^{\text{disp}}_P}  \bar{K} 
- 		\left|\bb{\Delta}_{b} \right| \frac{ \bar{\bb{u}}_{b}  - \bb{u}_P}{\left|\bb{d}_{Pb}\right|} 
+ 	+  \sum_{b \in \mathcal{F}^{\text{disp}}_P}  \bar{K}
+ 		\left|\bb{\Delta}_{b} \right| \frac{ \bar{\bb{u}}_{b}  - \bb{u}_P}{\left|\bb{d}_{Pb}\right|}
  		\left|\bb{\Gamma}_{b}\right|    \\
  	&	+ \sum_{b \in \mathcal{F}^{\text{symm}}_P}  \bar{K}
  		\left|\bb{\Delta}_{b} \right| \frac{ \bb{R}_{b} \cdot \bb{u}_{P} - \bb{u}_P}{\left|\bb{d}_{Pb}\right|} {\Gamma}_{b},
@@ -670,13 +671,13 @@ The approximate Jacobian, for cell $P$, corresponds to the discretised diffusion
 where $\bb{\Delta}_{f}=\bb{d_{PN}}/(\bb{d}_{PN} \cdot \bb{n}_f)$ is \emph{over-relaxed orthogonal} vector \cite{Demirdzic2015}.
 Note that the non-orthogonal correction, which is normally required to preserve accuracy when discretising the diffusion term on skewed meshes, is omitted here.
 Including it would enlarge the stencil (molecule) and compromise the compactness achieved with the central-difference approximation.
-As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself. 
+As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed primarily by the residual evaluation itself.
 
 For the JFNK solver, the PETSc library (version 3.22.2) \cite{PETSc} is used, where the interfaces for evaluating the approximate Jacobian (matrix $\bb{P}$) and the high-order residual ($\boldsymbol{R}(\bb{u})$) are implemented within the \texttt{solids4foam} toolbox \cite{Cardiff2018, Tukovic2018, Cardiff2025a}, which is built on OpenFOAM-v2312 \cite{Weller1998}.
 An extended discussion with additional implementation details is provided in the authors’ previous work \cite{Cardiff2025}, where the JFNK solver is coupled with a second-order residual evaluation.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%        
+%
 \section{Test Cases}
 \label{sec:test_cases}
 %
@@ -695,6 +696,14 @@ In all simulations, the convergence criterion corresponds to a three-order-of-ma
 The number of quadrature points per tetrahedral, triangular, or line element is kept to the minimum required for exact integration of the stress distribution.
 For example, triangular elements with $p=1$ and $p=2$ reconstructions require one integration point, whereas $p=3$ uses three.
 The interpolation stencil size for all cases is used as specified in Section \ref{sec:stencil}.
+%
+% Aim of each test case
+%
+% MMS 3D - to show convergence behaviour
+% MMS 2D - to show behavior in 2D, p=2 behaves like p=1 also in 2D
+%
+% Cantilever - 1. machine precistion reached if underlying solution is of same order as interpolation function. 
+%              2. shear locking effect
 %
 %------------------------------------------------------------------------------
 \subsection{Testing the Accuracy and Order of Accuracy}
@@ -726,7 +735,7 @@ Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x
 The first test case consists of a  $0.2 \times 0.2$ m square or $0.2 \times 0.2 \times 0.2$ m cube with linear elastic ($E = 200$ GPa, $\nu = 0.3$) properties.
 A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is employed in the form or polynomial, trigonometric \citep{Mazzanti2024} or mixed form \citep{Castrillo2022}:
 \begin{itemize}
-\item[•] \textbf{2D} 
+\item[•] \textbf{2D}
 \begin{eqnarray}
 	\bb{u} =
 	\begin{pmatrix}
@@ -735,23 +744,13 @@ A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is empl
  0.
 	\end{pmatrix}
 \end{eqnarray}
-\item[•] \textbf{3D - polynomial}
-\begin{eqnarray}
-	\bb{u} =
-	\begin{pmatrix}
-	a_x(x^3 + xy^2) \\
-	a_y(y^3 + yz^2) \\
-	a_z(z^3 + zx^2)
-	\end{pmatrix}
-\end{eqnarray}
-where $a_x = 1\,\mu$m, $a_y = 1\,\mu$m, and $a_z = 1\,\mu$m.
-\item[•] \textbf{3D - trigonometric}
+\item[•] \textbf{3D}
  \begin{eqnarray}
 	\bb{u} =
 	\begin{pmatrix}
 	a_x \sin(4\pi x) \sin(2\pi y) \sin(\pi z) \\
 	a_y \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) \\
-	a_z \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z) 
+	a_z \sin(4 \pi x) \sin(2 \pi y) \sin(\pi z)
 	\end{pmatrix}
 \end{eqnarray}
 where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
@@ -821,9 +820,9 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
  	\caption{Manufactured solution cube (2D case): error convergence for stress magnitude.}
  	\label{fig:mms2D-stress}
  \end{figure}
-% 
 %
-% 
+%
+%
 %
 \begin{figure}[H]
  	\centering
@@ -895,60 +894,66 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
 \subsubsection{Case 2: Cantilever beam}
 %------------------------------------------------------------------------------
 %
-The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
-%TO DO:
-% - segregated solutions
-% - Geometry and boundary conditions image
-% - mesh images
+The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
+%
 %
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.7\textwidth]{figures/cantilever/cantilever.png} 
-	\caption{Cantilever beam case: geometry and boundary conditions}
+	\subfigure[Case geometry and boundary conditions]
+ 	{
+ 		\label{fig:cantilever-dispErrors-tetstruct}
+    	\includegraphics[scale=1]{figures/cantilever-geometry}
+    }
+    \subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:cantilever-dispErrors-tetunstruct}
+        \includegraphics[scale=0.1]{figures/cantilever_tet-struct-mesh}
+    }
+    \subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:cantilever-dispErrors-tetunstruct}
+        \includegraphics[scale=0.1]{figures/cantilever_tet-unstruct-mesh}
+    }  
 	\label{fig:cantilever}
+	\caption{Cantilever beam case: case geometry, boundary conditions and the coarsest mesh used.}
 \end{figure}
-
+%
+%
+%
+%
 \begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral mesh]
- 	{
- 		\label{fig:mms_solution}
-    		\includegraphics[scale=0.8]{figures/cantilever/dispErrors_hex} 
-    }
  	\subfigure[Tetrahedral structured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/cantilever/dispErrors_tet-struct}  
-    	}
-    	\subfigure[Tetrahedral unstructured mesh]
- 	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/cantilever/dispErrors_tet-unstruct}  
+ 		\label{fig:cantilever-dispErrors-tetstruct}
+    	\includegraphics[scale=0.8]{figures/cantilever_dispErrors_tet-struct}
     }
- 	\caption{Cantilever beam case: displacement magnitude discretisation errors}
- 	\label{fig:jj}
+    \subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:cantilever-dispErrors-tetunstruct}
+        \includegraphics[scale=0.8]{figures/cantilever_dispErrors_tet-unstruct}
+    }
+ 	\caption{Cantilever beam case: displacement magnitude discretisation errors.}
+ 		\label{fig:cantilever-dispErrors-tetstruct}
  \end{figure}
-
+%
+%
 \begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral mesh]
- 	{
- 		\label{fig:mms_solution}
-    		\includegraphics[scale=0.8]{figures/cantilever/stressErrors_hex} 
-    }
  	\subfigure[Tetrahedral structured mesh]
  	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/cantilever/stressErrors_tet-struct}  
-    	}
-    	\subfigure[Tetrahedral unstructured mesh]
- 	{
- 		\label{fig:mms_mesh}
-    		\includegraphics[scale=0.8]{figures/cantilever/stressErrors_tet-unstruct}  
+ 		\label{fig:cantilever-stressErrors-tetstruct}
+    	\includegraphics[scale=0.8]{figures/cantilever_stressErrors_tet-struct}
     }
- 	\caption{Cantilever beam case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors. Results for $N=3$ are not shown because stress error is around $\sim$ $10^{-12}$}
- 	\label{fig:uu}
+    \subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:cantilever-stressErrors-tetstruct}
+    	\includegraphics[scale=0.8]{figures/cantilver_stressErrors_tet-unstruct}
+    }
+ 	\caption{Cantilever beam case: error convergence for stress magnitude. Results for $p=3$ are omitted for brevity, i.e. stress error for $p=3$ is below $\sim$ $10^{-6}$ MPa.}
+ 	\label{fig:cantilever-stressErrors-tetstruct}
  \end{figure}
+ %
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 3: Internally pressurised thick-walled cylinder}
@@ -958,7 +963,7 @@ In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner
 \begin{itemize}
 \item[i.] Small strain, linear-elastic \cite{Bijelonja2006}: $E=10$ GPa, $\nu=0.3$.
 \item[ii.] Finite strain, Mooney-Rivlin law \cite{Bijelonja2005a}: $c_{10} = 80$ MPa, $c_{01} = 20$ MPa, and $c_{11} = 0.0$ MPa and Poisson's ratio $\nu=0.49$
-\end{itemize} 
+\end{itemize}
 The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of unstructured tetrahedral grids. Gravitational and inertial effects are neglected. Linear elastic case is solved using one loading increment while hyperelastic case is solved using 100 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.
 
 %Pogledaj reference sve jesu li dobre, Green1992 je u bijelonji starija knjiha, vidi da li ima jos ovaj cejs.
@@ -971,12 +976,12 @@ The problem is considered plane stress, with the 2-D computational domain compri
  	\subfigure[Case geometry]
  	{
  		\label{fig:plateHole:a}
-    		\includegraphics[scale=1]{figures/pressurisedCylinder-geometry} 
+    		\includegraphics[scale=1]{figures/pressurisedCylinder-geometry}
     }
 	\subfigure[Tetrahedral mesh]
  	{
  		\label{fig:plateHole:b}
-    		\includegraphics[scale=0.053]{figures/pressurisedCylinder-mesh} 
+    		\includegraphics[scale=0.053]{figures/pressurisedCylinder-mesh}
     }
  	\caption{Plate hole case geometry and mesh}
  	\label{fig:plateHole}
@@ -988,12 +993,12 @@ The problem is considered plane stress, with the 2-D computational domain compri
 	\subfigure[Displacement convergence]
  	{
  		\label{fig:plateHole-disp:a}
-    	\includegraphics[scale=0.8]{figures/pressurisedCylinder-dispErrors_tet} 
+    	\includegraphics[scale=0.8]{figures/pressurisedCylinder-dispErrors_tet}
     }
  	\subfigure[Stress convergence]
  	{
  		\label{fig:plateHole-disp:b}
-    	\includegraphics[scale=0.8]{figures/pressurisedCylinder-stressErrors_tet}  
+    	\includegraphics[scale=0.8]{figures/pressurisedCylinder-stressErrors_tet}
     }
  	\caption{Pressurised cylinder case: displacement and stress magnitude discretisation errors for linear elastic material}
  	\label{fig:plateHole-disp}
@@ -1022,17 +1027,17 @@ This benchmark problem consists of a thin, infinitely large plate with a circula
  	\subfigure[Case geometry]
  	{
  		\label{fig:plateHole:a}
-    		\includegraphics[scale=1]{figures/plateHole-geometry} 
+    		\includegraphics[scale=1]{figures/plateHole-geometry}
     }
 	\subfigure[Hexahedral mesh]
  	{
  		\label{fig:plateHole:b}
-    		\includegraphics[scale=0.06]{figures/plateHole-hexmesh} 
+    		\includegraphics[scale=0.06]{figures/plateHole-hexmesh}
     }
  	\subfigure[Tetrahedral mesh]
  	{
  		\label{fig:plateHole:a}
-    	\includegraphics[scale=0.06]{figures/plateHole-tetmesh}  
+    	\includegraphics[scale=0.06]{figures/plateHole-tetmesh}
     }
  	\caption{Plate hole case geometry and mesh}
  	\label{fig:plateHole}
@@ -1045,34 +1050,34 @@ Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This resu
 	\subfigure[Hexahedral mesh]
  	{
  		\label{fig:plateHole-disp:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_hex} 
+    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_hex}
     }
  	\subfigure[Tetrahedral mesh]
  	{
  		\label{fig:plateHole-disp:b}
-    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_tet-unstruct}  
+    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_tet-unstruct}
     }
  	\caption{Plate hole case: displacement magnitude discretisation errors}
  	\label{fig:plateHole-disp}
  \end{figure}
- 
+
 \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
  	{
  		\label{fig:plateHole-stress:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_hex} 
+    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_hex}
     }
  	\subfigure[Tetrahedral mesh]
  	{
  		\label{fig:plateHole-stress:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_tet-unstruct}  
+    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_tet-unstruct}
    	}
  	\caption{Plate hole case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors.}
  	\label{fig:plateHole-stress}
  \end{figure}
- 
- 
+
+
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 5: Elliptic plate}
@@ -1131,13 +1136,13 @@ Plate hole sa hex mrezom tu staviti i objasniti sto se desava u 2D-u sa kondicij
 
 %% 	\item \textbf{Additional memory overhead}: The Jacobian-free Newton-Krylov approach has been shown to have approximately the same memory requirements as a segregated solution algorithm for less than $10^4$ degrees of freedom, but generally increases beyond this.
 %% 	The greatest memory increase was found to be 3.6 and occured in the spherical cavity case. Nonetheless, these differences are likely attributed to the different linear solver and preconditioner used in the Jacobian-free Newton-Krylov approach (GMRESS with multigrid or LU decomposition) compared to the segregated approach (conjugate gradient with zero in-fill Cholesky decomposition).
-	
+
 %% 	\item \textbf{Applicability to existing segregated frameworks}: By employing a compact-stencil diffusion approximation of the Jacobian as the preconditioner, the proposed Jacobian-free Newton-Krylov approach can be integrated into existing segregated finite volume frameworks with minimal modifications to the existing code base, in particular if existing publicly available Jacobian-free Newton-Krylov solvers (e.g., PETSc) are used.
 
 %% %	\item \textbf{Benchmark performance}: On a range of benchmark cases, the method maintained accuracy and robustness across different dimensions, geometries, and material behaviours, proving its versatility.
 
 %% 	\item \textbf{Choice of preconditioning approach}: It has been shown that the LU direct solver preconditioning approach is faster than multigrid and ILU($k$) approaches for 2-D cases and moderately-sized 3-D problems; however, for larger 3-D problems the multigrid approach is the fastest while also requiring less memory than the direct LU approach. In addition, the multigrid approach is seen to show approximate ideal scaling in a parallel strong scaling study.
-	
+
 %% 	\item \textbf{Rhie-Chow stabilisation}: The magnitude of the Rhie-Chow stabilisation term is shown to affect the speed and robustness of the Jacobian-free Newton-Krylov approach, where $\alpha = 0.1$ and $1$ are seen to outperform $\alpha = 0.01$.
 
 %% 	\item \textbf{Open access and extensibility}: The implementation is made publicly available within the solids4foam toolbox for OpenFOAM to encourage implementation critique, community adoption, and comparative studies, contributing to advancing finite volume solid mechanics simulations.
@@ -1267,7 +1272,7 @@ The \citet{Guccione1995} hyperelastic law defines the second Piola-Kirchhoff str
 \begin{eqnarray}
 	\boldsymbol{S}
 		%&=&  \frac{\partial \Psi}{\partial \boldsymbol{E} } \notag \\
-		&=& \frac{\partial Q}{\partial \boldsymbol{E} } \left( \frac{C}{2} \right) e^Q + \frac{\kappa}{2} \frac{J^2 - 1}{J} \textbf{I} 
+		&=& \frac{\partial Q}{\partial \boldsymbol{E} } \left( \frac{C}{2} \right) e^Q + \frac{\kappa}{2} \frac{J^2 - 1}{J} \textbf{I}
 \end{eqnarray}
 where
 \begin{eqnarray}
@@ -1283,7 +1288,7 @@ The scalars $C$, $c_f$, $c_{fs}$, and $c_t$ are material parameters and invarian
 \begin{eqnarray}
 	I_1 = \text{tr}(\boldsymbol{E}), \quad
 	I_2 =  \frac{1}{2} \left[ \text{tr}^2(\boldsymbol{E}) - \text{tr}(\boldsymbol{E} \cdot \boldsymbol{E}) \right], \notag \\
-	I_4 = \boldsymbol{E}  : \left( \boldsymbol{f_0} \otimes \boldsymbol{f_0} \right), \quad 
+	I_4 = \boldsymbol{E}  : \left( \boldsymbol{f_0} \otimes \boldsymbol{f_0} \right), \quad
 	I_5 = \left( \boldsymbol{E} \cdot \boldsymbol{E} \right): \left( \boldsymbol{f_0} \otimes \boldsymbol{f_0} \right)
 \end{eqnarray}
 with $\boldsymbol{f_0}$ representing the unit fibre directions in the initial configuration.
@@ -1298,19 +1303,19 @@ Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress t
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\section{Preconditioner Based on True Jacobian} 
+\section{Preconditioner Based on True Jacobian}
 \label{app:P}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 
 \begin{equation}
-\begin{split} 
-& \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
+\begin{split}
+& \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
 = \\
 =&
 \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}\right) \right]\Gamma_f \\
-=& 
+=&
 \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I} \bb{u}_N  + \mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\bb{n}_f^T) \bb{u}_N +\lambda  \sum_{N\,\in\,\mathcal{S}_f}(\bb{n}_f \bb{c}_{x_N}^T) \bb{u}_N\right) \right]\Gamma_f
 \end{split}
 \end{equation}
@@ -1320,19 +1325,19 @@ Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress t
 
 \begin{equation}
 \begin{split}
-&\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_P  
+&\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_P
 =
-\sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f 
-\approx 
+\sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f
+\approx
 \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right]\Gamma_f \\
-& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{b,q} \right]\Gamma_b 
+& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{b,q} \right]\Gamma_b
 + \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}}   \bb{n}_{b} \cdot  \sum_{q=1}^{q=N_{f,q}}\bb{T}_{b,q} \Gamma_b,
 \end{split}
 \end{equation}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\section{High-order Derivatives} 
+\section{High-order Derivatives}
 \label{app:derivatives}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1368,7 +1373,7 @@ For $p = 3$, the third-order derivative tensor $(\nabla \nabla \nabla u)_P$ for 
 = \sum_{N \in \mathcal{S}_P} \mathbf{c}_{\bb{x}\bb{x}\bb{x}_N} u_N,
 \label{eq:thirdTensor}
 \end{equation}
-where $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N}$ is a symmetric third-order coefficient tensor $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N} =\big[c_{xxx_N},c_{xxy_N},c_{xxz_N},c_{xyy_N},c_{xyz_N},c_{xzz_N},c_{yyy_N},c_{yyz_N},c_{yzz_N},c_{zzz_N}\big]^{\mathrm{T}}$ 
+where $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N}$ is a symmetric third-order coefficient tensor $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N} =\big[c_{xxx_N},c_{xxy_N},c_{xxz_N},c_{xyy_N},c_{xyz_N},c_{xzz_N},c_{yyy_N},c_{yyz_N},c_{yzz_N},c_{zzz_N}\big]^{\mathrm{T}}$
 derived from the rows of the reconstruction matrix $\mathbf{\bar{A}}$.
 
 To mitigate ill-conditioning in the reconstruction procedure, the polynomial basis $\mathbf{q}$ in Equation \eqref{eq:qAnda} is scaled using the characteristic stencil size $h = 2r_s$:
@@ -1380,7 +1385,7 @@ Accordingly, the monomials and their corresponding coefficients in Equations \eq
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\section{Time integration scheme} 
+\section{Time integration scheme}
 \label{app:time}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1389,11 +1394,11 @@ For the unsteady problem considered in this study, the second-order backward dif
 %
 \begin{equation} \label{eq:inertia2}. 	\left(\dfrac{\partial^2 \boldsymbol{u}_P}{\partial t^2}\right)_P
  	\approx
- 	\dfrac{3\boldsymbol{v}_P^{[t+1]} - 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t} 
+ 	\dfrac{3\boldsymbol{v}_P^{[t+1]} - 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t}
  	\approx
- 	\frac{3\left( 
- 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t} 
- 		\right) 
+ 	\frac{3\left(
+ 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t}
+ 		\right)
  	- 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t}
 \end{equation}
 %
@@ -1410,7 +1415,7 @@ Consequently, the displacement and velocity at the two previous time steps must 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\section{List of things to check/discuss/improve in the paper} 
+\section{List of things to check/discuss/improve in the paper}
 \label{app:time}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
