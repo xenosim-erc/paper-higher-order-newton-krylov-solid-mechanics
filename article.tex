@@ -981,7 +981,7 @@ The problem is considered plane stress, with the 2-D computational domain compri
  		\label{fig:pressurisedCylinder:b}
     		\includegraphics[scale=0.052]{figures/pressurisedCylinder-mesh}
     }
- 	\caption{Pressurised cylinder: case geometry and the coarsest mesh.}
+ 	\caption{Pressurised cylinder case: geometry and the coarsest mesh.}
  	\label{fig:pressurisedCylinder}
 \end{figure}
 %
@@ -1004,16 +1004,61 @@ The problem is considered plane stress, with the 2-D computational domain compri
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 4: Cooks membrane}
+\subsubsection{Case 4: Cook's membrane}
 %------------------------------------------------------------------------------
 %
-
-\begin{itemize}
-\item tekst
-\item slika geometrija
-\item desno od slike deformirana geometrija
-\item konvergencija za finite and small strain tip
-\end{itemize}
+The Cook’s membrane configuration (Figure \ref{fig:CooksMembrane}) is a classic benchmark problem dominated by bending effects.
+It consists of a two-dimensional trapezoidal panel (plane-strain condition) that is fully constrained along its left edge and loaded by a uniform shear traction applied to the right edge.
+%The coordinates of the four vertices of the trapezoid, given in millimetres, are $(0,0)$, $(48,44)$, $(48,60)$, and $(0,44)$.
+In this study, two variants of the problem are analysed:
+\vspace{0.5em}
+\begin{enumerate}[label=\roman*.]
+\item Small-strain, linear elastic \cite{Zienkiewicz2000,Simplas}: $E = 70$ MPa, $\nu = 1/3$, and $\tau = 6.25$ kPa.
+\item Finite-strain, neo-Hookean hyperelastic \cite{Pelteret2018}: $E = 1.0985$ MPa, $\nu = 0.3$, and $\tau = 62.5$ kPa.
+\end{enumerate}
+\vspace{0.5em}
+\noindent
+where $E$ denotes Young’s modulus, $\nu$ the Poisson ratio, and $\tau$ is the imposed shear traction.
+The analysis is performed as quasi-static without body forces.
+The linear case is solved in a single step, whereas the hyperelastic case is solved using 30 uniform load increments.
+To validate the results, Figure \ref{fig:CooksMembrane-tipConvergence} plots the vertical displacement of a key reference point against the average cell width, comparing the predictions to literature data and Abaqus (C3D8 element) results. 
+The location of this reference point differs by analysis type: it is the top-right corner (48, 60) mm for the elastic case but the midpoint of the loaded edge (48, 52) mm for the hyperelastic case.
+%
+%
+\begin{figure}[H]
+ 	\centering
+ 	\subfigure[Case geometry and dimensions (in mm)]
+ 	{
+ 		\label{fig:CooksMembrane:a}
+    	\includegraphics[scale=1]{figures/CooksMembrane-geometry}
+    }
+    \qquad
+	\subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:CooksMembrane:b}
+    	\includegraphics[scale=0.06]{figures/CooksMembrane-mesh}
+    }
+ 	\caption{Cook's membrane case: geometry and the coarsest mesh.}
+ 	\label{fig:CooksMembrane}
+\end{figure}
+%
+%
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Linear elastic case]
+ 	{
+ 		\label{fig:CooksMembrane-tip:a}
+    	\includegraphics[scale=0.8]{figures/CooksMembrane-tet-neoHookeanTipDispConvergence}
+    }
+ 	\subfigure[Hyperelastic case]
+ 	{
+ 		\label{fig:CooksMembrane-tip:b}
+    	\includegraphics[scale=0.8]{figures/CooksMembrane-tet-neoHookeanTipDispConvergence}
+    }
+ 	\caption{Cook’s membrane vertical displacement predictions at the reference point as a function of the average cell width. Comparisons are given with the results from the literature  \cite{Zienkiewicz2000, Simplas, Pelteret2018}}
+ 	\label{fig:CooksMembrane-tipConvergence}
+ \end{figure}
+%
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 4: Plate hole}
@@ -1032,28 +1077,27 @@ This benchmark problem consists of a thin, infinitely large plate with a circula
  		\label{fig:plateHole:a}
     		\includegraphics[scale=1]{figures/plateHole-geometry}
     }
-	\subfigure[Hexahedral mesh]
+	\subfigure[Tetrahedral structured mesh]
  	{
  		\label{fig:plateHole:b}
-    		\includegraphics[scale=0.06]{figures/plateHole-hexmesh}
+    		\includegraphics[scale=0.0534]{figures/plateHole-tet-struct-mesh}
     }
- 	\subfigure[Tetrahedral mesh]
+ 	\subfigure[Tetrahedral unstructured mesh]
  	{
  		\label{fig:plateHole:a}
-    	\includegraphics[scale=0.06]{figures/plateHole-tetmesh}
+    	\includegraphics[scale=0.052]{figures/plateHole-tet-unstruct-mesh}
     }
  	\caption{Plate hole case geometry and mesh}
  	\label{fig:plateHole}
 \end{figure}
-%
-Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This results in lower slope for displacement but not affecting the stresses. I'm not sure why S4F results flatten on finer meshes.
+%.
 %
 \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
  	{
  		\label{fig:plateHole-disp:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_hex}
+    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_tet-unstruct}
     }
  	\subfigure[Tetrahedral mesh]
  	{
@@ -1069,7 +1113,7 @@ Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This resu
 	\subfigure[Hexahedral mesh]
  	{
  		\label{fig:plateHole-stress:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_hex}
+    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_tet-unstruct}
     }
  	\subfigure[Tetrahedral mesh]
  	{
@@ -1108,21 +1152,41 @@ An additional clarification regarding the notation used in the next sections is 
 % napomenut da se konstruiraju interpolacije, ako je isplativo za jedan korak to je pouzdan znak da je motodologija primjenjiva na update lagrangian pristup
 % opisat da se puno vremena trosi na racuanje koeficijenata
 % ovo je samo okvirna procjena jer se radi o akademskim implementacijama
+
+MMS case is one iteration + volume source term. 
+Hex from S4F have good timings becouse it is showing "overconvergence" on such regular grids
 \begin{figure}[H]
  	\centering
-	\subfigure[3D MMS case, hexahedral structured mesh]
+	\subfigure[Displacement error]
  	{
  		\label{fig:error-time:a}
-    	\includegraphics[scale=0.8]{figures/mms_3D_efficiency_hex_struct}
+    	\includegraphics[scale=0.8]{figures/mms_3D_dispEfficiency_hex_struct}
     }
- 	\subfigure[3D MMS case, tetrahedral unstructured mesh]
+ 	\subfigure[Stress error]
  	{
  		\label{fig:perror-time:b}
-    	\includegraphics[scale=0.8]{figures/mms_3D_efficiency_tet_unstruct}
+    	\includegraphics[scale=0.8]{figures/mms_3D_stressEfficiency_hex_struct}
     }
- 	\caption{Error-time relationship for different cases considered}
- 	\label{fig:error-time}
+ 	\caption{Error-time relationship for 3D MMS case, hexahedral structured mesh}
+ 	\label{fig:error-time-MMS-struct-hex}
  \end{figure}
+ 
+ \begin{figure}[H]
+ 	\centering
+	\subfigure[Displacement error]
+ 	{
+ 		\label{fig:error-time:a}
+    	\includegraphics[scale=0.8]{figures/mms_3D_dispEfficiency_tet_struct}
+    }
+ 	\subfigure[Stress error]
+ 	{
+ 		\label{fig:perror-time:b}
+    	\includegraphics[scale=0.8]{figures/mms_3D_stressEfficiency_tet_struct}
+    }
+ 	\caption{Error-time relationship for 3D MMS case, tetrahedral unstructured mesh}
+ 	\label{fig:error-time-MMS-unstruct-tet}
+ \end{figure}
+ 
 % Slika za spherical cavity (nema MMS)
 % Slika za dynamic case (vremenski)
 % Dvije slike za memoriju koja se koristi
@@ -1137,7 +1201,7 @@ An additional clarification regarding the notation used in the next sections is 
 \subsection{Effects of poor interpolation conditioning}
 %------------------------------------------------------------------------------
 %
-
+%Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This results in lower slope for displacement but not affecting the stresses. I'm not sure why S4F results flatten on finer meshes
 %
 %------------------------------------------------------------------------------
 \subsection{Different choice for approximate Jacobian}
