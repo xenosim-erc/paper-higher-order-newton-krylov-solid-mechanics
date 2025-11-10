@@ -1032,13 +1032,19 @@ The location of this reference point differs by analysis type: it is the top-rig
  		\label{fig:CooksMembrane:a}
     	\includegraphics[scale=1]{figures/CooksMembrane-geometry}
     }
-    \qquad
+    \quad
 	\subfigure[Tetrahedral unstructured mesh]
  	{
  		\label{fig:CooksMembrane:b}
     	\includegraphics[scale=0.06]{figures/CooksMembrane-mesh}
     }
- 	\caption{Cook's membrane case: geometry and the coarsest mesh.}
+    \quad
+    \subfigure[Equivalent (von Mises) stress distribution for hyperelastic case]
+ 	{
+ 		\label{fig:CooksMembrane:b}
+    	\includegraphics[scale=0.35]{figures/cooksMembrane-neoHookean-sigmaEq.pdf}
+    }
+ 	\caption{Cook's membrane case: geometry, the coarsest mesh and deformation in the hyperelastic case.}
  	\label{fig:CooksMembrane}
 \end{figure}
 %
@@ -1048,14 +1054,14 @@ The location of this reference point differs by analysis type: it is the top-rig
 	\subfigure[Linear elastic case]
  	{
  		\label{fig:CooksMembrane-tip:a}
-    	\includegraphics[scale=0.8]{figures/CooksMembrane-tet-neoHookeanTipDispConvergence}
+    	\includegraphics[scale=0.8]{figures/CooksMembrane-tet-hookeanTipDispConvergence}
     }
  	\subfigure[Hyperelastic case]
  	{
  		\label{fig:CooksMembrane-tip:b}
     	\includegraphics[scale=0.8]{figures/CooksMembrane-tet-neoHookeanTipDispConvergence}
     }
- 	\caption{Cook’s membrane vertical displacement predictions at the reference point as a function of the average cell width. Comparisons are given with the results from the literature  \cite{Zienkiewicz2000, Simplas, Pelteret2018}}
+ 	\caption{Cook’s membrane vertical displacement predictions at the reference point as a function of the average cell width. Comparisons are given with the results from the literature  \cite{Zienkiewicz2000, Simplas, Pelteret2018}. Case with $p=1$ is using $n+=7$ instead of 10 get resutls on first mesh.}
  	\label{fig:CooksMembrane-tipConvergence}
  \end{figure}
 %
@@ -1087,7 +1093,7 @@ This benchmark problem consists of a thin, infinitely large plate with a circula
  		\label{fig:plateHole:a}
     	\includegraphics[scale=0.052]{figures/plateHole-tet-unstruct-mesh}
     }
- 	\caption{Plate hole case geometry and mesh}
+ 	\caption{Plate hole case: geometry and mesh}
  	\label{fig:plateHole}
 \end{figure}
 %.
@@ -1107,7 +1113,7 @@ This benchmark problem consists of a thin, infinitely large plate with a circula
  	\caption{Plate hole case: displacement magnitude discretisation errors}
  	\label{fig:plateHole-disp}
  \end{figure}
-
+%
 \begin{figure}[H]
  	\centering
 	\subfigure[Hexahedral mesh]
@@ -1123,8 +1129,8 @@ This benchmark problem consists of a thin, infinitely large plate with a circula
  	\caption{Plate hole case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors.}
  	\label{fig:plateHole-stress}
  \end{figure}
-
-
+%
+%
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 5: Elliptic plate}
