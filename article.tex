@@ -696,6 +696,9 @@ In all simulations, the convergence criterion corresponds to a three-order-of-ma
 The number of quadrature points per tetrahedral, triangular, or line element is kept to the minimum required for exact integration of the stress distribution.
 For example, triangular elements with $p=1$ and $p=2$ reconstructions require one integration point, whereas $p=3$ uses three.
 The interpolation stencil size for all cases is used as specified in Section \ref{sec:stencil}.
+Different mesh types are considered; the open-source mesher Gmsh \cite{geuzaine2009gmsh} was employed to generate tetrahedral meshes. 
+For the structured hexahedral meshes, the native OpenFOAM utilities \texttt{blockMesh} and \texttt{extrudeMesh} were used. 
+Polyhedral meshes were subsequently produced by converting a representative tetrahedral mesh using the \texttt{polyDualMesh} utility, which is also available in OpenFOAM.
 %
 % Aim of each test case
 %
@@ -757,6 +760,7 @@ where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
 \end{itemize}
 The Cartesian coordinates are given by $x$, $y$ and $z$.
 The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in \citep{Cardiff2025} or obtained by manufactured solution procedure.
+\textcolor{red}{velicine mreza}
 %
 \begin{figure}[H]
  	\centering
@@ -894,7 +898,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
 \subsubsection{Case 2: Cantilever beam}
 %------------------------------------------------------------------------------
 %
-The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
+The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.\textcolor{red}{velicine mreza}
 %
 %
 \begin{figure}[H]
@@ -964,7 +968,7 @@ In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner
 \item[i.] Small strain, linear-elastic \cite{Bijelonja2006}: $E=10$ GPa, $\nu=0.3$.
 \item[ii.] Finite strain, Mooney-Rivlin law \cite{Bijelonja2005a}: $c_{10} = 80$ MPa, $c_{01} = 20$ MPa, and $c_{11} = 0.0$ MPa and Poisson's ratio $\nu=0.49$
 \end{itemize}
-The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of unstructured tetrahedral grids. Gravitational and inertial effects are neglected. Linear elastic case is solved using one loading increment while hyperelastic case is solved using 100 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.
+The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of unstructured tetrahedral grids. Gravitational and inertial effects are neglected. Linear elastic case is solved using one loading increment while hyperelastic case is solved using 100 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.\textcolor{red}{velicine mreza}
 %
 %Pogledaj reference sve jesu li dobre, Green1992 je u bijelonji starija knjiha, vidi da li ima jos ovaj cejs.
 %
@@ -980,6 +984,11 @@ The problem is considered plane stress, with the 2-D computational domain compri
  	{
  		\label{fig:pressurisedCylinder:b}
     		\includegraphics[scale=0.052]{figures/pressurisedCylinder-mesh}
+    }
+    \subfigure[Displacement convergence]
+ 	{
+ 		\label{fig:pressurisedCylindere-error:a}
+    	\includegraphics[scale=0.6]{figures/pressurisedCylinder-dispErrors_tet}
     }
  	\caption{Pressurised cylinder case: geometry and the coarsest mesh.}
  	\label{fig:pressurisedCylinder}
@@ -1023,6 +1032,9 @@ The analysis is performed as quasi-static without body forces.
 The linear case is solved in a single step, whereas the hyperelastic case is solved using 30 uniform load increments.
 To validate the results, Figure \ref{fig:CooksMembrane-tipConvergence} plots the vertical displacement of a key reference point against the average cell width, comparing the predictions to literature data and Abaqus (C3D8 element) results. 
 The location of this reference point differs by analysis type: it is the top-right corner (48, 60) mm for the elastic case but the midpoint of the loaded edge (48, 52) mm for the hyperelastic case.
+Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:plateHole:b}), 164, 177, 263, 389, 1457, 5637, 22119 and 88012 cells.
+
+\textcolor{red}{Firs order extrapolation for figure \ref{fig:CooksMembrane:b}}
 %
 %
 \begin{figure}[H]
@@ -1044,7 +1056,7 @@ The location of this reference point differs by analysis type: it is the top-rig
  		\label{fig:CooksMembrane:b}
     	\includegraphics[scale=0.35]{figures/cooksMembrane-neoHookean-sigmaEq.pdf}
     }
- 	\caption{Cook's membrane case: geometry, the coarsest mesh and deformation in the hyperelastic case.}
+ 	\caption{Cook's membrane case: geometry, mesh and deformation in the hyperelastic case.}
  	\label{fig:CooksMembrane}
 \end{figure}
 %
@@ -1075,25 +1087,26 @@ The location of this reference point differs by analysis type: it is the top-rig
 % Application of the nite volume method and unstructured meshes to linear elasticity
 %
 This benchmark problem consists of a thin, infinitely large plate with a circular hole, subjected to uniaxial tension. Owing to the symmetry of the geometry and loading, only one quarter of the plate is modeled as a finite domain. To minimize the influence of the finite computational boundaries, the exact tractions obtained from the analytical solution \cite{Demirdzic1997} are prescribed on the outer edges BC and CD. Symmetry boundary conditions are applied on boundaries AB and DE, while zero traction is specified on the hole boundary. The material properties are defined by a Young’s modulus of $E = 200 \,\text{GPa}$ and a Poisson’s ratio of $\nu = 0.3$.
+Five successively refined tetrahedral meshes are used 978 (Figure \ref{fig:plateHole:b}), 4050, 16296, 64257 and 256512 cells.
 %
 \begin{figure}[H]
  	\centering
  	\subfigure[Case geometry]
  	{
  		\label{fig:plateHole:a}
-    		\includegraphics[scale=1]{figures/plateHole-geometry}
-    }
-	\subfigure[Tetrahedral structured mesh]
- 	{
- 		\label{fig:plateHole:b}
-    		\includegraphics[scale=0.0534]{figures/plateHole-tet-struct-mesh}
+    		\includegraphics[scale=0.95]{figures/plateHole-geometry}
     }
  	\subfigure[Tetrahedral unstructured mesh]
  	{
- 		\label{fig:plateHole:a}
-    	\includegraphics[scale=0.052]{figures/plateHole-tet-unstruct-mesh}
+ 		\label{fig:plateHole:b}
+    	\includegraphics[scale=0.051]{figures/plateHole-tet-unstruct-mesh}
     }
- 	\caption{Plate hole case: geometry and mesh}
+    \subfigure[Von Mises stress distribution]
+ 	{
+ 		\label{fig:plateHole:c}
+    	\includegraphics[scale=0.79]{figures/plateHole-vonMises}
+    }
+ 	\caption{Plate hole case: geometry, mesh and resulting stress distribution}
  	\label{fig:plateHole}
 \end{figure}
 %.
@@ -1103,52 +1116,79 @@ This benchmark problem consists of a thin, infinitely large plate with a circula
 	\subfigure[Hexahedral mesh]
  	{
  		\label{fig:plateHole-disp:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_tet-unstruct}
+    	\includegraphics[scale=0.8]{figures/plateHole_dispErrors_tet-unstruct}
     }
  	\subfigure[Tetrahedral mesh]
  	{
  		\label{fig:plateHole-disp:b}
-    	\includegraphics[scale=0.8]{figures/plateHole-dispErrors_tet-unstruct}
+    	\includegraphics[scale=0.8]{figures/plateHole_stressErrors_tet-unstruct}
     }
- 	\caption{Plate hole case: displacement magnitude discretisation errors}
+ 	\caption{Plate hole case: displacement and stress error convergence}
  	\label{fig:plateHole-disp}
  \end{figure}
 %
+%
+%------------------------------------------------------------------------------
+\subsubsection{Case 5: Spherical Cavity in an Infinite Solid Subjected to Remote Stress}
+%------------------------------------------------------------------------------
+%
+This problem considers a spherical cavity embedded within an infinite and isotropic medium with linear elastic material properties ($E = 200$ GPa, $\nu = 0.3$).
+The solid is subjected to a far-field uniaxial tensile stress of $\sigma_{zz} = T = 1$ MPa, with all other stress components being zero.
+A key feature of this problem is the pronounced stress concentration that forms near the cavity on the plane perpendicular to the applied load; 
+this stress rapidly diminishes further from the cavity. 
+Although the problem is inherently axisymmetric, it is solved here as a 3-D case with a mesh graded towards the cavity.
+The computational domain is taken as one-eighth of a $1 \times 1 \times 1$ m cube aligned with the Cartesian axes, with one corner at the centre of the sphere.
+The analytical tractions are applied to the domain's far boundaries to mitigate the finite geometry effects. 
+The analytical expressions for stress \cite{Southwell1926} and displacement \cite{Goodier1933} can be found in \cite{Cardiff2025}.
+The analysis is performed using six different unstructured tetrahedral meshes with cell counts of 3802, 7030, 14891, 32864, 72945 and 158870, with the coarsest mesh shown in Figure \ref{fig:sphericalCavity:b}.
+%
 \begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral mesh]
+ 	\subfigure[Unstructured tetrahedral mesh]
  	{
- 		\label{fig:plateHole-stress:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_tet-unstruct}
+ 		\label{fig:sphericalCavity:a}
+    	\includegraphics[scale=1]{figures/sphericalCavity-mesh}
     }
- 	\subfigure[Tetrahedral mesh]
+	\subfigure[Von Mises stress distribution]
  	{
- 		\label{fig:plateHole-stress:a}
-    	\includegraphics[scale=0.8]{figures/plateHole-stressErrors_tet-unstruct}
-   	}
- 	\caption{Plate hole case: $\sigma_{xx}$, $\sigma_{yy}$, $\sigma_{xy}$ stress discretisation errors.}
- 	\label{fig:plateHole-stress}
- \end{figure}
+ 		\label{fig:sphericalCavity:b}
+    	\includegraphics[scale=1]{figures/sphericalCavity-vonmises}
+    }
+ 	\caption{Spherical cavity case: geometry, mesh and resulting von Mises stress distribution.}
+ 	\label{fig:sphericalCavity}
+\end{figure}
 %
-%
-%
-%------------------------------------------------------------------------------
-\subsubsection{Case 5: Elliptic plate}
-%------------------------------------------------------------------------------
 %
 
+\begin{figure}[H]
+ 	\centering
+ 	\subfigure[Displacement convergence]
+ 	{
+ 		\label{fig:sphericalCavity:a}
+    	\includegraphics[scale=0.8]{figures/sphericalCavity_dispErrors_tet}
+    }
+	\subfigure[Stress convergence]
+ 	{
+ 		\label{fig:sphericalCavity:b}
+    	\includegraphics[scale=0.8]{figures/sphericalCavity_stressErrors_tet}
+    }
+ 	\caption{Spherical cavity case: displacement and stress error convergence.}
+ 	\label{fig:sphericalCavity}
+\end{figure}
+%
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 6: Spherical cavity}
+\subsubsection{Case 6: Inflation of an Idealised Ventricle}
 %------------------------------------------------------------------------------
 %
-
-%
-%------------------------------------------------------------------------------
-\subsubsection{Case 7: Idealised ventricle}
-%------------------------------------------------------------------------------
-%
-
+This case considers the idealized ventricle inflation benchmark developed by \citet{Land2015} to test cardiac mechanics software. 
+The material is governed by the hyperelastic, transversely isotropic constitutive law from \citet{Guccione1995}. 
+The specific parameters used, $C = 10$ kPa and $c_f = c_t = c_{fs} = 1$, are chosen to produce an isotropic material response.
+The benchmark specifies incompressibility; this is enforced in the current work in a weak sense by setting the bulk modulus ($\kappa = 1000$ kPa) to be two orders of magnitude greater than the shear modulus parameter $C$. 
+The ventricle geometry is defined as a truncated ellipsoid (see \citet{Land2015, Cardiff2025} for geometry definition).
+The base plane is fixed, the internal surface (endocardial surface) has an internal pressure of $10$ kPa,
+while the outer surface is traction-free. 
+The problem is solved quasi-statically using 100 equal increments on a set of four grids: $1\,620$, $12\,960$, $50\,000$, and $103\,680$ cells.
 %
 %------------------------------------------------------------------------------
 \subsection{Error-cost Relationship}
@@ -1208,6 +1248,16 @@ Hex from S4F have good timings becouse it is showing "overconvergence" on such r
 %------------------------------------------------------------------------------
 %
 %Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This results in lower slope for displacement but not affecting the stresses. I'm not sure why S4F results flatten on finer meshes
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Tetrahedral structured mesh]
+ 	{
+ 		\label{fig:plateHole:interp:b}
+    		\includegraphics[scale=0.0534]{figures/plateHole-tet-struct-mesh}
+    }
+ 	\caption{Plate hole case: geometry and mesh}
+ 	\label{fig:plateHole}
+\end{figure}
 %
 %------------------------------------------------------------------------------
 \subsection{Different choice for approximate Jacobian}
