@@ -360,7 +360,7 @@ The most widely used stabilization technique in the finite-volume framework is t
 Since this limits the overall convergence rate to second order, it is not suitable for the present high-order discretisation.
 Instead, we employ an $\alpha$-damping scheme \cite{Nishikawa2010}, which preserves the designed high-order convergence of the method \cite{ Nishikawa2011, Nishikawa2025a}.
 This damping is introduced in the form of an additional traction term $\bb{t}_s$, defined as a function of the solution jump between the values extrapolated from the centroids of the two cells sharing a common face:
-\begin{equation}
+\begin{equation}\label{eq:alpha}
 \bb{t}_s = \alpha \frac{\bar{K}}{|\bb{d}_{PN} \cdot \bb{n}_f|}(\bb{u}_{fN}^*-\bb{u}_{fP}^*)
 \end{equation}
 %
@@ -1080,6 +1080,7 @@ Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:p
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 4: Plate hole}
+\label{sec:plateHole}
 %------------------------------------------------------------------------------
 %
 % Case can be also found in:
@@ -1194,11 +1195,16 @@ The problem is solved quasi-statically using 100 equal increments on a set of fo
 \subsection{Error-cost Relationship}
 %------------------------------------------------------------------------------
 %
+Clock times and memory usage
+(measured with the GNU time utility) were generated using a Mac Studio with an M1 Ultra CPU
+on one core, where the code was built with the Clang compiler (version 16.0.0). Examination of
+multi-CPU-core parallelisation is left to Section
+
 An additional clarification regarding the notation used in the next sections is needed. The abbreviations are as follows: “$S4F^{seg}$” stands for solids4foam segregated solver whereas “$S4F^{snes}$” is the same solver with JFNK algorithm. Both solvers are second-order accurate, meaning that their accuracy is comparable with high-order discretisation with p=1.
 % napomenut da se konstruiraju interpolacije, ako je isplativo za jedan korak to je pouzdan znak da je motodologija primjenjiva na update lagrangian pristup
 % opisat da se puno vremena trosi na racuanje koeficijenata
 % ovo je samo okvirna procjena jer se radi o akademskim implementacijama
-
+they reach the same accuracy under different timings and memory requirements
 MMS case is one iteration + volume source term. 
 Hex from S4F have good timings becouse it is showing "overconvergence" on such regular grids
 \begin{figure}[H]
@@ -1241,22 +1247,96 @@ Hex from S4F have good timings becouse it is showing "overconvergence" on such r
 \subsection{Stabilisation Scheme Effects}
 %------------------------------------------------------------------------------
 %
+This section analyses the effect of the scaling factor, $\alpha$, which is a user-defined parameter in the stabilisation scheme (Equation \eqref{eq:alpha}) used to suppress spurious zero-energy modes. While $\alpha=0.1$ is used as the default value for results in all examples, the investigation here focuses on how a different choice of $\alpha$ impacts solution accuracy and computational timing.
+The effect on timing is indirect: while the damping calculation itself has a constant computational cost, different $\alpha$ values alter the properties of the system matrix by lowering the matrix condition number, making it easier to precondition. 
+This change in system behavior directly affects the linear solver's performance. 
+Accordingly, selecting $\alpha$ involves a balance between introducing numerical dissipation (which impacts accuracy) and maintaining solver efficiency and robustness. 
+To quantify this trade-off, the Method of Manufactured Solutions case (case \ref{case:mms}) is used with structured hexahedral and unstructured tetrahedral meshes.
 
+Four values for the scaling factor, 
+each differing by an order of magnitude, are investigated: $\alpha = 0.001, 0.01, 0.1,$ and $1.0$. 
+Figure \ref{fig:alpha-disp} presents the $L_2$ error norm convergence for displacement, while Figure \ref{fig:alpha-timing} presents computational timings. 
+As expected, different values of $\alpha$ do not affect the convergence order; the exception is for $p=2$, where it forces an earlier transition to second-order. 
+In terms of robustness, $\alpha=0.001$ is too low to stabilise the unstructured mesh, and oscillatory behaviour is obtained. 
+From these diagrams, one can see that $\alpha=0.1$ and $\alpha=0.01$ are the best values in terms of accuracy. However, when looking at Figure \ref{fig:alpha-timing}, 
+it is clear that the recommended value of $\alpha=0.1$ is the optimal choice for efficiency. 
+It should be emphasised that the recommended value, $\alpha=0.1$, is the same as the one for Rhie-Chow stabilisation in standard second-order solvers \cite{Cardiff2025}.
+
+As an alternative to the proposed $\alpha$-stabilisation, a comparable stabilising effect can be achieved by increasing the interpolation stencil and employing more integration points than the minimum required—an approach often referred to as \emph{over-integration} or \emph{antialiasing}. 
+This strategy has been adopted in previous studies \citep{Castrillo2022, Castrillo2024}. 
+However, its main drawbacks are the higher computational cost, arising from both the enlarged stencil and the increased number of integration points. 
+Moreover, while this approach can be effective for structured meshes, 
+its impact is significantly reduced for unstructured meshes, where the present $\alpha$-stabilisation scheme demonstrates clear advantages (see Appendix \ref{app:stabilisation}).
+%
+%
+ \begin{figure}[H]
+ 	\centering
+	\subfigure[Structured hexahedral mesh]
+ 	{
+ 		\label{fig:alpha-disp:a}
+    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_disp_hex_struct}
+    }
+ 	\subfigure[Unstructured tetrahedral mesh]
+ 	{
+ 		\label{fig:alpha-disp:b}
+    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_disp_ho-tet_unstruct}
+    }
+ 	\caption{Convergence of the $L_2$ displacement error norm for case \ref{case:mms} with varying stabilisation parameter: $\alpha = 0.001, 0.01, 0.1,$ and $1.0$.}
+ 	\label{fig:alpha-disp}
+ \end{figure}
+%
+% 
+ \begin{figure}[H]
+ 	\centering
+	\subfigure[Structured hexahedral mesh]
+ 	{
+ 		\label{fig:alpha-timing:a}
+    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_efficiency_hex_struct}
+    }
+ 	\subfigure[Unstructured tetrahedral mesh]
+ 	{
+ 		\label{fig:alpha-timing:b}
+    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_efficiency_tet_unstruct}
+    }
+ 	\caption{$L_2$ displacement error norm versus computational time for case \ref{case:mms}, comparing the effect of $\alpha = 0.001, 0.01, 0.1,$ and $1.0$.}
+ 	\label{fig:alpha-timing}
+ \end{figure}
+%
 %
 %------------------------------------------------------------------------------
-\subsection{Effects of poor interpolation conditioning}
+\subsection{Effect of Poor Interpolation Conditioning}
 %------------------------------------------------------------------------------
 %
+The conditioning of the least-squares system used to compute interpolation coefficients can influence both the accuracy and robustness of the numerical solution. 
+When the interpolation matrix $M$ is highly ill-conditioned, the resulting coefficients may lead to an \emph{artificially stiff discretisation},
+which can cause the linear solver to stall or converge very slowly. 
+In this context, \emph{artificially stiff discretisation} means that the residual vector $\bb{R}(\bb{u})$ becomes highly sensitive to displacements of some neighbouring cells within the interpolation stencil.
+
+This problem is particularly relevant in high-order schemes, which are generally more suitable for unstructured meshes, since irregular point distributions tend to improve matrix conditioning \cite{s,s,s}.
+On structured grids, however, the regular alignment of points amplifies ill-conditioning (especially in the case of stretched structured grids), leading to numerical difficulties.
+This limitation is often regarded as one of the key challenges of high-order finite-volume discretisations.
+
+The objective of this section is to illustrate the impact of this phenomenon and to demonstrate a simple remedy to mitigate it. Numerical tests reveal that ill-conditioning is most pronounced in structured two-dimensional meshes, where the absence of a third dimension prevents natural improvement of the condition number. To investigate this effect, the plate hole benchmark from Section \ref{case:plateHole} is considered, discretised with hexahedral control volumes (see Figure \ref{fig:plateHole:hex-mesh}).
+
+Figure \ref{ig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix $\mathbf{M}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the observed order of accuracy.
+It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK linear solver stalls, a fully implicit discretisation combined with a direct linear solver (as in \citep{Castrillo2022, Castrillo2024}) can still produce a solution; however, the accuracy of these results is typically affected.
+
+
 %Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This results in lower slope for displacement but not affecting the stresses. I'm not sure why S4F results flatten on finer meshes
 \begin{figure}[H]
  	\centering
 	\subfigure[Tetrahedral structured mesh]
  	{
- 		\label{fig:plateHole:interp:b}
-    		\includegraphics[scale=0.0534]{figures/plateHole-tet-struct-mesh}
+ 		\label{fig:plateHole:hex-mesh}
+    	\includegraphics[scale=0.0534]{figures/plateHole-tet-struct-mesh}
+    }
+    \subfigure[Tetrahedral structured mesh]
+ 	{
+ 		\label{fig:plateHole-conditioning:b}
+    	\includegraphics[scale=0.0534]{figures/plateHole-tet-struct-mesh}
     }
  	\caption{Plate hole case: geometry and mesh}
- 	\label{fig:plateHole}
+ 	\label{fig:plateHole-conditioning}
 \end{figure}
 %
 %------------------------------------------------------------------------------
@@ -1543,6 +1623,29 @@ The velocity vector $\bb{v} = \partial \bb{u}/\partial t$ at the current time st
 \end{equation}
 %
 Consequently, the displacement and velocity at the two previous time steps must be stored, or alternatively, the displacement at the previous four time steps. The discretisation of the acceleration term in Equation~\ref{eq:inertiaTerm} can also be performed using higher-order time integration schemes. However, such formulations require integration over multiple volume quadrature points, rather than a single point, which is sufficient for the second-order scheme employed here.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\section{Stabilisation using \emph{over-integration}}
+\label{app:stabilisation}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+ \begin{figure}[H]
+ 	\centering
+	\subfigure[Structured hexahedral mesh]
+ 	{
+ 		\label{fig:alpha-disp:a}
+    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_disp_hex_struct}
+    }
+ 	\subfigure[Unstructured tetrahedral mesh]
+ 	{
+ 		\label{fig:alpha-disp:b}
+    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_disp_ho-tet_unstruct}
+    }
+ 	\caption{Convergence of the $L_2$ displacement error norm for case \ref{case:mms} with varying stabilisation parameter: $\alpha = 0.001, 0.01, 0.1,$ and $1.0$.}
+ 	\label{fig:alpha-disp}
+ \end{figure}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
