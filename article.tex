@@ -122,49 +122,42 @@ The implementations are openly released in the solids4foam toolbox for OpenFOAM,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Paper outline:
 %
-%Intro
-\textcolor{red}{Dodaj onaj clanak sa isogeometric}
-Potential structure of this section:
+%Potential structure of this section:
+%	1.	Higher-order discretisation in computational solid mechanics remains relatively underexplored compared to fluid dynamics, despite its potential %for improving accuracy and efficiency. Comment on 'why' we should care about higher order: potentially cheaper to achieve the same mesh error; %potential to reduce the amount of data when running large models on HPC systems (where data is the bottleneck).
+%
+%   2.	Recent research has demonstrated that higher-order accuracy can be achieved in cell-centred formulations through gradient reconstruction (e.g. %least-squares approaches) and face integration techniques (e.g. Gaussian quadrature); however, their efficiency and ease of implementation in an %industrial code are unexplored.
+%
+%	3.	The solution strategy is a crucial factor: segregated iterative solvers remain the standard in finite-volume solid mechanics but often suffer %from slow convergence and limited robustness, and they are efficient for higher orders, as shown by Demirdzic.
+%	Jacobian-free Newton–Krylov (JFNK) methods have emerged as a promising alternative, avoiding the need for explicit Jacobian construction while %enabling quadratic convergence through Krylov subspace acceleration.
+%	In addition, the JFNK approach is well-suited for integration into existing segregated frameworks.
+%
+%	4.	Our previous work established the feasibility and efficiency of JFNK for second-order cell-centred formulations, where a compact-stencil %approximate Jacobian proved highly effective as a preconditioner.
+%	This study extends JFNK to third- and fourth-order cell-centred finite-volume formulations for linear and nonlinear solid mechanics, combining %least-squares gradient reconstruction with Gaussian quadrature integration.
+%
+%	5.	We demonstrate that the proposed approach significantly improves accuracy while retaining computational efficiency, and we show that compact-%stencil Jacobians remain effective as preconditioners in the higher-order setting.
+%
+%	6.	The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on higher-order cell-centred finite-volume methods %for solids, and to explore the synergy between such methods and Jacobian-free Newton–Krylov solution strategies.
+%
+%Philip comment: we should mention the importance of using consistent areas and
+%volumes, e.g when discretising the volumetric terms we should use the same cell
+%decomposition as we use to calculate the cell volume; the same applies for the
+%face area integrals. Ivan noted this is required for non-flat faces to get the
+%expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
+%
+%
+High-order finite-volume discretisations are generally defined as schemes that achieve at least third-order accuracy [3]. Over the past two decades, such methods have attracted growing interest within the computational fluid dynamics (CFD) community, leading to continuous development and refinement [2–4]. In contrast, the application of high-order FV discretisations to solid mechanics remains relatively underexplored [2,3], despite several recent advances. The untapped potential of these formulations is significant: for a given level of accuracy, high-order methods can be computationally more efficient and reduce data movement, an increasingly important factor for large-scale simulations on high-performance computing (HPC) systems, where memory bandwidth is often the main bottleneck. As noted in [4], these two criteria, computational efficiency and reduced data footprint, are guiding principles in the development of next-generation discretisations. Within the solid mechanics community, the development of such methods lags decades behind the finite-element counterparts [3]. Their greatest promise lies in multiphysics simulations, where solving the coupled problem within a unified finite volume framework is particularly advantageous.
 
-	1.	Higher-order discretisation in computational solid mechanics remains relatively underexplored compared to fluid dynamics, despite its potential for improving accuracy and efficiency. Comment on 'why' we should care about higher order: potentially cheaper to achieve the same mesh error; potential to reduce the amount of data when running large models on HPC systems (where data is the bottleneck).
+The first high-order, cell-centred finite volume method for solid mechanics was introduced by Demirdžić [3], who also pioneered the general finite volume approach for solids. In his work, a fourth-order discretisation for two-dimensional structured hexahedral meshes was proposed, and it was shown that shear locking is not inherent to high-order finite volume formulations but is a limitation of conventional second-order schemes. However, Demirdžić’s formulation was not easily generalisable, and he suggested adopting a Moving Least-Squares (MLS) reconstruction, similar to those already used in CFD [20,21]. This step was realised in later studies [4,5], where it was demonstrated that higher-order accuracy can be achieved through gradient reconstruction using least-squares interpolation, specifically the Local Regression Estimator (LRE) technique, and face-flux integration via Gaussian quadrature.
 
-	2.	Recent research has demonstrated that higher-order accuracy can be achieved in cell-centred formulations through gradient reconstruction (e.g. least-squares approaches) and face integration techniques (e.g. Gaussian quadrature); however, their efficiency and ease of implementation in an industrial code are unexplored.
+A major distinction between these studies lies in their solution strategies. Demirdžić [3] employed a semi-implicit, segregated framework with Picard iterations, whereas the later work [4] adopted a fully implicit, block-coupled Newton–Raphson approach. While segregated solvers are simpler to implement, they typically exhibit only linear convergence and limited robustness. The Newton–Raphson method, in contrast, achieves quadratic convergence but requires the explicit formation and storage of the Jacobian matrix, which is both computationally expensive and memory-intensive. Moreover, constructing an exact Jacobian for nonlinear material models is often non-trivial, further complicating implementation. 
 
-	3.	The solution strategy is a crucial factor: segregated iterative solvers remain the standard in finite-volume solid mechanics but often suffer from slow convergence and limited robustness, and they are efficient for higher orders, as shown by Demirdzic.
-	Jacobian-free Newton–Krylov (JFNK) methods have emerged as a promising alternative, avoiding the need for explicit Jacobian construction while enabling quadratic convergence through Krylov subspace acceleration.
-	In addition, the JFNK approach is well-suited for integration into existing segregated frameworks.
-	Until the recent introduction of the Jacobian-free Newton–Krylov (JFNK) algorithm as an option for finite volume solid mechanics solvers,
-the most common solution strategy was based on the segregated approach, which may be interpreted as a quasi-Newton method.
-Alternatively, some studies employed the Newton method for both linear material behaviour (special case of the Newton procedure) and for nonlinear materials.
-The primary barrier to the wider adoption of full Newton methods has been the complexity of the required linearization.
-For non-linear material models, such as those involving plasticity, the derivation, implementation,
-and assembly of the analytical Jacobian is a notoriously complex.
-The present work addresses this critical limitation by adopting the JFNK algorithm, which eliminates the need for explicit Jacobian assembly while retaining the quadratic convergence properties of Newton's method.
+To overcome these limitations, Jacobian-free Newton–Krylov (JFNK) methods have emerged as a powerful alternative. JFNK algorithms retain the quadratic convergence properties of Newton’s method while avoiding explicit Jacobian construction by estimating matrix-vector products through finite differencing of the residual. These methods were first introduced in the 1980s and early 1990s for solving ordinary and partial differential equations [20,26–29], and subsequently applied to the Navier–Stokes equations with various preconditioners and linear solvers [16–19]. Despite their potential, JFNK methods are still not widely adopted in CFD, although several codes provide them as built-in options. Of particular relevance is that recent developments in high-order finite volume schemes increasingly rely on JFNK formulations, due to their natural compatibility with compact-stencil preconditioners and flexible treatment of nonlinearities. Notably, the preconditioning matrix can be constructed from a lower-order spatial discretisation, which provides a good approximation to the true Jacobian while maintaining computational efficiency and robustness [21–25]. 
 
-	4.	Our previous work established the feasibility and efficiency of JFNK for second-order cell-centred formulations, where a compact-stencil approximate Jacobian proved highly effective as a preconditioner.
-	This study extends JFNK to third- and fourth-order cell-centred finite-volume formulations for linear and nonlinear solid mechanics, combining least-squares gradient reconstruction with Gaussian quadrature integration.
+The application of JFNK methods to cell-centred FV solid mechanics was first demonstrated by the present authors in previous work [4]. There, it was shown that a compact-stencil approximate Jacobian is highly effective as a preconditioner and that the resulting JFNK solution procedure, when combined with a second-order FV discretisation, offers a feasible, efficient, and robust framework applicable to static, dynamic, linear, and nonlinear solid mechanics problems.
 
-	5.	We demonstrate that the proposed approach significantly improves accuracy while retaining computational efficiency, and we show that compact-stencil Jacobians remain effective as preconditioners in the higher-order setting.
+The present study extends the JFNK framework to third- and fourth-order cell-centred finite volume formulations for both linear and nonlinear solid mechanics. High-order accuracy is achieved through least-squares-based gradient reconstruction and high-order flux integration. For preconditioning, we demonstrate that compact-stencil Jacobians remain effective within this higher-order setting. Unlike previous work [3, 4], this study uses a standardised implementation within the OpenFOAM framework (specifically the solids4foam toolbox \cite{Cardiff2025a}). This \emph{conventional} implementation treats arbitrary polyhedral cells via decomposition, enabling a direct comparison of efficiency and memory requirements against standard second-order discretisation. The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in [4] and implementing a different treatment of boundary conditions. A further contribution of this work is the introduction of the $\alpha$-stabilisation scheme, which proved to be necessary for stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations or zero-energy modes. The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order FV discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (Rhie–Chow-type stabilisation) used in segregated solvers. The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
 
-	6.	The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on higher-order cell-centred finite-volume methods for solids, and to explore the synergy between such methods and Jacobian-free Newton–Krylov solution strategies.
-
-	7. pokazano je da se moze splitat surface topologija cv-a na surface
-
-	8. nemamo proracunske tocke na rubu
-
-	9. dodali smo stabilizaciju i pokazali da je nuzna
-
-	10. SA JFNK ne moramo konstruirati matricu sto moze biti vremenski zathejno i matematicki zajebano isto
-	skica molekule na symmetry planeu
-skica molekule na dirichlet boundariu
-sve jedna slika na kojoj je desni rub dirichlet, dole je symmetry a gore je neumman rub!
-
-Philip comment: we should mention the importance of using consistent areas and
-volumes, e.g when discretising the volumetric terms we should use the same cell
-decomposition as we use to calculate the cell volume; the same applies for the
-face area integrals. Ivan noted this is required for non-flat faces to get the
-expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
-
+The remainder of this paper is structured as follows: Section 2 presents the governing equations, followed by the formulation of the high-order FV discretisation in Section 3. Section 4 summarises the JFNK solution algorithm. Section 5 reports the performance of the proposed solver across a series of benchmark problems, analysing accuracy, computational cost, robustness and memory requirements. Finally, Section 6 provides concluding remarks and outlines future research directions.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -1080,7 +1073,7 @@ Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:p
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 4: Plate hole}
-\label{sec:plateHole}
+\label{case:plateHole}
 %------------------------------------------------------------------------------
 %
 % Case can be also found in:
@@ -1131,6 +1124,7 @@ Five successively refined tetrahedral meshes are used 978 (Figure \ref{fig:plate
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 5: Spherical Cavity in an Infinite Solid Subjected to Remote Stress}
+\label{case:sphericalCavity}
 %------------------------------------------------------------------------------
 %
 This problem considers a spherical cavity embedded within an infinite and isotropic medium with linear elastic material properties ($E = 200$ GPa, $\nu = 0.3$).
@@ -1256,8 +1250,8 @@ To quantify this trade-off, the Method of Manufactured Solutions case (case \ref
 Four values for the scaling factor, 
 each differing by an order of magnitude, are investigated: $\alpha = 0.001, 0.01, 0.1,$ and $1.0$. 
 Figure \ref{fig:alpha-disp} presents the $L_2$ error norm convergence for displacement, while Figure \ref{fig:alpha-timing} presents computational timings. 
-As expected, different values of $\alpha$ do not affect the convergence order; the exception is for $p=2$, where it forces an earlier transition to second-order. 
-In terms of robustness, $\alpha=0.001$ is too low to stabilise the unstructured mesh, and oscillatory behaviour is obtained. 
+As expected, different values of $\alpha$ do not affect the convergence order; the exception is for $p=2$ (hexahedral mesh), where $\alpha=1$ forces an earlier transition to second-order. 
+In terms of robustness, $\alpha=0.001$ is too low to stabilise the unstructured (irregular) mesh, and oscillatory behaviour is obtained. 
 From these diagrams, one can see that $\alpha=0.1$ and $\alpha=0.01$ are the best values in terms of accuracy. However, when looking at Figure \ref{fig:alpha-timing}, 
 it is clear that the recommended value of $\alpha=0.1$ is the optimal choice for efficiency. 
 It should be emphasised that the recommended value, $\alpha=0.1$, is the same as the one for Rhie-Chow stabilisation in standard second-order solvers \cite{Cardiff2025}.
@@ -1318,7 +1312,7 @@ This limitation is often regarded as one of the key challenges of high-order fin
 
 The objective of this section is to illustrate the impact of this phenomenon and to demonstrate a simple remedy to mitigate it. Numerical tests reveal that ill-conditioning is most pronounced in structured two-dimensional meshes, where the absence of a third dimension prevents natural improvement of the condition number. To investigate this effect, the plate hole benchmark from Section \ref{case:plateHole} is considered, discretised with hexahedral control volumes (see Figure \ref{fig:plateHole:hex-mesh}).
 
-Figure \ref{ig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix $\mathbf{M}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the observed order of accuracy.
+Figure \ref{fig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix $\mathbf{M}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the observed order of accuracy.
 It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK linear solver stalls, a fully implicit discretisation combined with a direct linear solver (as in \citep{Castrillo2022, Castrillo2024}) can still produce a solution; however, the accuracy of these results is typically affected.
 
 
