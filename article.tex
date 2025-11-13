@@ -158,7 +158,7 @@ The application of JFNK methods to cell-centred FV solid mechanics was first dem
 The present work addresses this gap by extending the JFNK framework to third- and fourth-order cell-centred finite volume formulations for both linear and nonlinear solid mechanics. High-order accuracy is achieved through least-squares-based gradient reconstruction and high-order flux integration, following the approaches validated in prior studies \cite{Castrillo2022, Castrillo2024}. We show that even in this higher-order setting, a compact-stencil Jacobian derived from a lower-order scheme remains an effective preconditioner for the Krylov solver, thereby preserving the efficiency and fast convergence of the JFNK approach. To our knowledge, this work provides the first demonstration of a JFNK solver successfully applied to high-order (beyond second-order) finite-volume solid mechanics formulations.
 
 Another key contribution of this study is its implementation within a conventional open-source framework, which distinguishes it from earlier custom-code prototypes.
-Specifically, we build our solver using the OpenFOAM-based solids4foam toolbox \cite{Cardiff2025a}, maintaining its support for arbitrary polyhedral cells by decomposing cells and faces into tetrahedral and triangles.
+Specifically, we build our solver using the OpenFOAM-based solids4foam toolbox \cite{Weller1998, Cardiff2025a}, maintaining its support for arbitrary polyhedral cells by decomposing cells and faces into tetrahedral and triangles.
 This \emph{conventional} implementation means that the high-order JFNK solver can handle general unstructured meshes and can be directly compared against standard second-order solvers.
 The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} and implementing a different treatment of boundary conditions. Finally, we introduction of the $\alpha$-stabilisation scheme \cite{Nishikawa2010, Nishikawa2011, Nishikawa2025a}, which proved to be necessary for stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations or zero-energy modes. The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order FV discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
 
@@ -472,6 +472,7 @@ Defining $\mathbf{A}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathbf{Q}(\
 %
 The rows of $\bar{\mathbf{A}}$ correspond to the interpolation coefficients used in
 Eqs.~\eqref{eq:interp} and \eqref{eq:derInterp}.
+The interpolation coefficients from matrix $\bar{\mathbf{A}}$ depend only on the mesh (geometry), so they can be computed once (or whenever the mesh moves) and stored.
 The inversion of $\bar{\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.
 This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}$ to positive values, and employing a QR factorization via Householder transformations \cite{strang2012}, see \cite{Castrillo2022, Castrillo2023}.
 %
@@ -893,7 +894,7 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 2: Cantilever beam}
+\subsubsection{Case 2: Cantilever Beam}
 %------------------------------------------------------------------------------
 %
 The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.\textcolor{red}{velicine mreza}
@@ -958,7 +959,7 @@ The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimension
  %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 3: Internally pressurised thick-walled cylinder}
+\subsubsection{Case 3: Internally Pressurised Thick-walled Cylinder}
 %------------------------------------------------------------------------------
 %
 In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner radius $R_i = 7$ m, outer radius $R_o = 18.625$ m, and loaded internally with pressure $p = 100$ MPa is analysed. Two types of material are considered:
@@ -1011,7 +1012,7 @@ The problem is considered plane stress, with the 2-D computational domain compri
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 4: Cook's membrane}
+\subsubsection{Case 4: Cook's Membrane}
 %------------------------------------------------------------------------------
 %
 The Cook’s membrane configuration (Figure \ref{fig:CooksMembrane}) is a classic benchmark problem dominated by bending effects.
@@ -1077,7 +1078,7 @@ Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:p
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 4: Plate hole}
+\subsubsection{Case 4: Hole in a Infinite Plate Subjected to Remote Stress}
 \label{case:plateHole}
 %------------------------------------------------------------------------------
 %
@@ -1191,9 +1192,12 @@ while the outer surface is traction-free.
 The problem is solved quasi-statically using 100 equal increments on a set of four grids: $1\,620$, $12\,960$, $50\,000$, and $103\,680$ cells.
 %
 %------------------------------------------------------------------------------
-\subsection{Error-cost Relationship}
+\subsection{Error-Cost Relationship}
 %------------------------------------------------------------------------------
 %
+
+\cite{syrakos} cell centred grad is second order, stranica 10.
+
 Clock times and memory usage
 (measured with the GNU time utility) were generated using a Mac Studio with an M1 Ultra CPU
 on one core, where the code was built with the Clang compiler (version 16.0.0). Examination of
@@ -1307,7 +1311,7 @@ its impact is significantly reduced for unstructured meshes, where the present $
 %------------------------------------------------------------------------------
 %
 The conditioning of the least-squares system used to compute interpolation coefficients can influence both the accuracy and robustness of the numerical solution. 
-When the interpolation matrix $M$ is highly ill-conditioned, the resulting coefficients may lead to an \emph{artificially stiff discretisation},
+When the interpolation matrix $\bar{\mathbf{M}}$ is highly ill-conditioned, the resulting coefficients may lead to an \emph{artificially stiff discretisation},
 which can cause the linear solver to stall or converge very slowly. 
 In this context, \emph{artificially stiff discretisation} means that the residual vector $\bb{R}(\bb{u})$ becomes highly sensitive to displacements of some neighbouring cells within the interpolation stencil.
 
@@ -1317,74 +1321,106 @@ This limitation is often regarded as one of the key challenges of high-order fin
 
 The objective of this section is to illustrate the impact of this phenomenon and to demonstrate a simple remedy to mitigate it. Numerical tests reveal that ill-conditioning is most pronounced in structured two-dimensional meshes, where the absence of a third dimension prevents natural improvement of the condition number. To investigate this effect, the plate hole benchmark from Section \ref{case:plateHole} is considered, discretised with hexahedral control volumes (see Figure \ref{fig:plateHole:hex-mesh}).
 
-Figure \ref{fig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix $\mathbf{M}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the accuracy level.
+Figure \ref{fig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix $\bar{\mathbf{M}}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the accuracy level.
 It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK linear solver stalls, a fully implicit discretisation combined with a direct linear solver (as in \citep{Castrillo2022, Castrillo2024}) can still produce a solution; however, the accuracy of these results is typically affected.
 
 
 %Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This results in lower slope for displacement but not affecting the stresses. I'm not sure why S4F results flatten on finer meshes
 \begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral structured mesh]
+	\subfigure[Hexahedral structured mesh, coloured with matrix $\bar{\mathbf{M}}$ condition number. Red coloured cells have condition number $> 1e12$]
  	{
  		\label{fig:plateHole:hex-mesh}
-    	\includegraphics[scale=0.0534]{figures/plateHole-hex-struct-mesh}
+    	\includegraphics[scale=0.052]{figures/plateHole-hex-condNumber.pdf}
     }
-    \subfigure[Displacement $L_2$ norm convergence]
+    \qquad
+    \subfigure[Displacement $L_2$ norm convergence for $n^+ = 10$ and $n^+ = 20$]
  	{
  		\label{fig:plateHole-conditioning:b}
     	\includegraphics[scale=0.8]{figures/plateHole_interpolationConditioning_hex}
     }
- 	\caption{Plate hole case: effects of poor conditioning}
+ 	\caption{Plate hole case: effects of high ill-conditioning of matrix $\bar{\mathbf{M}}$.}
  	\label{fig:plateHole-conditioning}
 \end{figure}
 %
 %------------------------------------------------------------------------------
-\subsection{Different choice for approximate Jacobian}
+\subsection{Different Choice for Approximate Jacobian}
 %------------------------------------------------------------------------------
 %
 
-Plate hole sa hex mrezom tu staviti i objasniti sto se desava u 2D-u sa kondicijskim brojem interpolacije
+It has already been demonstrated that a compact-stencil \emph{approximate}
+ Jacobian, when used as a preconditioner in the JFNK algorithm, 
+is highly effective for second-order finite-volume discretisations in solid mechanics \cite{Cardiff2025}. 
+In the present work, we confirm that this preconditioning strategy remains effective even when the residual is evaluated using a higher-order discretisation. 
 
+To isolate the impact of preconditioner accuracy, a linear elastic test case is employed where the \emph{true} (exact) Jacobian matrix can be assembled explicitly for reference (see Appendix \ref{app:P}). 
+Although in a truly linear problem, Newton’s method would converge in a single iteration with the exact Jacobian, 
+we deliberately enforce multiple Newton iterations using the assembled \emph{true} Jacobian in this case. 
+This allows a direct comparison of convergence behaviour and computational cost against the standard compact-stencil approximate Jacobian preconditioner.
+The results show that using a fully assembled true Jacobian as the preconditioner provides no improvement in solver convergence or performance, 
+but dramatically increases the computational time. 
+For example, in the spherical cavity benchmark (Table \ref{tab:AJvsTJ}), employing the \emph{true} Jacobian preconditioner can make the solve from 2 to 92 times slower than using the compact-stencil approximation. 
+These findings make it clear that increasing the Jacobian’s accuracy yields no practical benefits; on the contrary, it severely penalises efficiency. 
+This outcome strongly supports continuing to use the compact-stencil \emph{approximate} Jacobian for preconditioning, given its superior efficiency and significant memory savings with no loss of solver effectiveness. 
+Finally, this is consistent with the documented behavior of the \emph{approximate} Jacobians used in high-order finite volume computational fluid dynamics \cite{Mchugh1994, Qin2000, Geuzaine2001, Pernice2001, Knoll2004, Vaassen2008, Lucas2010, Nejat2011, Nishikawa2020}.
+%
+\begin{table}[h]
+\centering
+\begin{tabular}{c|cc|cc|cc}
+\multicolumn{1}{l|}{} & \multicolumn{2}{c|}{$p=1$} & \multicolumn{2}{c|}{$p=2$} & \multicolumn{2}{c}{$p=3$} \\
+Mesh size             & AJ          & TJ           & AJ          & TJ           & AJ          & TJ        \\ \hline
+2068                  & 1.34           & 2.82            & 1.78           & 4.18          & 4.55         &  418.33        \\
+3802                  & 2.19           & 5.48            & 2.89           & 9.46         & 8.02      &  24.07             \\
+7030                  & 3.94           & 11.43            & 5.23           & 16.82       & 14.80         &  48.75           \\
+14891                  & 8.15           & 30.89            & 10.96           & 44.00        & 32.00    &   91.12              \\
+32864                  & 18.40           & 90.45            & 24.95           & 1896.12         & 75.64  &   246.67                 \\
+72945                 & 43.48          & 1183.30          & 58.71         & 3841.79        & 189.71 &  1340.57              \\ \hline
+\end{tabular}
+\caption{Spherical cavity case: computational time (in s) for different preconditioning matrices, comparing the approximate Jacobian (AJ) with the high-order true Jacobian (TJ).}
+\label{tab:AJvsTJ}
+\end{table}
+%
+%
+%------------------------------------------------------------------------------
 \subsection{Code parallelisation}
-
+\label{sec:codeParallelisation}
+%------------------------------------------------------------------------------
+%
+\hl{To work on after meeting with Philip}
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions} \label{sec:conclusion}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-A Jacobian-free Newton-Krylov solution algorithm has been proposed for solid mechanics problems discretised using the cell-centred finite volume method.
-A compact-stencil discretisation of the diffusion term is proposed as the preconditioner matrix, implemenation without boundary unkwons and stabilisation term, allowing a straightforward extension of existing segregated solution frameworks.
-The key conclusions of the work are:
+This work presents a high-order cell-centred finite volume formulation for solid mechanics combined with a Jacobian-free Newton–Krylov nonlinear solution strategy. 
+Third- and fourth-order spatial accuracy is achieved through Gaussian quadrature and a least-squares (LRE) gradient reconstruction procedure.
+To ensure stability on unstructured meshes, an $\alpha$-stabilisation scheme is introduced to suppress high-frequency error modes. 
+Solver efficiency is maintained through the use of a compact-stencil second-order approximate Jacobian as a preconditioner within the JFNK solver.
+The formulation does not require additional boundary unknowns, supports arbitrary polyhedral cells and is demonstrated across a range of linear and nonlinear benchmark problems.
+\\
+The principal findings of the study are:
+%
 \begin{itemize}
-\item \textbf{Accuracy}: On a range of benchmark cases, the method maintained accuracy and robustness across different dimensions, geometries, and material behaviours, proving its versatility.
-
-\item \textbf{Efficiency}: The proposed Jacobian-free Newton-Krylov solution algorithm has been shown to be faster than a conventional segregated solution algorithm for all linear and nonlinear elastic test cases examined. In particular, speedups of one order of magnitude were seen in many cases, with a maximum speedup of 341 in the 2-D linear elastic Cook's membrane case.
-
-\item \textbf{Stabilisation scheme}:The magnitude of the Rhie-Chow stabilisation term is shown to affect the speed and robustness of the Jacobian-free Newton-Krylov approach, where $\alpha = 0.1$ and $1$ are seen to outperform $\alpha = 0.01$. The proposed Jacobian-free Newton-Krylov solution algorithm has been shown to be faster than a conventional segregated solution algorithm for all linear and nonlinear elastic test cases examined. In particular, speedups of one order of magnitude were seen in many cases, with a maximum speedup of 341 in the 2-D linear elastic Cook's membrane case.
-
-\item \textbf{Additional memory overhead}: The Jacobian-free Newton-Krylov approach has been shown to have approximately the same memory requirements as a segregated solution algorithm for less than $10^4$ degrees of freedom, but generally increases beyond this.
-%% 	The greatest memory increase was found to be 3.6 and occured in the spherical cavity case. Nonetheless, these differences are likely attributed to the different linear solver and preconditioner used in the Jacobian-free Newton-Krylov approach (GMRESS with multigrid or LU decomposition) compared to the segregated approach (conjugate gradient with zero in-fill Cholesky decomposition).
-
-\item \textbf{Benchmark performance}: On a range of benchmark cases, the method maintained accuracy and robustness across different dimensions, geometries, and material behaviours, proving its versatility.
-
-\item \textbf{Shear locking}:
-
-\item \textbf{Choice of preconditioning approach}: It has been shown that the LU direct solver preconditioning approach is faster than multigrid and ILU($k$) approaches for 2-D cases and moderately-sized 3-D problems; however, for larger 3-D problems the multigrid approach is the fastest while also requiring less memory than the direct LU approach. In addition, the multigrid approach is seen to show approximate ideal scaling in a parallel strong scaling study.
-
-\item \textbf{Applicability to existing segregated frameworks}: By employing a compact-stencil diffusion approximation of the Jacobian as the preconditioner, the proposed Jacobian-free Newton-Krylov approach can be integrated into existing segregated finite volume frameworks with minimal modifications to the existing code base, in particular if existing publicly available Jacobian-free Newton-Krylov solvers (e.g., PETSc) are used.
-
-\item \textbf{Open access and extensibility}: The implementation is made publicly available within the solids4foam toolbox for OpenFOAM to encourage implementation critique, community adoption, and comparative studies, contributing to advancing finite volume solid mechanics simulations.
+%
+\item \textbf{Accuracy}: The proposed discretisation delivers consistent high-order accuracy across diverse test cases. Linear reconstruction yields second-order displacement and first-order stress accuracy. Quadratic reconstruction achieves second-order accuracy for both displacement and stress; the expected third-order displacement behaviour is not observed, consistent with prior reports in the literature. Cubic reconstruction attains fourth-order displacement and third-order stress accuracy, confirming the effectiveness of the underlying high-order flux integration and LRE reconstruction.
+%
+\item \textbf{Stabilisation scheme}: The introduced $\alpha$-stabilisation scheme, adapted from high-order CFD, effectively damps spurious high-frequency errors on unstructured meshes. The stabilisation term scales with the order of the method, unlike the Rhie–Chow correction used in second-order finite volume solvers. An optimal value of $\alpha \approx 0.1$ is observed, which is also consistent with recommendations for Rhie-Chow stabilisation \cite{Cardiff2025}.
+%
+\item \textbf{Preconditioning choice}: The compact-stencil approximate Jacobian, originating from a second-order semi-implicit discretisation, remains highly effective when used as a preconditioner for high-order residual evaluations. Comparison against a fully assembled true Jacobian (possible for linear elastic tests) shows that increased preconditioner fidelity does not improve convergence, confirming that compact approximate Jacobians offer the best balance of efficiency, robustness, and memory usage.
+%
+\item \textbf{Avoidance of shear locking}: The high-order finite volume formulation naturally avoids shear-locking artefacts, providing an important advantage over conventional second-order discretisations.
+%
+\item \textbf{Robustness}:
+The method is robust across linear, nonlinear, structured, and unstructured meshes. The main challenge arises from the ill-conditioning of the local least-squares reconstruction, particularly on structured 2-D grids. When conditioning is improved (e.g., via enlarged stencils), robustness is restored.
+%
+\item \textbf{Efficiency}: The OpenFOAM implementation enabled direct comparison with conventional second-order finite volume solvers. Tetrahedral meshes provide the best performance between accuracy and computational cost due to fewer quadrature points. Efficiency decreases with increasing face-edge count because this enlarges the quadrature stencil and increases storage requirements for interpolation coefficients. Despite a non-optimised implementation, the method shows competitive performance and substantial potential.
+%
+\item \textbf{Integration into existing JFNK frameworks}: The high-order formulation requires only modifications to the residual evaluation and therefore integrates seamlessly into existing second-order JFNK infrastructure. The complete implementation is released within \texttt{solids4foam}, enabling community use, evaluation, and extension.
+%
 \end{itemize}
-
-The presented study highlights the potential of the Jacobian-free Newton-Krylov method in finite-volume solid mechanics simulations, yet several areas for future exploration remain:
-\begin{enumerate}
-\item{Curved boundary treatment}: 
-
-\item{Explore possibility of more efficient implementation}:
-
-\item{Development of a monolithic fluid-solid interaction framework}: Extending the Jacobian-free Newton-Krylov method to a fully monolithic fluid-solid interaction framework presents a promising avenue. In this approach, both fluid and solid domains would be solved simultaneously using a unified Jacobian-free Newton-Krylov method, potentially improving stability and performance in highly nonlinear coupled problems.
-\end{enumerate}
-
-
-
+Future work will be directed in several key areas. First, the treatment of curved boundaries in the context of high-order finite volume for solid mechanics is a critical and unresolved challenge that warrants special attention. Second, more efficient high-order implementations, potentially using economical approach from \cite{Nishikawa2025}, should be investigated to maximise computational efficiency. Finally, the successful application of this high-order JFNK algorithm to solid mechanics opens a promising avenue for its extension to a monolithic, high-order, fluid-solid interaction framework.
+%
+%
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \backmatter
 %
