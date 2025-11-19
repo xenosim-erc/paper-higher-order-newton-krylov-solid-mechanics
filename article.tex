@@ -153,14 +153,14 @@ A major distinction between these studies lies in their solution strategies. Dem
 
 To overcome these limitations, Jacobian-free Newton–Krylov (JFNK) methods have emerged as a powerful alternative. JFNK algorithms retain the quadratic convergence properties of Newton’s method while avoiding explicit Jacobian construction by estimating matrix-vector products through finite differencing of the residual. These methods were first introduced in the 1980s and early 1990s for solving ordinary and partial differential equations \citep{Gear1983, Chan1984, Brown1986, Brown1990}, and subsequently applied to the Navier–Stokes equations with various preconditioners and linear solvers  \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2011}. Despite their potential, JFNK methods are still not widely adopted in CFD, although some codes provide them as built-in options \cite{Nakashima2025}. Of particular relevance is that recent developments in high-order finite volume schemes increasingly rely on JFNK formulations, due to their natural compatibility with compact-stencil preconditioners and flexible treatment of nonlinearities \cite{Nishikawa2025}. Notably, the preconditioning matrix can be constructed from a lower-order spatial discretisation, which provides a good approximation to the true Jacobian while maintaining computational efficiency and robustness \cite{Mchugh1994, Qin2000, Geuzaine2001, Pernice2001, Knoll2004, Vaassen2008, Lucas2010, Nejat2011, Nishikawa2020}. 
 
-The application of JFNK methods to cell-centred FV solid mechanics was first demonstrated by the present authors in previous work \cite{Cardiff2025}. There, it was shown that a compact-stencil approximate Jacobian is highly effective as a preconditioner and that the resulting JFNK solution procedure, when combined with a second-order finite volume discretisation, offers a feasible, efficient, and robust framework applicable to static, dynamic, linear, and nonlinear solid mechanics problems. However, the combination of JFNK with high-order finite volume formulations for solids has remained unexplored prior to the current study.
+The application of JFNK methods to cell-centred finite volume solid mechanics was first demonstrated by the present authors in previous work \cite{Cardiff2025}. There, it was shown that a compact-stencil approximate Jacobian is highly effective as a preconditioner and that the resulting JFNK solution procedure, when combined with a second-order finite volume discretisation, offers a feasible, efficient, and robust framework applicable to static, dynamic, linear, and nonlinear solid mechanics problems. However, the combination of JFNK with high-order finite volume formulations for solids has remained unexplored prior to the current study.
 
 The present work addresses this gap by extending the JFNK framework to third- and fourth-order cell-centred finite volume formulations for both linear and nonlinear solid mechanics. High-order accuracy is achieved through least-squares-based gradient reconstruction and high-order flux integration, following the approaches validated in prior studies \cite{Castrillo2022, Castrillo2024}. We show that even in this higher-order setting, a compact-stencil Jacobian derived from a lower-order scheme remains an effective preconditioner for the Krylov solver, thereby preserving the efficiency and fast convergence of the JFNK approach. To our knowledge, this work provides the first demonstration of a JFNK solver successfully applied to high-order (beyond second-order) finite-volume solid mechanics formulations.
 
 Another key contribution of this study is its implementation within a conventional open-source framework, which distinguishes it from earlier custom-code prototypes.
 Specifically, we build our solver using the OpenFOAM-based solids4foam toolbox \cite{Weller1998, Cardiff2025a}, maintaining its support for arbitrary polyhedral cells by decomposing cells and faces into tetrahedral and triangles.
 This \emph{conventional} implementation means that the high-order JFNK solver can handle general unstructured meshes and can be directly compared against standard second-order solvers.
-The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} and implementing a different treatment of boundary conditions. Finally, we introduction of the $\alpha$-stabilisation scheme \cite{Nishikawa2010, Nishikawa2011, Nishikawa2025a}, which proved to be necessary for stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations or zero-energy modes. The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order FV discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
+The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} what required different treatment of boundary conditions. Finally, we introduction of the $\alpha$-stabilisation scheme \cite{Nishikawa2010, Nishikawa2011, Nishikawa2025a}, which proved to be necessary for stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations or zero-energy modes. The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order FV discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
 
 The remainder of this paper is structured as follows: Section 2 presents the governing equations, followed by the formulation of the high-order FV discretisation in Section 3. Section 4 summarises the JFNK solution algorithm. Section 5 reports the performance of the proposed solver across a series of benchmark problems, analysing accuracy, computational cost, robustness and memory requirements. Finally, Section 6 provides concluding remarks and outlines future research directions.
 %
@@ -735,7 +735,7 @@ Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x
 %------------------------------------------------------------------------------
 %
 The first test case consists of a  $0.2 \times 0.2$ m square or $0.2 \times 0.2 \times 0.2$ m cube with linear elastic ($E = 200$ GPa, $\nu = 0.3$) properties.
-A manufactured solution for displacement (Figure \ref{fig:mms_solution}) is employed in the form or polynomial, trigonometric \citep{Mazzanti2024} or mixed form \citep{Castrillo2022}:
+A manufactured solution for displacement is employed in the form or trigonometric function in 3D \citep{Mazzanti2024} and mixed form in 2D \citep{Castrillo2022}:
 \begin{itemize}
 \item[•] \textbf{2D}
 \begin{eqnarray}
@@ -759,7 +759,7 @@ where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
 \end{itemize}
 The Cartesian coordinates are given by $x$, $y$ and $z$.
 The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in \citep{Cardiff2025} or obtained by manufactured solution procedure.
-\textcolor{red}{velicine mreza}
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 \begin{figure}[H]
  	\centering
@@ -897,7 +897,9 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
 \subsubsection{Case 2: Cantilever Beam}
 %------------------------------------------------------------------------------
 %
-The test case geometry, shown in Fig. 6(a), is a rectangular beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.\textcolor{red}{velicine mreza}
+The test case geometry, shown in Fig. 6(a), is a rectangular 2D beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
+
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 %
 \begin{figure}[H]
@@ -967,7 +969,9 @@ In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner
 \item[i.] Small strain, linear-elastic \cite{Bijelonja2006}: $E=10$ GPa, $\nu=0.3$.
 \item[ii.] Finite strain, Mooney-Rivlin law \cite{Bijelonja2005a}: $c_{10} = 80$ MPa, $c_{01} = 20$ MPa, and $c_{11} = 0.0$ MPa and Poisson's ratio $\nu=0.49$
 \end{itemize}
-The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of unstructured tetrahedral grids. Gravitational and inertial effects are neglected. Linear elastic case is solved using one loading increment while hyperelastic case is solved using 100 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.\textcolor{red}{velicine mreza}
+The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of unstructured tetrahedral grids. Gravitational and inertial effects are neglected. Linear elastic case is solved using one loading increment while hyperelastic case is solved using 100 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.
+
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 %Pogledaj reference sve jesu li dobre, Green1992 je u bijelonji starija knjiha, vidi da li ima jos ovaj cejs.
 %
@@ -1030,10 +1034,11 @@ where $E$ denotes Young’s modulus, $\nu$ the Poisson ratio, and $\tau$ is the 
 The analysis is performed as quasi-static without body forces.
 The linear case is solved in a single step, whereas the hyperelastic case is solved using 30 uniform load increments.
 To validate the results, Figure \ref{fig:CooksMembrane-tipConvergence} plots the vertical displacement of a key reference point against the average cell width, comparing the predictions to literature data and Abaqus (C3D8 element) results. 
-The location of this reference point differs by analysis type: it is the top-right corner (48, 60) mm for the elastic case but the midpoint of the loaded edge (48, 52) mm for the hyperelastic case.
+The location of this reference point differs by analysis type: it is the top-right corner (48, 60) mm for the elastic case but the midpoint of the loaded edge (48, 52) mm for the hyperelastic case. 
 Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:plateHole:b}), 164, 177, 263, 389, 1457, 5637, 22119 and 88012 cells.
 
-\textcolor{red}{Firs order extrapolation for figure \ref{fig:CooksMembrane:b}}
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.\\
+Only first derivative is used when extracting displacement at reference point.}
 %
 %
 \begin{figure}[H]
@@ -1078,7 +1083,7 @@ Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:p
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 4: Hole in a Infinite Plate Subjected to Remote Stress}
+\subsubsection{Case 5: Hole in a Infinite Plate Subjected to Remote Stress}
 \label{case:plateHole}
 %------------------------------------------------------------------------------
 %
@@ -1088,6 +1093,8 @@ Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:p
 %
 This benchmark problem consists of a thin, infinitely large plate with a circular hole, subjected to uniaxial tension. Owing to the symmetry of the geometry and loading, only one quarter of the plate is modeled as a finite domain. To minimize the influence of the finite computational boundaries, the exact tractions obtained from the analytical solution \cite{Demirdzic1997} are prescribed on the outer edges BC and CD. Symmetry boundary conditions are applied on boundaries AB and DE, while zero traction is specified on the hole boundary. The material properties are defined by a Young’s modulus of $E = 200 \,\text{GPa}$ and a Poisson’s ratio of $\nu = 0.3$.
 Five successively refined tetrahedral meshes are used 978 (Figure \ref{fig:plateHole:b}), 4050, 16296, 64257 and 256512 cells.
+
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 \begin{figure}[H]
  	\centering
@@ -1129,7 +1136,7 @@ Five successively refined tetrahedral meshes are used 978 (Figure \ref{fig:plate
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 5: Spherical Cavity in an Infinite Solid Subjected to Remote Stress}
+\subsubsection{Case 6: Spherical Cavity in an Infinite Solid Subjected to Remote Stress}
 \label{case:sphericalCavity}
 %------------------------------------------------------------------------------
 %
@@ -1142,6 +1149,8 @@ The computational domain is taken as one-eighth of a $1 \times 1 \times 1$ m cub
 The analytical tractions are applied to the domain's far boundaries to mitigate the finite geometry effects. 
 The analytical expressions for stress \cite{Southwell1926} and displacement \cite{Goodier1933} can be found in \cite{Cardiff2025}.
 The analysis is performed using six different unstructured tetrahedral meshes with cell counts of 3802, 7030, 14891, 32864, 72945 and 158870, with the coarsest mesh shown in Figure \ref{fig:sphericalCavity:b}.
+
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 \begin{figure}[H]
  	\centering
@@ -1179,7 +1188,47 @@ The analysis is performed using six different unstructured tetrahedral meshes wi
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 6: Inflation of an Idealised Ventricle}
+\subsubsection{Case 7: Vibration of a 3-D Cantilevered Beam}
+%------------------------------------------------------------------------------
+%
+In this case, compressible bending of a 3D thick column under dynamic response is considered \cite{Tukovic2007, Cardiff2025}.
+The beam is clamped on its bottom face, and its upper face is subjected to a sudden traction $T = (50, 50, 0)$ kPa.
+A Neo-Hookean hyperelastic material is assumed with $E = 15.293\ \text{MPa}$, $\nu = 0.3$, and density $\rho = 1000$ $\text{kg/m}^3$.
+The beam dimensions are $0.2 \times 0.2\ \text{m}$ and $6$ m in length.
+$p$-refinement is performed on the mesh containing $1250$ cells, using a $1$ ms time step and a total simulation time of $1$ s.
+Inertia term in Equation \eqref{eq:inertiaTerm} is integrated with second-order backward scheme and one integration point per cell, see Appendix \ref{app:time}.
+%The main objective of this problem is to illustrate the robustness of the solution procedure when large rotations and strains are present.
+
+The corresponding displacement magnitude at the centre of the upper surface versus time is shown in Figure \ref{fig:vibratingCantilever:b}, 
+where the predictions are seen to converge toward results from the finite element software Abaqus (element type C3D8) using a mesh with 138 240 elements.
+
+\begin{figure}[H]
+ 	\centering
+ 	\subfigure[Displacement magnitude of the centre of the upper surface of the beam vs. time.]
+ 	{
+ 		\label{fig:vibratingCantilever:a}
+    	\includegraphics[scale=0.8]{figures/vibratingCantilever_disp}
+    }
+    \quad
+ 	\subfigure[Displacement magnitude for $t=0.3$ s and $p=3$]
+ 	{
+ 		\label{fig:vibratingCantilever:b}
+    	\includegraphics[scale=0.8]{figures/vibratingCantilever_deformation}
+    }
+ 	\caption{Vibration of a 3-D cantilevered beam.}
+ 	\label{fig:vibratingCantilever}
+\end{figure}
+
+
+
+
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.\\
+Only first derivative is used when extracting displacement at reference point.}
+
+%
+%
+%------------------------------------------------------------------------------
+\subsubsection{Case 8: Inflation of an Idealised Ventricle}
 %------------------------------------------------------------------------------
 %
 This case considers the idealized ventricle inflation benchmark developed by \citet{Land2015} to test cardiac mechanics software. 
@@ -1190,6 +1239,8 @@ The ventricle geometry is defined as a truncated ellipsoid (see \citet{Land2015,
 The base plane is fixed, the internal surface (endocardial surface) has an internal pressure of $10$ kPa,
 while the outer surface is traction-free. 
 The problem is solved quasi-statically using 100 equal increments on a set of four grids: $1\,620$, $12\,960$, $50\,000$, and $103\,680$ cells.
+\hl{The case can not converge at the first time-step - linear solver is stalling. Something weird is happening.}
+\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 %------------------------------------------------------------------------------
 \subsection{Error-Cost Relationship}
@@ -1405,7 +1456,7 @@ The principal findings of the study are:
 %
 \item \textbf{Stabilisation scheme}: The introduced $\alpha$-stabilisation scheme, adapted from high-order CFD, effectively damps spurious high-frequency errors on unstructured meshes. The stabilisation term scales with the order of the method, unlike the Rhie–Chow correction used in second-order finite volume solvers. An optimal value of $\alpha \approx 0.1$ is observed, which is also consistent with recommendations for Rhie-Chow stabilisation \cite{Cardiff2025}.
 %
-\item \textbf{Preconditioning choice}: The compact-stencil approximate Jacobian, originating from a second-order semi-implicit discretisation, remains highly effective when used as a preconditioner for high-order residual evaluations. Comparison against a fully assembled true Jacobian (possible for linear elastic tests) shows that increased preconditioner fidelity does not improve convergence, confirming that compact approximate Jacobians offer the best balance of efficiency, robustness, and memory usage.
+\item \textbf{Preconditioning choice}: The compact-stencil approximate Jacobian, originating from a second-order semi-implicit discretisation, remains highly effective when used as a preconditioner for high-order residual evaluations. Comparison against a fully assembled true Jacobian (linear elastic tests) shows that increased preconditioner fidelity does not improve convergence, confirming that compact approximate Jacobians offer the best balance of efficiency, robustness, and memory usage.
 %
 \item \textbf{Avoidance of shear locking}: The high-order finite volume formulation naturally avoids shear-locking artefacts, providing an important advantage over conventional second-order discretisations.
 %
