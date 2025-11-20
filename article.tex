@@ -145,7 +145,7 @@ The implementations are openly released in the solids4foam toolbox for OpenFOAM,
 %expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
 %
 %
-High-order finite-volume discretisations are generally defined as schemes that achieve at least third-order accuracy \cite{wang2013}. Over the past two decades, such methods have attracted growing interest within the computational fluid dynamics (CFD) community, leading to continuous development and refinement \cite{Nishikawa2025, Antonis2022, Costa2022, Costa2023}. In contrast, the application of high-order FV discretisations to solid mechanics remains relatively underexplored  \cite{Demirdzic2016, Castrillo2022, Castrillo2024}, despite several recent advances. The untapped potential of these formulations is significant: for a given level of accuracy, high-order methods can be computationally more efficient and reduce data movement, an increasingly important factor for large-scale simulations on high-performance computing systems, where memory bandwidth is often the main bottleneck. As noted in \cite{Tzanio2021}, these two criteria, computational efficiency and reduced data movement, are guiding principles in the development of next-generation discretisations. Within the solid mechanics community, the development of such methods lags decades behind the finite-element counterparts \cite{bathe2006}. Their greatest promise lies in multiphysics simulations, where solving the coupled problem within a unified finite volume framework is particularly advantageous.
+High-order finite-volume discretisations are generally defined as schemes that achieve at least third-order accuracy \cite{wang2013}. Over the past two decades, such methods have attracted growing interest within the computational fluid dynamics (CFD) community, leading to continuous development and refinement \cite{Nishikawa2025, Antonis2022, Costa2022, Costa2023, Antoniadis2022}. In contrast, the application of high-order FV discretisations to solid mechanics remains relatively underexplored  \cite{Demirdzic2016, Castrillo2022, Castrillo2024}, despite several recent advances. The untapped potential of these formulations is significant: for a given level of accuracy, high-order methods can be computationally more efficient and reduce data movement, an increasingly important factor for large-scale simulations on high-performance computing systems, where memory bandwidth is often the main bottleneck. As noted in \cite{Tzanio2021}, these two criteria, computational efficiency and reduced data movement, are guiding principles in the development of next-generation discretisations. Within the solid mechanics community, the development of such methods lags decades behind the finite-element counterparts \cite{bathe2006}. Their greatest promise lies in multiphysics simulations, where solving the coupled problem within a unified finite volume framework is particularly advantageous.
 
 The first high-order, cell-centred finite volume method for solid mechanics was introduced by Demirdžić \cite{Demirdzic2016}, who also pioneered the general finite volume approach for solids \cite{Demirdzic1988, Cardiff2021}. In his work, a fourth-order discretisation for two-dimensional structured hexahedral meshes was proposed, and it was shown that shear locking is not inherent to high-order finite volume formulations but is a limitation of conventional second-order schemes. However, Demirdžić’s formulation was not easily generalisable, and he suggested adopting a Moving Least-Squares (MLS) reconstruction, similar to those already used in CFD \cite{Felgueroso2007, Ramirez2014}. This step was realised later by Castrillo et. al. \cite{Castrillo2022, Castrillo2023}, where it was demonstrated that higher-order accuracy can be achieved through gradient reconstruction using least-squares interpolation, specifically the Local Regression Estimator (LRE) technique, and face-flux integration via Gaussian quadrature.
 
@@ -160,7 +160,7 @@ The present work addresses this gap by extending the JFNK framework to third- an
 Another key contribution of this study is its implementation within a conventional open-source framework, which distinguishes it from earlier custom-code prototypes.
 Specifically, we build our solver using the OpenFOAM-based solids4foam toolbox \cite{Weller1998, Cardiff2025a}, maintaining its support for arbitrary polyhedral cells by decomposing cells and faces into tetrahedral and triangles.
 This \emph{conventional} implementation means that the high-order JFNK solver can handle general unstructured meshes and can be directly compared against standard second-order solvers.
-The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} what required different treatment of boundary conditions. Finally, we introduction of the $\alpha$-stabilisation scheme \cite{Nishikawa2010, Nishikawa2011, Nishikawa2025a}, which proved to be necessary for stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations or zero-energy modes. The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order FV discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
+The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} what required different treatment of boundary conditions. Finally, we introduction of the $\alpha$-stabilisation scheme \cite{Nishikawa2010, Nishikawa2011, Nishikawa2025a, Antoniadis2022}, which proved to be necessary for stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations or zero-energy modes. The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order FV discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
 
 The remainder of this paper is structured as follows: Section 2 presents the governing equations, followed by the formulation of the high-order FV discretisation in Section 3. Section 4 summarises the JFNK solution algorithm. Section 5 reports the performance of the proposed solver across a series of benchmark problems, analysing accuracy, computational cost, robustness and memory requirements. Finally, Section 6 provides concluding remarks and outlines future research directions.
 %
@@ -269,9 +269,9 @@ volumes are handled consistently using the same reconstruction and integration p
 Before proceeding with the discretization of the volume and surface integrals, we introduce the following sets of cell faces.
 The set of internal faces is denoted by $\mathcal{F}_P^{\text{int}}$, and the set of boundary faces by $\mathcal{F}_P^{\text{bnd}}$.
 The boundary-face set $\mathcal{F}_P^{\text{bnd}}$ is further partitioned into three mutually disjoint subsets,
-$\mathcal{F}_P^{bnd} := \mathcal{F}_P^{\text{dip}} \cup \mathcal{F}_P^{\text{sym}} \cup \mathcal{F}_P^{\text{trac}}$,
-representing boundary faces where displacement ($\mathcal{F}_P^{\text{dip}}$), traction ($\mathcal{F}_P^{\text{trac}}$),
- or symmetry ($\mathcal{F}_P^{\text{sym}}$) conditions are prescribed. For convenience, we additionally define the set of non-traction boundary faces as $\mathcal{F}_P^{\text{non-trac}} := \mathcal{F}_P^{\text{dip}} \cup \mathcal{F}_P^{\text{sym}}$.
+$\mathcal{F}_P^{bnd} := \mathcal{F}_P^{\text{disp}} \cup \mathcal{F}_P^{\text{sym}} \cup \mathcal{F}_P^{\text{trac}}$,
+representing boundary faces where displacement ($\mathcal{F}_P^{\text{disp}}$), traction ($\mathcal{F}_P^{\text{trac}}$),
+ or symmetry ($\mathcal{F}_P^{\text{sym}}$) conditions are prescribed. For convenience, we additionally define the set of non-traction boundary faces as $\mathcal{F}_P^{\text{non-trac}} := \mathcal{F}_P^{\text{disp}} \cup \mathcal{F}_P^{\text{sym}}$.
 %
 %------------------------------------------------------------------------------
 \subsection{Surface Integrals}
@@ -972,6 +972,7 @@ In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner
 The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of unstructured tetrahedral grids. Gravitational and inertial effects are neglected. Linear elastic case is solved using one loading increment while hyperelastic case is solved using 100 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.
 
 \hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
+\hl{Figure 11 c) is placeholder, there I need to put results of finite strain case}
 %
 %Pogledaj reference sve jesu li dobre, Green1992 je u bijelonji starija knjiha, vidi da li ima jos ovaj cejs.
 %
@@ -1238,29 +1239,29 @@ The benchmark specifies incompressibility; this is enforced in the current work 
 The ventricle geometry is defined as a truncated ellipsoid (see \citet{Land2015, Cardiff2025} for geometry definition).
 The base plane is fixed, the internal surface (endocardial surface) has an internal pressure of $10$ kPa,
 while the outer surface is traction-free. 
-The problem is solved quasi-statically using 100 equal increments on a set of four grids: $1\,620$, $12\,960$, $50\,000$, and $103\,680$ cells.
-\hl{The case can not converge at the first time-step - linear solver is stalling. Something weird is happening.}
+$p$-refinement is performed on the mesh containing $12\,960$ cells and solution is obtained quasi-statically using 100 equal increments.%, using a $1$ ms time step and a total simulation time of $1$ s.
+%The problem is solved quasi-statically using 100 equal increments on a set of four grids: $1\,620$, $12\,960$, $50\,000$, and $103\,680$ cells.
 \hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 %------------------------------------------------------------------------------
 \subsection{Error-Cost Relationship}
 %------------------------------------------------------------------------------
 %
+\hl{section not finished, text missing}
+%\cite{syrakos} cell centred grad is second order, stranica 10.
 
-\cite{syrakos} cell centred grad is second order, stranica 10.
-
-Clock times and memory usage
-(measured with the GNU time utility) were generated using a Mac Studio with an M1 Ultra CPU
-on one core, where the code was built with the Clang compiler (version 16.0.0). Examination of
-multi-CPU-core parallelisation is left to Section
+%Clock times and memory usage
+%(measured with the GNU time utility) were generated using a Mac Studio with an M1 Ultra CPU
+%on one core, where the code was built with the Clang compiler (version 16.0.0). Examination of
+%multi-CPU-core parallelisation is left to Section
 
 An additional clarification regarding the notation used in the next sections is needed. The abbreviations are as follows: “$S4F^{seg}$” stands for solids4foam segregated solver whereas “$S4F^{snes}$” is the same solver with JFNK algorithm. Both solvers are second-order accurate, meaning that their accuracy is comparable with high-order discretisation with p=1.
 % napomenut da se konstruiraju interpolacije, ako je isplativo za jedan korak to je pouzdan znak da je motodologija primjenjiva na update lagrangian pristup
 % opisat da se puno vremena trosi na racuanje koeficijenata
 % ovo je samo okvirna procjena jer se radi o akademskim implementacijama
-they reach the same accuracy under different timings and memory requirements
-MMS case is one iteration + volume source term. 
-Hex from S4F have good timings becouse it is showing "overconvergence" on such regular grids
+%they reach the same accuracy under different timings and memory requirements
+%MMS case is one iteration + volume source term. 
+%Hex from S4F have good timings becouse it is showing "overconvergence" on such regular grids
 \begin{figure}[H]
  	\centering
 	\subfigure[Displacement error]
@@ -1525,23 +1526,23 @@ The Lam\'{e} parameters can be expressed in term of the Young's modulus ($E$) an
 \end{eqnarray}
 %
 %------------------------------------------------------------------------------
-\subsection{St.\,Venant-Kirchoff Hyperelasticity}
-%------------------------------------------------------------------------------
+%\subsection{St.\,Venant-Kirchoff Hyperelasticity}
+%%------------------------------------------------------------------------------
+%%
+%The St.\,Venant-Kirchoff model defines the second Piola–Kirchhoff stress $\textbf{S}$ as
+%\begin{eqnarray}
+%	\bb{S} &=& 2 \mu \bb{E} + \lambda \, \text{tr} \left( \bb{E} \right) \textbf{I}
+%\end{eqnarray}
+%where, as before, $\lambda$ is the first Lam\'{e} parameter, and $\mu$ is the second Lam\'{e} parameter.
+%The Lagrangian Green strain $\textbf{E}$ is defined as
+%\begin{eqnarray}
+%	\bb{E} &=& \frac{1}{2} \left( \bb{\nabla} \bb{u} + \bb{\nabla} \bb{u}^{\text{T}} + \bb{\nabla} \bb{u} \cdot \bb{\nabla} \bb{u}^{\text{T}}  \right)
+%\end{eqnarray}
 %
-The St.\,Venant-Kirchoff model defines the second Piola–Kirchhoff stress $\textbf{S}$ as
-\begin{eqnarray}
-	\bb{S} &=& 2 \mu \bb{E} + \lambda \, \text{tr} \left( \bb{E} \right) \textbf{I}
-\end{eqnarray}
-where, as before, $\lambda$ is the first Lam\'{e} parameter, and $\mu$ is the second Lam\'{e} parameter.
-The Lagrangian Green strain $\textbf{E}$ is defined as
-\begin{eqnarray}
-	\bb{E} &=& \frac{1}{2} \left( \bb{\nabla} \bb{u} + \bb{\nabla} \bb{u}^{\text{T}} + \bb{\nabla} \bb{u} \cdot \bb{\nabla} \bb{u}^{\text{T}}  \right)
-\end{eqnarray}
-
-The true stress can be calculated from the second Piola–Kirchhoff stress as
-\begin{eqnarray} \label{eq:S2sigma}
-	\bb{\sigma} &=& \frac{1}{J} \bb{F} \cdot \bb{S} \cdot \bb{F}^{\text{T}}
-\end{eqnarray}
+%The true stress can be calculated from the second Piola–Kirchhoff stress as
+%\begin{eqnarray} \label{eq:S2sigma}
+%	\bb{\sigma} &=& \frac{1}{J} \bb{F} \cdot \bb{S} \cdot \bb{F}^{\text{T}}
+%\end{eqnarray}
 %
 %------------------------------------------------------------------------------
 \subsection{Neo-Hookean Hyperelasticity}
@@ -1591,14 +1592,27 @@ The scalars $C$, $c_f$, $c_{fs}$, and $c_t$ are material parameters and invarian
 	I_5 = \left( \boldsymbol{E} \cdot \boldsymbol{E} \right): \left( \boldsymbol{f_0} \otimes \boldsymbol{f_0} \right)
 \end{eqnarray}
 with $\boldsymbol{f_0}$ representing the unit fibre directions in the initial configuration.
-
-Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress to the true stress.
+%
+The push-forward mapping is used to obtain the true (Cauchy) stress from the second Piola–Kirchhoff stress, i.e. $\bb{\sigma}=J^{-1}\bb{F}\bb{S}\bb{F}^{\mathrm{T}}$.
 %
 %------------------------------------------------------------------------------
-\subsection{Mon-Rivlin - add here if used}
+\subsection{Mooney-Rivlin Hyperelasticity}
 %------------------------------------------------------------------------------
 %
+Strain-energy function in three-parameter Mooney-Rivlin hyperelastic material \cite{Rivlin1951}:
+%
+\begin{equation}
+\Psi = c_{10}(I_1-3) + c_{01}(I_2-3) + c_{11}(I_1-3)(I_2-3)
+\end{equation}
+%
+where $c_{10}$, $c_{01}$ and $c_{11}$ are material parameters, $I_1$ and $I_2$ are first and second principal invariant of the left Cauchy-Green deformation.
 
+The Cauchy stress tensor for the compressible case is then given by:
+\begin{equation}
+\bb{\sigma} = \frac{1}{J} \left[ \dfrac{1}{2}\kappa(J^2-1)\mathbf{I} + 2(c_{10}+c_{11}(I_2-3)*\text{dev}(\bb{B}_{iso})) -2(c_{01}+c_{11}(I_1-3)\text{dev}(\bb{B}_{iso}^{-1}))\right]
+\end{equation}
+where $\kappa$ is bulk modulus and $\bb{B}_{iso}=J^{-2/3}\bb{F}\cdot\bb{F}^{\mathrm{T}}$ is isochoric left Cauchy-Green deformation tensor.
+%
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -1607,32 +1621,58 @@ Equation \ref{eq:S2sigma} is used to convert the second Piola-Kirchhoff stress t
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-
+In the case of a linear elastic material, the true Jacobian is constructed as follows:
+\begin{equation} \label{app:tj}
+\begin{split}
+ \sum_{f \,\in\, \mathcal{F}_P} \bb{n}_{f} \cdot &\left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f = \\
+ &\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
+ +  \sum_{f \,\in\, \mathcal{F}_P^{\text{non-trac}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
+\end{split}
+\end{equation}
+%
+The first term in Equation \eqref{app:tj},  corresponding to internal faces, is further discretised following \cite{Castrillo2022, Castrillo2024}:
+%
+\begin{equation} \notag
+\begin{split}
+&\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f\\
+& = \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}\right) \right]\Gamma_f \\
+=&
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I} \bb{u}_N 
+ + \mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N} \otimes \bb{n}_f) \bb{u}_N 
+ +\lambda  \sum_{N\,\in\,\mathcal{S}_f}(\bb{n}_f \otimes \bb{c}_{x_N}) \bb{u}_N\right) \right]\Gamma_f.
+\end{split}
+\end{equation}
+%
+The second term corresponds to symmetry and displacement boundaries (traction boundaries are omitted, as their contribution is moved to the right-hand-side source vector):
+%
 \begin{equation}
 \begin{split}
-& \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
+\sum_{f \,\in\, \mathcal{F}_P^{\text{non-trac}}}& \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f = \\
+&=\sum_{f \,\in\, \mathcal{F}_P^{\text{symm}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
++ \sum_{f \,\in\, \mathcal{F}_P^{\text{disp}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f.\\
+\end{split}
+\end{equation}
+%
+Faces on the displacement boundary $\mathcal{S}_f^{\text{disp}}$ are discretised in the same way as internal faces.
+The ghost-point contribution on displacement boundaries is moved to the right-hand side.
+For symmetry faces, the stencil is split into the physical part $\mathcal{F}_P^{\text{symm,p}}$ and the ghost part $\mathcal{F}_P^{\text{symm,g}}$.
+The physical part is again discretised as internal faces, while the ghost contribution includes the reflection tensor $\bb{R}$:
+%
+\begin{equation} \notag
+\begin{split}
+\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \bb{n}_{f} \cdot &\left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
 = \\
-=&
-\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}\right) \right]\Gamma_f \\
-=&
-\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I} \bb{u}_N  + \mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\bb{n}_f^T) \bb{u}_N +\lambda  \sum_{N\,\in\,\mathcal{S}_f}(\bb{n}_f \bb{c}_{x_N}^T) \bb{u}_N\right) \right]\Gamma_f
+& \sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I}\cdot \bb{R} \cdot \bb{u}_N  \right) \right] 
+\\
+&  
+ +\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{c}_{x_N} \otimes \bb{n}_f) \cdot \bb{R} \cdot \bb{u}_N  \right) \right] \\
+& 
++\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\lambda \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{n}_f \otimes \bb{c}_{x_N}) \cdot \bb{R} \cdot \bb{u}_N \right) \right] .
 \end{split}
 \end{equation}
-
-
-\textcolor{red}{Provjeri sto se desava sa simetrijom i displacement rubom pa nadopisi}
-
-\begin{equation}
-\begin{split}
-&\oint_{\Gamma_P} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_P
-=
-\sum_{f \, \in \,\mathcal{F}_P} \int_{\Gamma_f} \bb{n} \cdot \bb{\sigma}_s \; \text{d}\Gamma_f
-\approx
-\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right]\Gamma_f \\
-& + \sum_{b\, \in \,\mathcal{F}_P^{\text{non-trac}}}  \bb{n}_{b} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{b,q} \right]\Gamma_b
-+ \sum_{b\, \in \, \mathcal{F}_P^{\text{trac}}}   \bb{n}_{b} \cdot  \sum_{q=1}^{q=N_{f,q}}\bb{T}_{b,q} \Gamma_b,
-\end{split}
-\end{equation}
+%
+The resulting true Jacobian can be used for an implicit solution procedure in which the solution is obtained in a single Newton iteration (as in \cite{Castrillo2022}).
+Note that no stabilisation term is included here; however, it may be incorporated in the same implicit fashion.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -1680,7 +1720,6 @@ To mitigate ill-conditioning in the reconstruction procedure, the polynomial bas
 \mathbf{q}^T(\bb{x}-\tilde{\bb{x}}) = \left[1, \frac{(x-\tilde{x})}{h}, \frac{(y-\tilde{y})}{h}, \frac{(z-\tilde{z})}{h}, \frac{1}{2}\frac{(x-\tilde{x})^2}{h^2}, \dots \right].
 \end{equation}
 Accordingly, the monomials and their corresponding coefficients in Equations \eqref{eq:hessianComponent} and \eqref{eq:thirdTensor} are scaled by $h^{-2}$ for the second-order (Hessian) terms and by $h^{-3}$ for the third-order derivative tensor.
-\textcolor{red}{check is $1/2$ going into q or a matrix}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -1719,6 +1758,7 @@ Consequently, the displacement and velocity at the two previous time steps must 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
+\hl{Image below are placeholder figures, i need to run those cases}
  \begin{figure}[H]
  	\centering
 	\subfigure[Structured hexahedral mesh]
@@ -1747,7 +1787,11 @@ Consequently, the displacement and velocity at the two previous time steps must 
 \item[•] Only for quadrature point sum i'm using different notation, i should use $q \in \mathcal{N}_q$ or something like that. Also in that case it make sense to describe what is going into $q \in \mathcal{N}_q$ and how weights are scaled? Now i explain this only by text.
 \item[•] High-order derivatives appendix is not going into details how product $d : \nabla \nabla \bb{u}$ and $d :: \nabla \nabla \nabla \bb{u}$ is calculated.
 \item[•] Time scheme is mentioned in dynamic example and not before in text.
-\item[•] add that alpha is used in ucns3
+\item[•] Spherical cavity, maybe we should add results when there is no analytical traction on cavity surface.
+\item[•] We use openFoam normal in momentum balance when integrating over quadrature points. This assumes that face is flat. When face is not flat this affects convergence behaviour and fourth order method is affected. This is not commented in the text.
+\item[•] First part of the stabilisation term is face gradient which is usually interpolated or average value. Here we are using gradient calculated directly at face. This proves that alpha damping is working also for this case. This is not commented in the text.
+\item[•] Maybe to use $\mathcal{P}$ instead of $p$ for polynomial order
+\item[•] Check appendix B, I'm using $\otimes$ notation
 \end{itemize}
 %
 %
