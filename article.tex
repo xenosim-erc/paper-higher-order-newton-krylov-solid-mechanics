@@ -735,7 +735,7 @@ Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x
 %------------------------------------------------------------------------------
 %
 The first test case consists of a  $0.2 \times 0.2$ m square or $0.2 \times 0.2 \times 0.2$ m cube with linear elastic ($E = 200$ GPa, $\nu = 0.3$) properties.
-A manufactured solution for displacement is employed in the form or trigonometric function in 3D \citep{Mazzanti2024} and mixed form in 2D \citep{Castrillo2022}:
+A manufactured solution for displacement, prescribed on domain boundaries, is employed in the form or trigonometric function in 3D \citep{Mazzanti2024} and mixed form in 2D \citep{Castrillo2022}:
 \begin{itemize}
 \item[•] \textbf{2D}
 \begin{eqnarray}
@@ -759,72 +759,77 @@ where $a_x = 2\,\mu$m, $a_y = 4\,\mu$m, and $a_z = 6\,\mu$m.
 \end{itemize}
 The Cartesian coordinates are given by $x$, $y$ and $z$.
 The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:momentum_lingeom}) can be found in \citep{Cardiff2025} or obtained by manufactured solution procedure.
-\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
+
+Both manufactured-solution cases were examined using four mesh types: (i) \emph{regular} hexahedral meshes, (ii) \emph{regular} tetrahedral meshes, (iii) \emph{regular} polyhedral meshes, and (iv) \emph{irregular} tetrahedral meshes. In two dimensions, these correspond to quadrilateral, triangular, and polygonal meshes. For reference, the finest 2D quadrilateral mesh contains $1\;024$ cells, while the finest irregular triangular mesh contains $2\;048$ cells. In 3D, the finest regular hexahedral mesh consists of $91\;125$ cells, whereas the finest regular tetrahedral mesh contains $511\;104$ cells.
+
+Figures \ref{fig:mms2D-disp} and \ref{fig:mms2D-stress} show the $L_2$ and $L_\infty$ norms of the displacement and stress magnitude errors plotted against the average cell width. For visual reference, a small image of the corresponding mesh is included in the lower-right corner of each plot. Across all mesh types, the convergence behaviour of both displacement and stress is smooth. The stress errors exhibit the expected orders of accuracy: first-order for $p=1$, second-order for $p=2$, and third-order for $p=3$. Regular hexahedral and polyhedral meshes exhibit slightly higher than expected convergence rates, attributed to error cancellation effects commonly observed on regular grids. 
+ Theoretical expectations for displacement errors are reached for second- and fourth-order discretisation, i.e, for $p=1$ and $p=3$. For 
+$p=2$, the displacement error exhibits a transition from an initial third-order to second-order convergence as mesh is refined. Despite the convergence rate degradation, the $p=2$ discretisation consistently yields displacement errors approximately an order of magnitude smaller, demonstrating a substantially lower error value. Importantly, this reduction in displacement convergence rate does not degrade the stress convergence rate, which remains uniformly second-order. Such behaviour has been reported by several authors \cite{Nishikawa2025a}, although a definitive explanation for why odd-order schemes exhibit convergence characteristics to those of the next lower even order has not yet been established by the author's knowledge. 
+
+Figures \ref{fig:mms3D-disp} and \ref{fig:mms3D-stress} present the corresponding 3D results;  convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress magnitude errors.  The trends closely mirror those observed in the 2D case: smooth convergence, expected accuracy for the stress field, and the same characteristic reduction of displacement convergence from third- to second-order for $p=2$. These results confirm that the observed behaviour is not specific to mesh dimensionality or topology, but rather intrinsic to the reconstruction order.
 %
 \begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral mesh]
+	\subfigure[Regular quadrilateral mesh]
  	{
  	    \begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_hex_struct}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_hex_struct-mesh}}
     	\end{overpic}
     }
- 	\subfigure[Tetrahedral structured mesh]
+ 	\subfigure[Regular triangular mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-tet_struct}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_struct-mesh}}
     	\end{overpic}
     }
-    \subfigure[Tetrahedral unstructured mesh]
+    \subfigure[Irregular triangular mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-tet_unstruct_v2}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_unstruct_v2-mesh}}
     	\end{overpic}
     }
-    \subfigure[Polyhedral structured mesh]
+    \subfigure[Regular polygonal mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_dispErrors_ho-poly_struct}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_poly_struct-mesh}}
     	\end{overpic}
     }
- 	\caption{Manufactured solution cube (2D case): error convergence for displacement magnitude.}
+ 	\caption{Manufactured solution square (2D case): error convergence for displacement magnitude.}
  	\label{fig:mms2D-disp}
  \end{figure}
  % line width 2, Ambient 0.15. mesh number 6 is shown at diagrams
  %
  %
  %
- \begin{figure}[H]
+\begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral mesh]
+	\subfigure[Regular quadrilateral mesh]
  	{
  	    \begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_hex_struct}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_hex_struct-mesh}}
     	\end{overpic}
     }
- 	\subfigure[Tetrahedral structured mesh]
+ 	\subfigure[Regular triangular mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_ho-tet_struct}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_struct-mesh}}
     	\end{overpic}
     }
-    \subfigure[Tetrahedral unstructured mesh]
+    \subfigure[Irregular triangular mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_ho-tet_unstruct_v2}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_tet_unstruct_v2-mesh}}
     	\end{overpic}
     }
-    \subfigure[Polyhedral structured mesh]
+    \subfigure[Regular polygonal mesh]
  	{
  	 	\begin{overpic}[scale=0.8]{figures/mms_2D_stressErrors_ho-poly_struct}
   			\put(50,13){\includegraphics[scale=0.016]{figures/mms_2D_poly_struct-mesh}}
     	\end{overpic}
     }
- 	\caption{Manufactured solution cube (2D case): error convergence for stress magnitude.}
+ 	\caption{Manufactured solution square (2D case): error convergence for stress magnitude.}
  	\label{fig:mms2D-stress}
- \end{figure}
-%
-%
+\end{figure}
 %
 %
 \begin{figure}[H]
@@ -897,33 +902,33 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Equation \ref{eqn:
 \subsubsection{Case 2: Cantilever Beam}
 %------------------------------------------------------------------------------
 %
-The test case geometry, shown in Fig. 6(a), is a rectangular 2D beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. The top and bottom boundaries of the beam are traction-free, and plane strain conditions are assumed. The left end of the beam is constrained by the analytical displacement, while the right end is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined grids.
-
-\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
+The test case geometry, shown in Fig. \ref{fig:cantilever-geometry}, is a rectangular 2D beam with dimensions of $L$ $\times$ $D$ = $2$ m $\times$ $0.2$ m, a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. Beam edges AB and CF are traction-free, and plane strain conditions are assumed. The edge AF is constrained by the analytical displacement, while the edge BC is subjected to the corresponding analytical traction of (0, 1) MPa. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end. Convergence is assessed using 15 successively refined regular and irregular triangular meshes, shown at Figure \ref{fig:cantilever-tetstruct-mesh} and \ref{fig:cantilever-tetunstruct-mesh}, respectively. For orientation, finest irregular triangular mesh consists of $12\;290$ cells while finest regular triangular mesh of $10\;368$ cells.
 %
+
+The analytical displacement field is a third-order polynomial, implying that a fourth-order discretisation should reproduce the solution exactly. In this sense, the problem serves as a patch test for the fourth-order scheme. Figure \ref{fig:cantilever-dispErrors} presents the $L_2$ and $L_\infty$ convergence of the displacement error. As expected, the fourth-order discretisation ($p=3$) achieves the exact displacement field over the entire domain, reaching machine precision, across all meshes. The second and third-order schemes both converge at a second-order rate and require an extremely fine mesh to approach the accuracy of the fourth-order method.
+
+The cantilever geometry is chosen to be susceptible to shear locking; therefore, these results also demonstrate that the fourth-order method effectively eliminates shear-locking effects. Figure \ref{fig:cantilever-stressErrors} shows the corresponding convergence of the stress error norms. As expected, the $p=1$ and $p=2$ discretisation converge with first- and second-order accuracy, respectively.
 %
 \begin{figure}[H]
 	\centering
 	\subfigure[Case geometry and boundary conditions]
  	{
- 		\label{fig:cantilever-dispErrors-tetstruct}
+ 		\label{fig:cantilever-geometry}
     	\includegraphics[scale=1]{figures/cantilever-geometry}
     }
     \subfigure[Tetrahedral unstructured mesh]
  	{
- 		\label{fig:cantilever-dispErrors-tetunstruct}
+ 		\label{fig:cantilever-tetstruct-mesh}
         \includegraphics[scale=0.1]{figures/cantilever_tet-struct-mesh}
     }
     \subfigure[Tetrahedral unstructured mesh]
  	{
- 		\label{fig:cantilever-dispErrors-tetunstruct}
+ 		\label{fig:cantilever-tetunstruct-mesh}
         \includegraphics[scale=0.1]{figures/cantilever_tet-unstruct-mesh}
     }  
 	\label{fig:cantilever}
-	\caption{Cantilever beam case: case geometry, boundary conditions and the coarsest mesh used.}
+	\caption{Cantilever beam case: case geometry, boundary conditions and the coarsest triangular meshes used.}
 \end{figure}
-%
-%
 %
 %
 \begin{figure}[H]
@@ -939,7 +944,7 @@ The test case geometry, shown in Fig. 6(a), is a rectangular 2D beam with dimens
         \includegraphics[scale=0.8]{figures/cantilever_dispErrors_tet-unstruct}
     }
  	\caption{Cantilever beam case: displacement magnitude discretisation errors.}
- 		\label{fig:cantilever-dispErrors-tetstruct}
+ 	\label{fig:cantilever-dispErrors}
  \end{figure}
 %
 %
@@ -956,7 +961,7 @@ The test case geometry, shown in Fig. 6(a), is a rectangular 2D beam with dimens
     	\includegraphics[scale=0.8]{figures/cantilver_stressErrors_tet-unstruct}
     }
  	\caption{Cantilever beam case: error convergence for stress magnitude. Results for $p=3$ are omitted for brevity, i.e. stress error for $p=3$ is below $\sim$ $10^{-6}$ MPa.}
- 	\label{fig:cantilever-stressErrors-tetstruct}
+ 	\label{fig:cantilever-stressErrors}
  \end{figure}
  %
 %
@@ -1020,8 +1025,8 @@ The problem is considered plane stress, with the 2-D computational domain compri
 \subsubsection{Case 4: Cook's Membrane}
 %------------------------------------------------------------------------------
 %
-The Cook’s membrane configuration (Figure \ref{fig:CooksMembrane}) is a classic benchmark problem dominated by bending effects.
-It consists of a two-dimensional trapezoidal panel (plane-strain condition) that is fully constrained along its left edge and loaded by a uniform shear traction applied to the right edge.
+The Cook’s membrane configuration (Figure \ref{fig:CooksMembrane:a}) is a classic benchmark problem dominated by bending effects.
+It consists of a two-dimensional trapezoidal panel (plane-strain condition) that is fully constrained along edge AD and loaded by a uniform shear traction applied to BC edge. Edges AB and CD are traction-free.
 %The coordinates of the four vertices of the trapezoid, given in millimetres, are $(0,0)$, $(48,44)$, $(48,60)$, and $(0,44)$.
 In this study, two variants of the problem are analysed:
 \vspace{0.5em}
@@ -1034,12 +1039,10 @@ In this study, two variants of the problem are analysed:
 where $E$ denotes Young’s modulus, $\nu$ the Poisson ratio, and $\tau$ is the imposed shear traction.
 The analysis is performed as quasi-static without body forces.
 The linear case is solved in a single step, whereas the hyperelastic case is solved using 30 uniform load increments.
-To validate the results, Figure \ref{fig:CooksMembrane-tipConvergence} plots the vertical displacement of a key reference point against the average cell width, comparing the predictions to literature data and Abaqus (C3D8 element) results. 
-The location of this reference point differs by analysis type: it is the top-right corner (48, 60) mm for the elastic case but the midpoint of the loaded edge (48, 52) mm for the hyperelastic case. 
-Eight successively refined tetrahedral meshes are used 11, 35 (Figure \ref{fig:plateHole:b}), 164, 177, 263, 389, 1457, 5637, 22119 and 88012 cells.
+Eight successively refined irregular tetrahedral meshes are used 11, 35 (Figure \ref{fig:CooksMembrane:b}), 164, 177, 263, 389, 1457, 5637, 22119 and 88012 cells.
 
-\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.\\
-Only first derivative is used when extracting displacement at reference point.}
+Figure \ref{fig:CooksMembrane:c} shows the predicted equivalent stress distribution on deformed geometry (using the mesh with 88012 cells) for the hyperelastic cases.  To validate the results, Figure \ref{fig:CooksMembrane-tipConvergence} plots the vertical displacement of a key reference point against the average cell width, comparing the predictions to literature data and Abaqus (C3D8 element) results. 
+The location of this reference point differs by analysis type: it is the top-right corner (48, 60) mm for the elastic case but the midpoint of the loaded edge (48, 52) mm for the hyperelastic case.  
 %
 %
 \begin{figure}[H]
@@ -1050,7 +1053,7 @@ Only first derivative is used when extracting displacement at reference point.}
     	\includegraphics[scale=1]{figures/CooksMembrane-geometry}
     }
     \quad
-	\subfigure[Tetrahedral unstructured mesh]
+	\subfigure[Irregular triangular mesh]
  	{
  		\label{fig:CooksMembrane:b}
     	\includegraphics[scale=0.06]{figures/CooksMembrane-mesh}
@@ -1058,7 +1061,7 @@ Only first derivative is used when extracting displacement at reference point.}
     \quad
     \subfigure[Equivalent (von Mises) stress distribution for hyperelastic case]
  	{
- 		\label{fig:CooksMembrane:b}
+ 		\label{fig:CooksMembrane:c}
     	\includegraphics[scale=0.35]{figures/cooksMembrane-neoHookean-sigmaEq.pdf}
     }
  	\caption{Cook's membrane case: geometry, mesh and deformation in the hyperelastic case.}
@@ -1078,7 +1081,7 @@ Only first derivative is used when extracting displacement at reference point.}
  		\label{fig:CooksMembrane-tip:b}
     	\includegraphics[scale=0.8]{figures/CooksMembrane-tet-neoHookeanTipDispConvergence}
     }
- 	\caption{Cook’s membrane vertical displacement predictions at the reference point as a function of the average cell width. Comparisons are given with the results from the literature  \cite{Zienkiewicz2000, Simplas, Pelteret2018}. Case with $p=1$ is using $n+=7$ instead of 10 get resutls on first mesh.}
+ 	\caption{Cook’s membrane vertical displacement predictions at the reference point as a function of the average cell width. Comparisons are given with the results from the literature  \cite{Zienkiewicz2000, Simplas, Pelteret2018}. Case with $p=1$ uses $n+=7$ instead of $n+=10$ to get results on the first mesh with 11 cells.}
  	\label{fig:CooksMembrane-tipConvergence}
  \end{figure}
 %
@@ -1092,10 +1095,10 @@ Only first derivative is used when extracting displacement at reference point.}
 % Finite volume method for stress analysis in complex domain
 % Application of the nite volume method and unstructured meshes to linear elasticity
 %
-This benchmark problem consists of a thin, infinitely large plate with a circular hole, subjected to uniaxial tension. Owing to the symmetry of the geometry and loading, only one quarter of the plate is modeled as a finite domain. To minimize the influence of the finite computational boundaries, the exact tractions obtained from the analytical solution \cite{Demirdzic1997} are prescribed on the outer edges BC and CD. Symmetry boundary conditions are applied on boundaries AB and DE, while zero traction is specified on the hole boundary. The material properties are defined by a Young’s modulus of $E = 200 \,\text{GPa}$ and a Poisson’s ratio of $\nu = 0.3$.
-Five successively refined tetrahedral meshes are used 978 (Figure \ref{fig:plateHole:b}), 4050, 16296, 64257 and 256512 cells.
+This benchmark problem consists of a thin, infinitely large plate with a circular hole, subjected to uniaxial tension of  $\sigma_{xx} = T = 1$ MPa. Owing to the symmetry of the geometry and loading, only one quarter of the plate is modeled as a finite domain. To minimize the influence of the finite computational boundaries, the exact tractions obtained from the analytical solution \cite{Demirdzic1997} are prescribed on the outer edges BC and CD. Symmetry boundary conditions are applied on boundaries AB and DE, while zero traction is specified on the hole boundary. The material properties are defined by a Young’s modulus of $E = 200 \,\text{GPa}$ and a Poisson’s ratio of $\nu = 0.3$.
+Five successively refined irregular triangular meshes are used: 978 (Figure \ref{fig:plateHole:b}), $4\;050$, $16\;296$, $64\;257$ and $256\;512$ cells.
 
-\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
+Figure \ref{fig:plateHole:c} shows the predicted equivalent stress distribution, highlighting the steep stress gradients and stress concentration around the hole. The convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress discretisation errors is presented in Figure \ref{fig:plateHole-convergence}. As before, the expected convergence rates for both displacement and stress are achieved. Notably, the presence of the curved hole boundary does not impair the convergence behaviour, despite the absence of any special treatment for this curved edge.
 %
 \begin{figure}[H]
  	\centering
@@ -1121,18 +1124,18 @@ Five successively refined tetrahedral meshes are used 978 (Figure \ref{fig:plate
 %
 \begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral mesh]
+	\subfigure[Displacement magnitude discretisation errors]
  	{
- 		\label{fig:plateHole-disp:a}
+ 		\label{fig:plateHole-disp}
     	\includegraphics[scale=0.8]{figures/plateHole_dispErrors_tet-unstruct}
     }
- 	\subfigure[Tetrahedral mesh]
+ 	\subfigure[Stress magnitude discretisation errors]
  	{
- 		\label{fig:plateHole-disp:b}
+ 		\label{fig:plateHole-stress}
     	\includegraphics[scale=0.8]{figures/plateHole_stressErrors_tet-unstruct}
     }
  	\caption{Plate hole case: displacement and stress error convergence}
- 	\label{fig:plateHole-disp}
+ 	\label{fig:plateHole-convergence}
  \end{figure}
 %
 %
@@ -1147,11 +1150,12 @@ A key feature of this problem is the pronounced stress concentration that forms 
 this stress rapidly diminishes further from the cavity. 
 Although the problem is inherently axisymmetric, it is solved here as a 3-D case with a mesh graded towards the cavity.
 The computational domain is taken as one-eighth of a $1 \times 1 \times 1$ m cube aligned with the Cartesian axes, with one corner at the centre of the sphere.
-The analytical tractions are applied to the domain's far boundaries to mitigate the finite geometry effects. 
 The analytical expressions for stress \cite{Southwell1926} and displacement \cite{Goodier1933} can be found in \cite{Cardiff2025}.
-The analysis is performed using six different unstructured tetrahedral meshes with cell counts of 3802, 7030, 14891, 32864, 72945 and 158870, with the coarsest mesh shown in Figure \ref{fig:sphericalCavity:b}.
+The analytical tractions are applied to the far-field boundaries to mitigate finite geometry effects. 
+The same analytical expressions are also used on the cavity surface, which theoretically corresponds to a zero-traction boundary; however, the quadrature points on the discretised faces do not lie exactly on the true zero-traction surface. Imposing a zero-traction condition directly on this curved boundary, without specialised boundary treatment, would therefore reduce the overall error convergence rate to second order, as it would be dominated by the second-order accurate geometrical approximation \cite{costa2019, Gooch2002}. Curved boundary treatment is outside the scope of this work and is left for future work.
+The analysis is performed using six different irregular tetrahedral meshes with cell counts of $3\;802$, $7\;030$, $14\;891$, $32\;864$, $72\;945$ and $158\;870$, with the coarsest mesh shown in Figure \ref{fig:sphericalCavity:a}.
 
-\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
+Figure \ref{fig:sphericalCavity:b} shows the predicted von Mises stress field on the finest mesh. The convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress discretisation errors is presented in Figure \ref{fig:sphericalCavity:convergence}. As in the previous cases, consistent and expected convergence behaviour is observed.
 %
 \begin{figure}[H]
  	\centering
@@ -1175,16 +1179,16 @@ The analysis is performed using six different unstructured tetrahedral meshes wi
  	\centering
  	\subfigure[Displacement convergence]
  	{
- 		\label{fig:sphericalCavity:a}
+ 		\label{fig:sphericalCavity:disp}
     	\includegraphics[scale=0.8]{figures/sphericalCavity_dispErrors_tet}
     }
 	\subfigure[Stress convergence]
  	{
- 		\label{fig:sphericalCavity:b}
+ 		\label{fig:sphericalCavity:stress}
     	\includegraphics[scale=0.8]{figures/sphericalCavity_stressErrors_tet}
     }
  	\caption{Spherical cavity case: displacement and stress error convergence.}
- 	\label{fig:sphericalCavity}
+ 	\label{fig:sphericalCavity:convergence}
 \end{figure}
 %
 %
@@ -1228,20 +1232,20 @@ Only first derivative is used when extracting displacement at reference point.}
 
 %
 %
-%------------------------------------------------------------------------------
-\subsubsection{Case 8: Inflation of an Idealised Ventricle}
-%------------------------------------------------------------------------------
-%
-This case considers the idealized ventricle inflation benchmark developed by \citet{Land2015} to test cardiac mechanics software. 
-The material is governed by the hyperelastic, transversely isotropic constitutive law from \citet{Guccione1995}. 
-The specific parameters used, $C = 10$ kPa and $c_f = c_t = c_{fs} = 1$, are chosen to produce an isotropic material response.
-The benchmark specifies incompressibility; this is enforced in the current work in a weak sense by setting the bulk modulus ($\kappa = 1000$ kPa) to be two orders of magnitude greater than the shear modulus parameter $C$. 
-The ventricle geometry is defined as a truncated ellipsoid (see \citet{Land2015, Cardiff2025} for geometry definition).
-The base plane is fixed, the internal surface (endocardial surface) has an internal pressure of $10$ kPa,
-while the outer surface is traction-free. 
-$p$-refinement is performed on the mesh containing $12\,960$ cells and solution is obtained quasi-statically using 100 equal increments.%, using a $1$ ms time step and a total simulation time of $1$ s.
-%The problem is solved quasi-statically using 100 equal increments on a set of four grids: $1\,620$, $12\,960$, $50\,000$, and $103\,680$ cells.
-\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
+%%------------------------------------------------------------------------------
+%\subsubsection{Case 8: Inflation of an Idealised Ventricle}
+%%------------------------------------------------------------------------------
+%%
+%This case considers the idealized ventricle inflation benchmark developed by \citet{Land2015} to test cardiac mechanics software. 
+%The material is governed by the hyperelastic, transversely isotropic constitutive law from \citet{Guccione1995}. 
+%The specific parameters used, $C = 10$ kPa and $c_f = c_t = c_{fs} = 1$, are chosen to produce an isotropic material response.
+%The benchmark specifies incompressibility; this is enforced in the current work in a weak sense by setting the bulk modulus ($\kappa = 1000$ kPa) to be two orders of magnitude greater than the shear modulus parameter $C$. 
+%The ventricle geometry is defined as a truncated ellipsoid (see \citet{Land2015, Cardiff2025} for geometry definition).
+%The base plane is fixed, the internal surface (endocardial surface) has an internal pressure of $10$ kPa,
+%while the outer surface is traction-free. 
+%$p$-refinement is performed on the mesh containing $12\,960$ cells and solution is obtained quasi-statically using 100 equal increments.%, using a $1$ ms time step and a total simulation time of $1$ s.
+%%The problem is solved quasi-statically using 100 equal increments on a set of four grids: $1\,620$, $12\,960$, $50\,000$, and $103\,680$ cells.
+%\hl{Further discussion of the results and accompanying comments will be added once Philip approves the case.}
 %
 %------------------------------------------------------------------------------
 \subsection{Error-Cost Relationship}
@@ -1254,7 +1258,7 @@ $p$-refinement is performed on the mesh containing $12\,960$ cells and solution 
 %(measured with the GNU time utility) were generated using a Mac Studio with an M1 Ultra CPU
 %on one core, where the code was built with the Clang compiler (version 16.0.0). Examination of
 %multi-CPU-core parallelisation is left to Section
-
+\hl{High-Order CFD Methods: Current Status and Perspective}
 An additional clarification regarding the notation used in the next sections is needed. The abbreviations are as follows: “$S4F^{seg}$” stands for solids4foam segregated solver whereas “$S4F^{snes}$” is the same solver with JFNK algorithm. Both solvers are second-order accurate, meaning that their accuracy is comparable with high-order discretisation with p=1.
 % napomenut da se konstruiraju interpolacije, ako je isplativo za jedan korak to je pouzdan znak da je motodologija primjenjiva na update lagrangian pristup
 % opisat da se puno vremena trosi na racuanje koeficijenata
@@ -1434,11 +1438,11 @@ Mesh size             & AJ          & TJ           & AJ          & TJ           
 %
 %
 %------------------------------------------------------------------------------
-\subsection{Code parallelisation}
-\label{sec:codeParallelisation}
+%\subsection{Code parallelisation}
+%\label{sec:codeParallelisation}
 %------------------------------------------------------------------------------
 %
-\hl{To work on after meeting with Philip}
+%\hl{To work on after meeting with Philip}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions} \label{sec:conclusion}
@@ -1563,6 +1567,7 @@ The volume-preserving component of the elastic left Cauchy--Green deformation te
 	\bar{\bb{b}} = J^{-2/3} \bb{b} = J^{-2/3} \bb{F} \cdot \bb{F}^{\text{T}}
 \end{eqnarray}
 In the limit of small deformations $\lVert \nabla \mathbf{u} \rVert  \ll 1$, neo-Hookean hyperelasticity (Equation \ref{eq:neoHook}) reduces to linear elasticity (Equation \ref{eq:linearElastic}).
+\iffalse
 %
 %------------------------------------------------------------------------------
 \subsection{Guccione Hyperelasticity}
@@ -1594,6 +1599,7 @@ The scalars $C$, $c_f$, $c_{fs}$, and $c_t$ are material parameters and invarian
 with $\boldsymbol{f_0}$ representing the unit fibre directions in the initial configuration.
 %
 The push-forward mapping is used to obtain the true (Cauchy) stress from the second Piola–Kirchhoff stress, i.e. $\bb{\sigma}=J^{-1}\bb{F}\bb{S}\bb{F}^{\mathrm{T}}$.
+\fi
 %
 %------------------------------------------------------------------------------
 \subsection{Mooney-Rivlin Hyperelasticity}
@@ -1609,70 +1615,9 @@ where $c_{10}$, $c_{01}$ and $c_{11}$ are material parameters, $I_1$ and $I_2$ a
 
 The Cauchy stress tensor for the compressible case is then given by:
 \begin{equation}
-\bb{\sigma} = \frac{1}{J} \left[ \dfrac{1}{2}\kappa(J^2-1)\mathbf{I} + 2(c_{10}+c_{11}(I_2-3)*\text{dev}(\bb{B}_{iso})) -2(c_{01}+c_{11}(I_1-3)\text{dev}(\bb{B}_{iso}^{-1}))\right]
+\bb{\sigma} = \frac{1}{J} \left[ \dfrac{1}{2}\kappa(J^2-1)\mathbf{I} + 2(c_{10}+c_{11}(I_2-3)*\text{dev}(\bb{B}_{\mathrm{iso}})) -2(c_{01}+c_{11}(I_1-3)\text{dev}(\bb{B}_{\mathrm{iso}}^{-1}))\right]
 \end{equation}
-where $\kappa$ is bulk modulus and $\bb{B}_{iso}=J^{-2/3}\bb{F}\cdot\bb{F}^{\mathrm{T}}$ is isochoric left Cauchy-Green deformation tensor.
-%
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-\section{Preconditioner Based on True Jacobian}
-\label{app:P}
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-In the case of a linear elastic material, the true Jacobian is constructed as follows:
-\begin{equation} \label{app:tj}
-\begin{split}
- \sum_{f \,\in\, \mathcal{F}_P} \bb{n}_{f} \cdot &\left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f = \\
- &\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
- +  \sum_{f \,\in\, \mathcal{F}_P^{\text{non-trac}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
-\end{split}
-\end{equation}
-%
-The first term in Equation \eqref{app:tj},  corresponding to internal faces, is further discretised following \cite{Castrillo2022, Castrillo2024}:
-%
-\begin{equation} \notag
-\begin{split}
-&\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f\\
-& = \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}\right) \right]\Gamma_f \\
-=&
-\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I} \bb{u}_N 
- + \mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N} \otimes \bb{n}_f) \bb{u}_N 
- +\lambda  \sum_{N\,\in\,\mathcal{S}_f}(\bb{n}_f \otimes \bb{c}_{x_N}) \bb{u}_N\right) \right]\Gamma_f.
-\end{split}
-\end{equation}
-%
-The second term corresponds to symmetry and displacement boundaries (traction boundaries are omitted, as their contribution is moved to the right-hand-side source vector):
-%
-\begin{equation}
-\begin{split}
-\sum_{f \,\in\, \mathcal{F}_P^{\text{non-trac}}}& \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f = \\
-&=\sum_{f \,\in\, \mathcal{F}_P^{\text{symm}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
-+ \sum_{f \,\in\, \mathcal{F}_P^{\text{disp}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f.\\
-\end{split}
-\end{equation}
-%
-Faces on the displacement boundary $\mathcal{S}_f^{\text{disp}}$ are discretised in the same way as internal faces.
-The ghost-point contribution on displacement boundaries is moved to the right-hand side.
-For symmetry faces, the stencil is split into the physical part $\mathcal{F}_P^{\text{symm,p}}$ and the ghost part $\mathcal{F}_P^{\text{symm,g}}$.
-The physical part is again discretised as internal faces, while the ghost contribution includes the reflection tensor $\bb{R}$:
-%
-\begin{equation} \notag
-\begin{split}
-\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \bb{n}_{f} \cdot &\left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
-= \\
-& \sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I}\cdot \bb{R} \cdot \bb{u}_N  \right) \right] 
-\\
-&  
- +\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{c}_{x_N} \otimes \bb{n}_f) \cdot \bb{R} \cdot \bb{u}_N  \right) \right] \\
-& 
-+\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\lambda \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{n}_f \otimes \bb{c}_{x_N}) \cdot \bb{R} \cdot \bb{u}_N \right) \right] .
-\end{split}
-\end{equation}
-%
-The resulting true Jacobian can be used for an implicit solution procedure in which the solution is obtained in a single Newton iteration (as in \cite{Castrillo2022}).
-Note that no stabilisation term is included here; however, it may be incorporated in the same implicit fashion.
+where $\kappa$ is bulk modulus and $\bb{B}_{\mathrm{iso}}=J^{-2/3}\bb{F}\cdot\bb{F}^{\mathrm{T}}$ is isochoric left Cauchy-Green deformation tensor.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -1720,6 +1665,68 @@ To mitigate ill-conditioning in the reconstruction procedure, the polynomial bas
 \mathbf{q}^T(\bb{x}-\tilde{\bb{x}}) = \left[1, \frac{(x-\tilde{x})}{h}, \frac{(y-\tilde{y})}{h}, \frac{(z-\tilde{z})}{h}, \frac{1}{2}\frac{(x-\tilde{x})^2}{h^2}, \dots \right].
 \end{equation}
 Accordingly, the monomials and their corresponding coefficients in Equations \eqref{eq:hessianComponent} and \eqref{eq:thirdTensor} are scaled by $h^{-2}$ for the second-order (Hessian) terms and by $h^{-3}$ for the third-order derivative tensor.
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\section{Preconditioner Based on True Jacobian}
+\label{app:P}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+In the case of a linear elastic material, the true Jacobian is constructed as follows:
+\begin{equation} \label{app:tj}
+\begin{split}
+ \sum_{f \,\in\, \mathcal{F}_P} \bb{n}_{f} \cdot &\left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f = \\
+ &\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
+ +  \sum_{f \,\in\, \mathcal{F}_P^{\text{non-trac}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f
+\end{split}
+\end{equation}
+%
+The first term in Equation \eqref{app:tj},  corresponding to internal faces, is further discretised following \cite{Castrillo2022, Castrillo2024}:
+%
+\begin{equation} \notag
+\begin{split}
+&\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f\\
+& = \sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \bb{n}_{f} \cdot \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu (\nabla \bb{u})_{f,q} + \mu (\nabla \bb{u})^T_{f,q} +\lambda \text{tr}((\nabla \bb{u})_{f,q} )\mathbf{I}\right) \right]\Gamma_f \\
+=&
+\sum_{f \,\in\, \mathcal{F}_P^{\text{int}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I} \bb{u}_N 
+ + \mu \sum_{N\,\in\,\mathcal{S}_f}(\bb{c}_{x_N} \otimes \bb{n}_f) \bb{u}_N 
+ +\lambda  \sum_{N\,\in\,\mathcal{S}_f}(\bb{n}_f \otimes \bb{c}_{x_N}) \bb{u}_N\right) \right]\Gamma_f.
+\end{split}
+\end{equation}
+%
+The second term corresponds to symmetry and displacement boundaries (traction boundaries are omitted, as their contribution is moved to the right-hand-side source vector):
+%
+\begin{equation}
+\begin{split}
+\sum_{f \,\in\, \mathcal{F}_P^{\text{non-trac}}}& \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f = \\
+&=\sum_{f \,\in\, \mathcal{F}_P^{\text{symm}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
++ \sum_{f \,\in\, \mathcal{F}_P^{\text{disp}}} \bb{n}_{f} \cdot \left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f.\\
+\end{split}
+\end{equation}
+%
+Faces on the displacement boundary $\mathcal{S}_f^{\text{disp}}$ are discretised in the same way as internal faces.
+The ghost-point contribution on displacement boundaries is included to the right-hand side vector.
+For symmetry faces, the stencil is split into the physical part $\mathcal{F}_P^{\text{symm,p}}$ and the ghost part $\mathcal{F}_P^{\text{symm,g}}$.
+The physical part is again discretised as internal faces, while the ghost contribution includes the reflection tensor $\bb{R}$:
+%
+\begin{equation} \notag
+\begin{split}
+\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \bb{n}_{f} \cdot &\left[  \sum_{q=1}^{q=N_{f,q}}\alpha_q \; (\bb{\sigma}_s)_{f,q} \right] \Gamma_f 
+= \\
+& \sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{c}_{x_N}\cdot \bb{n}_f)\mathbf{I}\cdot \bb{R} \cdot \bb{u}_N  \right) \right] 
+\\
+&  
+ +\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\mu \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{c}_{x_N} \otimes \bb{n}_f) \cdot \bb{R} \cdot \bb{u}_N  \right) \right] \\
+& 
++\sum_{f \,\in\, \mathcal{F}_P^{\text{symm,g}}} \left [ \sum_{q=1}^{q=N_{f,q}}\alpha_q \; \left(\lambda \sum_{N\,\in\,\mathcal{S}_f^{\text{symm,g}}}(\bb{n}_f \otimes \bb{c}_{x_N}) \cdot \bb{R} \cdot \bb{u}_N \right) \right] .
+\end{split}
+\end{equation}
+%
+The resulting true Jacobian can be used for an implicit solution procedure in which the solution is obtained in a single Newton iteration (as in \cite{Castrillo2022}).
+Note that no stabilisation term is included here; however, it may be incorporated in the same implicit fashion.
+
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -1792,6 +1799,9 @@ Consequently, the displacement and velocity at the two previous time steps must 
 \item[•] First part of the stabilisation term is face gradient which is usually interpolated or average value. Here we are using gradient calculated directly at face. This proves that alpha damping is working also for this case. This is not commented in the text.
 \item[•] Maybe to use $\mathcal{P}$ instead of $p$ for polynomial order
 \item[•] Check appendix B, I'm using $\otimes$ notation
+\item[•] Consider adding body force term for 2D case in appendix. For 3D it is available in previous paper.
+\item[•] Finish idealised ventricle case, consider adding it later.
+\item[•] Only first derivative is used when extracting displacement at reference point.
 \end{itemize}
 %
 %
