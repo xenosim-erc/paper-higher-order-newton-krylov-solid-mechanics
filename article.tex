@@ -321,20 +321,19 @@ The body force volume integral is discretised by integrating over the cell volum
 \begin{equation}\label{eq:bodyTerm}
 \int_{\Omega_P} \bb{f}_b \text{d}\Omega_P
 \approx
- \sum_{q=1}^{q=N_{\bb{f},q}}\beta_q \; \left(\bb{f}_b\right)_{\Omega,q}  \Omega_P,
+ \sum_{q=1}^{q=N_{\Omega,q}}\beta_q \; \left(\bb{f}_b\right)_{\Omega,q}  \Omega_P,
 \end{equation}
 %
-where $N_{\bb{f},q}$ is the number of cell quadrature points and $\beta_q$ are the corresponding quadrature weights.
+where $N_{\Omega,q}$ is the number of cell quadrature points and $\beta_q$ are the corresponding quadrature weights.
+Subscript ${\Omega,q}$ is used to denote a quantity calculated at quadrature point location $\bb{x}_{\Omega,q}$.
 Similarly, the inertia term (e.g. left-hand side term of Equation \eqref{eqn:momentum_lingeom}) is discretised as:
 %
 \begin{equation}\label{eq:inertiaTerm}
 \int_{\Omega_P} \rho \frac{\partial^2 \bb{u}}{\partial t^2} \text{d}\Omega_P
 \approx
- \sum_{q=1}^{q=N_{\bb{u},q}}\gamma_q \; \bb{\rho}_{\,\Omega,q}  \left(\frac{\partial^2 \bb{u}}{\partial t^2} \right)_{\Omega,q}  \Omega_P,
+ \sum_{q=1}^{q=N_{\Omega,q}}\beta_q \; \bb{\rho}_{\,\Omega,q}  \left(\frac{\partial^2 \bb{u}}{\partial t^2} \right)_{\Omega,q}  \Omega_P.
 \end{equation}
 %
-where $N_{\bb{u},q}$ and $\gamma_q$ are quadrature points and corresponding weights used for inertia term integration. Subscript ${\Omega,q}$ is used to denote a quantity calculated at quadrature point location $\bb{x}_{\Omega,q}$.
-
 To evaluate these integrals over arbitrary polyhedral cells, the control volume is partitioned into a set of non-overlapping tetrahedra using the face subdivisions already defined for surface integration.
 Each tetrahedron is formed by connecting the cell centroid P with one of the triangular faces, as illustrated in Figure \ref{fig:volumeTerm}.
 \begin{figure}[h]
@@ -366,6 +365,7 @@ This stabilisation is introduced in the form of an additional traction term at e
 %
 where $\alpha$ is the scale factor and $\bar{K}$ a stiffness-type parameter that gives the stabilisation an appropriate scale and dimension.
 In the current work, $\bar{K}$ is calculated using Lamé parameters $\bar{K} = 2\mu +\lambda$, following previous works \cite{Tukovic2013,Cardiff2017,Cardiff2018} where this value is used for Rhie-Chow stabilisation.
+For hyperelastic constitutive laws, the values of $\mu$ and $\lambda$ correspond to the linearised (small-strain) moduli obtained by expanding the hyperelastic model about the undeformed configuration, ensuring that $\bar{K}$ is consistent with the model’s tangent stiffness in the small-strain limit
 The vector $\bb{d}_{PN}=\bb{x}_N-\bb{x}_P$ connects the centroid of cell $P$ with that of its neighboring cell $N$,
 while the product $\bb{d}_{PN} \cdot \bb{n}_f$ serves as a skewness measure, increasing the stabilisation on highly skewed cells \cite{Nishikawa2011}.
 The quantities $\bb{u}_{fN}^*$ and $\bb{u}_{fP}^*$ denote the displacements at the face center $f$,
@@ -413,11 +413,10 @@ where $c_{x_N}$, $c_{y_N}$ and $c_{z_N}$ are the interpolation coefficients corr
 The procedure for computing these interpolation coefficients is described in the following section.
 %
 %------------------------------------------------------------------------------
-\subsubsection{Local Regression Estimators}
+\subsubsection{Least-Squares Taylor Reconstruction}
 %------------------------------------------------------------------------------
 %
-The Local Regression Estimators (LRE) method is used to determine the interpolation coefficients in Equations \eqref{eq:interp} and \eqref{eq:derInterp}.
-A truncated Taylor expansion of the displacement field, denoted by $\bar{\boldsymbol{u}}$, in the vicinity of $\tilde{\boldsymbol{x}}$ is written as:
+The interpolation coefficients in Equations \eqref{eq:interp} and \eqref{eq:derInterp} are determined using a local least-squares reconstruction method, commonly referred to as the Local Regression Estimator (LRE) in \cite{Castrillo2022,Castrillo2024}. A truncated Taylor expansion of the displacement field, denoted by $\bar{\boldsymbol{u}}$, in the vicinity of $\tilde{\boldsymbol{x}}$ is written as:
 %
 \begin{equation}
 \begin{split}
@@ -434,7 +433,9 @@ A truncated Taylor expansion of the displacement field, denoted by $\bar{\boldsy
 \label{eq:te}
 \end{equation}
 %
-The expansion is truncated at polynomial order $p$, which corresponds to $N_t$ terms, where $N_t = \dfrac{(d+p)!}{(d!\,p!)}$ in $d$ spatial dimensions.
+The expansion is truncated at polynomial order $p$, resulting in $N_t$ terms in the polynomial basis.
+%The expansion is truncated at polynomial order $p$, which corresponds to $N_t$ terms, where $N_t = \dfrac{(d+p)!}{(d!\,p!)}$ in $d$ spatial dimensions.
+Although the interpolation formulation supports arbitrary polynomial order $p$, in this work we restrict attention to orders up to $p = 3$.
 The truncated expansion can then be written compactly using a polynomial basis $\mathbf{q}$ and a vector of unknown coefficients $\bar{\mathbf{a}}$ representing the derivatives:
 %
 \begin{equation}
@@ -462,11 +463,12 @@ The parameter vector $\bar{\mathbf{a}}$ is calculated by minimising the weighted
 %
 Minimizing Equation \eqref{eq:ls} with respect to $\bar{\mathbf{a}}(\tilde{\boldsymbol{x}})$ leads to the following equation:
 %
-\begin{equation}
+\begin{equation}\label{eq:maQw}
 \mathbf{{M}}(\tilde{\bb{x}}) \mathbf{\bar{a}}(\tilde{\bb{x}}) = \mathbf{{Q}}(\tilde{\bb{x}}) \mathbf{{W}}(\tilde{\bb{x}}) \mathbf{u},
 \end{equation}
 %
-where $\mathbf{M}(\tilde{\bb{x}})=\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})\mathbf{Q}^{\mathrm{T}}(\tilde{\bb{x}})$, $\mathbf{Q}(\tilde{\bb{x}})$ is the $N_t \times |\mathcal{S}|$ matrix whose $N-$th column is $\mathbf{q}^{\mathrm{T}}(\bb{x}-\tilde{\bb{x}})$ and $\mathbf{W}(\tilde{\bb{x}})$ is a diagonal weighting matrix of size $|\mathcal{S}| \times |\mathcal{S}|$.
+where $\mathbf{M}(\tilde{\bb{x}})$ is the momentum matrix $\mathbf{M}(\tilde{\bb{x}})=\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})\mathbf{Q}^{\mathrm{T}}(\tilde{\bb{x}})$, $\mathbf{Q}(\tilde{\bb{x}})$ is the $N_t \times |\mathcal{S}|$ matrix whose $N-$th column is $\mathbf{q}^{\mathrm{T}}(\bb{x}-\tilde{\bb{x}})$ and $\mathbf{W}(\tilde{\bb{x}})$ is a diagonal weighting matrix of size $|\mathcal{S}| \times |\mathcal{S}|$.
+Although Equation \eqref{eq:maQw} represents the normal-equation form of the least-squares problem, it is not solved directly; instead, a QR factorization via Householder transformations \cite{strang2012} is used to obtain the coefficients in a more robust way.
 Defining $\bar{\mathbf{A}}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})$, the system becomes:
 %
 \begin{equation}\label{eq:lsA}
@@ -476,8 +478,8 @@ Defining $\bar{\mathbf{A}}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathb
 The rows of $\bar{\mathbf{A}}(\tilde{\boldsymbol{x}})$ correspond to the interpolation coefficients used in
 Equations \eqref{eq:interp} and \eqref{eq:derInterp} depending on order they were defined in Equation \eqref{eq:qAnda}.
 The interpolation coefficients from matrix $\bar{\mathbf{A}}(\tilde{\boldsymbol{x}})$ depend only on the mesh (geometry), so they can be computed once (or whenever the mesh moves) and stored.
-The inversion of $\bar{\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.
-This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size, restricting the weights in $\mathbf{W}(\tilde{\boldsymbol{x}})$ to positive values, and employing a QR factorization via Householder transformations \cite{strang2012}, see \cite{Castrillo2022, Castrillo2023}.
+The inversion of ${\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.
+This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size and restricting the weights in $\mathbf{W}(\tilde{\boldsymbol{x}})$ to positive values, see \cite{Castrillo2022, Castrillo2023}.
 %
 
 %
@@ -519,7 +521,7 @@ Stencil construction is adapted for boundary faces according to the imposed boun
 \item Symmetry boundary – the stencil, denoted $\mathcal{S}_b^{\text{symm}} := \mathcal{S}_b^{\text{symm,p}} \cup \mathcal{S}_b^{\text{symm,g}}$, is divided equally: half of the points correspond to the physical domain $\mathcal{S}_b^{\text{symm,p}}$, while the remaining half are mirrored ghost points $\mathcal{S}_b^{\text{symm,g}}$ that mirror both the position and state variables.
 \end{itemize}
 
-Alternative stencil construction strategies that account for the local cell distribution may also be employed \cite{Khelladi2011,Tsoutsanis2023}; however, they poses greater implementation complexity and in some cases higher computational cost. The chosen approach represents an efficient and robust choice for solid mechanics applications, particularly for problems involving moving meshes.
+As an alternative, the stencil can be constructed by selecting layers of neighbouring cells around the reference point; however, this approach can lead to less predictable stencil sizes. More advanced stencil construction strategies, such as those that account for cell distribution and moment-matrix conditioning, may also be employed \cite{Khelladi2011,Tsoutsanis2023}, but a detailed assessment of these approaches in the context of solid mechanics is required and is left for future work.
 %
 \begin{figure}[h]
  	\centering
@@ -563,8 +565,7 @@ Achieving high-order convergence near boundaries requires careful attention to g
 \label{sec:grad}
 %------------------------------------------------------------------------------
 %
-For all quadrature points on internal faces, Equation \eqref{eq:lsA} is evaluated,
-and the interpolation coefficients obtained from the matrix $\mathbf{\bar{A}}$ are stored for use in computing the displacement gradient:
+For each quadrature point on internal faces, Equation \eqref{eq:lsA} is evaluated and the resulting interpolation coefficients from the matrix $\mathbf{\bar{A}}$ are stored for computation of the displacement gradient:
 %
 \begin{equation}\label{eq:faceQuadGrad}
 (\nabla \bb{u})_{f,q} = \sum_{N \,\in\,  \mathcal{S}_f}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N,
@@ -588,8 +589,8 @@ For a symmetry boundary, the contribution of the mirrored (ghost) points is also
 %
 where $ \bb{R}_b = (\mathbf{I}-2\bb{n}_b \otimes \bb{n}_b)$ is the reflection tensor \cite{Demirdzic2022}.
 Note that only first derivatives are stored at face quadrature points, as higher derivatives are not required by the constitutive equations.
-In the present solution procedure, the displacements $\bb{u}_N$ are known, making the gradient evaluation straightforward.
-However, if $\bb{u}_N$ are treated as unknowns, the interpolation coefficients must be incorporated into the left-hand-side system matrix, as shown in \cite{Castrillo2022,Castrillo2024} and Appendix \ref{app:P}.
+%In the present solution procedure, the displacements $\bb{u}_N$ are known, making the gradient evaluation straightforward.
+%However, if $\bb{u}_N$ are treated as unknowns, the interpolation coefficients must be incorporated into the left-hand-side system matrix, as %shown in \cite{Castrillo2022,Castrillo2024} and Appendix \ref{app:P}.
 
 The stabilisation scheme requires the evaluation of first and higher derivatives at cell centres when computing Equation \eqref{eq:alphaJump}.
 For this purpose, each cell is associated with a stencil $\mathcal{S}_P$, constructed in the same manner as the face stencil.
@@ -646,10 +647,10 @@ Instead, a Krylov subspace method (e.g., GMRES) is used to solve the linear syst
 \end{equation}
 %
 where $\epsilon$ is a small scalar perturbation.
-To mitigate the effect of ill-conditioned Jacobian matrices on convergence and robustness, a right preconditioning strategy is employed:
+To mitigate the effect of ill-conditioned Jacobian matrices on convergence and robustness, a left preconditioning strategy is employed:
 %
 \begin{equation}\label{eq:jfnk}
- 	\bb{J} \bb{P}^{-1} \bb{v}\approx 	\frac{\bb{R}(\bb{u} + \epsilon \bb{P}^{-1} \bb{v}) - \bb{R}(\bb{u})}{\epsilon},
+ 	\bb{P}^{-1}\bb{J}  \bb{v}\approx 	\frac{\bb{P}^{-1}(\bb{R}(\bb{u} + \epsilon  \bb{v}) - \bb{R}(\bb{u}))}{\epsilon},
 \end{equation}
 %
 where $\bb{P}$ denotes the preconditioning matrix.
@@ -694,11 +695,11 @@ The benchmark cases are selected to cover a broad range of features, including b
 and various material models.
 The convergence behaviour is studied on a sequence of mesh refinements to detect potential oscillatory convergence trends, which may arise in high-order finite-volume formulations \cite{Nishikawa2025a}.
 
-In all simulations, the convergence criterion corresponds to a three-order-of-magnitude reduction in the residual, and a line-search procedure is employed to stabilise the solution update \cite{Cardiff2025}.
+In all simulations, the convergence criterion corresponds to a six-order-of-magnitude reduction in the residual, and a line-search procedure is employed driving the Newton-step solution update \cite{Cardiff2025}.
 The number of quadrature points per tetrahedral, triangular, or line element is kept to the minimum required for exact integration of the displacement gradient $\nabla \bb{u}$, from which the stresses are computed.
 For example, triangular elements with $p=1$ and $p=2$ interpolation require one integration point, whereas $p=3$ uses three.
 The interpolation stencil size for all cases is used as specified in Section \ref{sec:stencil}.
-Different mesh types are considered; the open-source mesher Gmsh \cite{geuzaine2009gmsh} was employed to generate tetrahedral meshes. 
+Different mesh types are considered: the open-source mesher Gmsh \cite{geuzaine2009gmsh} was employed to generate tetrahedral meshes. 
 For the structured hexahedral meshes, the native OpenFOAM utilities \texttt{blockMesh} and \texttt{extrudeMesh} were used. 
 Polyhedral meshes were subsequently produced by converting a tetrahedral mesh using the \texttt{polyDualMesh} OpenFOAM utility.
 %
@@ -766,7 +767,7 @@ Both manufactured-solution cases were examined using four mesh types: (i) \emph{
 
 Figures \ref{fig:mms2D-disp} and \ref{fig:mms2D-stress} show the $L_2$ and $L_\infty$ norms of the displacement and stress magnitude errors plotted against the average cell width. For visual reference, an image of the corresponding mesh is included in the lower-right corner of each plot. Across all mesh types, the convergence behaviour of both displacement and stress is smooth. The stress errors exhibit the expected orders of accuracy: first-order for $p=1$, second-order for $p=2$, and third-order for $p=3$. Regular hexahedral and polyhedral meshes exhibit slightly higher than expected convergence rates, attributed to error cancellation effects commonly observed on regular grids. 
  Theoretical expectations for displacement errors are reached for second- and fourth-order discretisation, i.e, for $p=1$ and $p=3$. For 
-$p=2$, the displacement error exhibits a transition from an initial third-order to second-order convergence as the mesh is refined. Despite the convergence rate degradation, the $p=2$ discretisation consistently yields displacement errors approximately an order of magnitude smaller. Importantly, this reduction in displacement convergence rate does not degrade the stress convergence rate, which remains uniformly second-order. Such behaviour has been reported by several authors \cite{Nishikawa2025a}, although a definitive explanation for why odd-order schemes exhibit convergence characteristics to those of the next lower even order has not yet been established by the author's knowledge. 
+$p=2$, the displacement error exhibits a transition from an initial third-order to second-order convergence as the mesh is refined. Despite the convergence rate degradation, the $p=2$ discretisation consistently yields displacement errors approximately an order of magnitude smaller. Importantly, this reduction in displacement convergence rate does not degrade the stress convergence rate, which remains uniformly second-order. Such behaviour has been reported by several authors \cite{Nishikawa2025a}, although, to the best of the author’s knowledge, a definitive explanation for why odd-order schemes often converge as if they were of the next lower even order has not yet been established.
 
 Figures \ref{fig:mms3D-disp} and \ref{fig:mms3D-stress} present the corresponding 3D results: convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress magnitude errors.  The trends closely mirror those observed in the 2D case: smooth convergence, expected order of accuracy for the stress field, and the same characteristic reduction of displacement convergence from third- to second-order for $p=2$. These results confirm that the observed behaviour is not specific to mesh dimensionality or topology, but rather intrinsic to the reconstruction order.
 %
@@ -1328,8 +1329,8 @@ Figure \ref{fig:alpha:disp-mms} presents the $L_2$ error norm convergence for di
 Different values of $\alpha$ do not affect the convergence order; the exception is for $p=2$ (hexahedral mesh), where $\alpha=1$ forces an earlier transition to second-order. 
 In terms of robustness, $\alpha=0.001$ is too low to stabilise the unstructured (irregular) mesh, and the solver converges only on some meshes. 
 From these diagrams, one can see that $\alpha=0.1$ and $\alpha=0.01$ are the best values in terms of accuracy. However, when looking at Figure \ref{fig:alpha-timing}, 
-it is clear that the recommended value of $\alpha=0.1$ is the optimal choice for efficiency. 
-It should be emphasised that, $\alpha=0.1$, is the same as the one for Rhie-Chow stabilisation in standard second-order solvers \cite{Cardiff2025}.
+it is clear that $\alpha=0.1$ is the optimal choice for efficiency. 
+It should be emphasised that, $\alpha=0.1$, is the same as the one for Rhie-Chow stabilisation in standard second-order solvers \cite{Cardiff2025}.This agreement arises because, for $p=1$, the Rhie–Chow stabilisation coincide to the $\alpha$-stabilisation.
 
 As an alternative to the proposed $\alpha$-stabilisation, a comparable stabilising effect can be achieved by increasing the interpolation stencil and employing more integration points than the minimum required—an approach often referred to as \emph{over-integration} or \emph{antialiasing}. 
 This strategy has been adopted in previous studies \citep{Castrillo2022, Castrillo2024}. 
@@ -1377,24 +1378,22 @@ its impact is significantly reduced for unstructured meshes, where the present $
 %------------------------------------------------------------------------------
 %
 The conditioning of the least-squares system used to compute interpolation coefficients can influence both the accuracy and robustness of the numerical solution. 
-When the interpolation matrix ${\mathbf{M}}$ is highly ill-conditioned, the resulting coefficients may lead to an \emph{artificially stiff discretisation},
+When the momentum matrix ${\mathbf{M}}$ is highly ill-conditioned, the resulting coefficients may lead to an \emph{artificially stiff discretisation},
 which can cause the linear solver to stall or converge very slowly. 
 In this context, \emph{artificially stiff discretisation} means that the residual vector $\bb{R}(\bb{u})$ becomes highly sensitive to displacements of some neighbouring cells within the interpolation stencil.
 
-This problem is particularly relevant in high-order schemes, which are generally more suitable for unstructured meshes, since irregular point distributions tend to improve matrix conditioning \cite{s,s,s}.
-On structured grids, however, the regular alignment of points amplifies ill-conditioning (especially in the case of stretched structured grids), leading to numerical difficulties.
-This limitation is often regarded as one of the key challenges of high-order finite-volume discretisations.
+The problem of ill-conditioning is of particular importance for high-order discretisations and is often regarded as one of their key challenges. While irregular meshes naturally help to alleviate ill-conditioning, the issue becomes especially severe on regular meshes, particularly on stretched regular grids, where the structured node distribution tends to amplify ill-conditioning \cite{jalali2013, Gooch2002}.
 
-The objective of this section is to illustrate the impact of this phenomenon and to demonstrate a simple remedy to mitigate it. Numerical tests reveal that ill-conditioning is most pronounced in structured two-dimensional meshes, where the absence of a third dimension prevents natural improvement of the condition number. To investigate this effect, the plate hole benchmark from Section \ref{case:plateHole} is considered, discretised with quadrilateral control volumes (see Figure \ref{fig:plateHole:hex-mesh}).
+The objective of this section is to illustrate the impact of this phenomenon and to demonstrate a simple remedy to mitigate it. Numerical tests reveal that ill-conditioning is most pronounced in structured two-dimensional meshes, where the absence of a third dimension prevents natural improvement of the condition number. To investigate this effect, the plate-hole benchmark from Section \ref{case:plateHole} is considered, discretised with quadrilateral control volumes. As shown in Figure \ref{fig:plateHole:hex-mesh}, the condition number of the least-squares system rises sharply for the boundary cells, revealing that stencil node arrangement leads to severe ill-conditioning
 
-Figure \ref{fig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix $\bar{\mathbf{M}}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the accuracy level.
+Figure \ref{fig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix ${\mathbf{M}}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the accuracy level.
 It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK linear solver stalls, a fully implicit discretisation combined with a direct linear solver (as in \citep{Castrillo2022, Castrillo2024}) can still produce a solution; however, the accuracy of these results is typically affected.
 
 
 %Hexahedral mesh with N3 needs 20 neighbours to avoid ill conditioning. This results in lower slope for displacement but not affecting the stresses. I'm not sure why S4F results flatten on finer meshes
 \begin{figure}[H]
  	\centering
-	\subfigure[Hexahedral structured mesh, coloured with matrix ${\mathbf{M}}$ condition number. Red coloured cells have condition number $> 1\cdot 10^{12}$]
+	\subfigure[Hexahedral structured mesh, coloured with matrix condition number. Red coloured cells have condition number $> 1\cdot 10^{12}$]
  	{
  		\label{fig:plateHole:hex-mesh}
     	\includegraphics[scale=0.052]{figures/plateHole-hex-condNumber.pdf}
@@ -1405,7 +1404,7 @@ It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK li
  		\label{fig:plateHole-conditioning:b}
     	\includegraphics[scale=0.8]{figures/plateHole_interpolationConditioning_hex}
     }
- 	\caption{Plate hole case: effects of high ill-conditioning of matrix ${\mathbf{M}}$.}
+ 	\caption{Plate hole case: effects of least square ill-conditioning when using regular quadrilateral mesh.}
  	\label{fig:plateHole-conditioning}
 \end{figure}
 %
@@ -1425,8 +1424,8 @@ we deliberately enforce multiple Newton iterations using the assembled \emph{tru
 This allows a direct comparison of convergence behaviour and computational cost against the standard compact-stencil approximate Jacobian preconditioner.
 The results show that using a fully assembled true Jacobian as the preconditioner provides no improvement in solver convergence or performance, 
 but dramatically increases the computational time. 
-For example, in the spherical cavity benchmark, presented in Section case:sphericalCavity, employing the \emph{true} Jacobian preconditioner can make the solve from 2 to 92 times slower than using the compact-stencil approximation, see Table \ref{tab:AJvsTJ}. 
-These findings make it clear that increasing the Jacobian’s accuracy yields no practical benefits; on the contrary, it severely penalises efficiency. 
+For example, in the spherical cavity benchmark, presented in Section \ref{case:sphericalCavity}, employing the \emph{true} Jacobian preconditioner can make the solve from 2 to 92 times slower than using the compact-stencil approximation, see Table \ref{tab:AJvsTJ}. 
+These findings make it clear that using a more complete Jacobian representation yields no practical benefits; on the contrary, it severely penalises efficiency.
 This outcome strongly supports continuing to use the compact-stencil \emph{approximate} Jacobian for preconditioning, given its superior efficiency and significant memory savings with no loss of solver effectiveness. 
 Finally, this is consistent with the documented behavior of the \emph{approximate} Jacobians used in high-order finite volume computational fluid dynamics \cite{Mchugh1994, Qin2000, Geuzaine2001, Pernice2001, Knoll2004, Vaassen2008, Lucas2010, Nejat2011, Nishikawa2020}.
 %
@@ -1472,8 +1471,6 @@ The principal findings of the study are:
 \item \textbf{Stabilisation scheme}: The introduced $\alpha$-stabilisation scheme, adapted from high-order CFD, effectively damps spurious high-frequency errors on unstructured meshes. The stabilisation term scales with the order of the method, unlike the Rhie–Chow correction used in second-order finite volume solvers. An optimal value of $\alpha \approx 0.1$ is observed, which is also consistent with recommendations for Rhie-Chow stabilisation \cite{Cardiff2025}.
 %
 \item \textbf{Preconditioning choice}: The compact-stencil approximate Jacobian, originating from a second-order semi-implicit discretisation, remains highly effective when used as a preconditioner for high-order residual evaluations. Comparison against a fully assembled true Jacobian (linear elastic tests) shows that increased preconditioner fidelity does not improve convergence, confirming that compact approximate Jacobians offer the best balance of efficiency, robustness, and memory usage.
-%
-\item \textbf{Avoidance of shear locking}: The high-order finite volume formulation naturally avoids shear-locking artefacts, providing an important advantage over conventional second-order discretisations.
 %
 \item \textbf{Robustness}:
 The method is robust across linear, nonlinear, structured, and unstructured meshes. The main challenge arises from the ill-conditioning of the local least-squares reconstruction, particularly on structured 2-D grids. When conditioning is improved (e.g., via enlarged stencils), robustness is restored.
@@ -1806,6 +1803,8 @@ Consequently, the displacement and velocity at the two previous time steps must 
 \item[•] Check appendix B, I'm using $\otimes$ notation
 \item[•] Finish idealised ventricle case, consider adding it later.
 \item[•] \textbf{To be fixed:} Only first derivative is used when extracting displacement at reference point.
+\item[•] Consider using coarser mesh in vibration beam.
+\item[•] Time scheme integration - check with Philip is it ok to leave as this
 \end{itemize}
 %
 %
