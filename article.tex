@@ -433,8 +433,12 @@ The interpolation coefficients in Equations \eqref{eq:interp} and \eqref{eq:derI
 \label{eq:te}
 \end{equation}
 %
+%The expansion is truncated at polynomial order $p$, resulting in $N_t$ terms in the polynomial basis.
+%Number of terms $N_t$ depends on spatial dimensions $d$ and polynomial order $p$, $N_t = \dfrac{(d+p)!}{(d!\,p!)}$.
 The expansion is truncated at polynomial order $p$, resulting in $N_t$ terms in the polynomial basis.
-%The expansion is truncated at polynomial order $p$, which corresponds to $N_t$ terms, where $N_t = \dfrac{(d+p)!}{(d!\,p!)}$ in $d$ spatial dimensions.
+The number of terms $N_t$ depends on the spatial dimension $d$ and the polynomial order $p$, and is given by
+ $N_t = \dfrac{(d+p)!}{(d!\,p!)}$ \cite{Khelladi2011}.
+%The expansion is truncated at polynomial order $p$, which corresponds to $N_t$ terms, where $N_t = \dfrac{(d+p)!}{(d!\,p!)}$ in $d$ spatial dimensions. 
 Although the interpolation formulation supports arbitrary polynomial order $p$, in this work we restrict attention to orders up to $p = 3$.
 The truncated expansion can then be written compactly using a polynomial basis $\mathbf{q}$ and a vector of unknown coefficients $\bar{\mathbf{a}}$ representing the derivatives:
 %
@@ -478,7 +482,7 @@ Defining $\bar{\mathbf{A}}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathb
 The rows of $\bar{\mathbf{A}}(\tilde{\boldsymbol{x}})$ correspond to the interpolation coefficients used in
 Equations \eqref{eq:interp} and \eqref{eq:derInterp} depending on order they were defined in Equation \eqref{eq:qAnda}.
 The interpolation coefficients from matrix $\bar{\mathbf{A}}(\tilde{\boldsymbol{x}})$ depend only on the mesh (geometry), so they can be computed once (or whenever the mesh moves) and stored.
-The inversion of ${\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil points.
+The inversion of ${\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil nodes.
 This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size and restricting the weights in $\mathbf{W}(\tilde{\boldsymbol{x}})$ to positive values, see \cite{Castrillo2022, Castrillo2023}.
 %
 
@@ -509,7 +513,7 @@ The actual stencil size $|S|$ used for computations is set as:
 \begin{equation}
 |\mathcal{S}| = |\mathcal{S}|_{\text{min}} + n^+
 \end{equation}
-where $n^{+}$ is a user-defined number of surplus points. The choice of $n^{+}$ represents a trade-off: an excessively large stencil introduces numerical dissipation and increases computational cost, whereas a small stencil may lead to unstable interpolation \cite{Khelladi2011}.
+where $n^{+}$ is a user-defined number of surplus nodes. The choice of $n^{+}$ represents a trade-off: an excessively large stencil introduces numerical dissipation and increases computational cost, whereas a small stencil may lead to unstable interpolation \cite{Khelladi2011}.
 Based on those findings presented in \cite{Castrillo2022,Castrillo2024}, $n^{+}$ is set to $10$ for all two-dimensional cases, and to $45$, $55$, and $65$ for $p = 1$, $p = 2$, and $p = 3$ in three-dimensional cases, respectively. These values are consistent with those reported in the literature. In particular, \cite{Tsoutsanis2023} noted that within the $k-$exact least-squares framework, the stencil size is typically chosen in the range $1.5\,|\mathcal{S}|_{\text{min}} \leq |\mathcal{S}| \leq 3\,|\mathcal{S}|_{\text{min}}$.
 
 The stencil is constructed using a nearest-neighbour approach, where the set $\mathcal{S}$ comprises the cells closest to the reference point (face or cell centre), enclosed within a sphere of radius $r_s$. To reduce computational cost, all quadrature points on a given face share the same stencil, and likewise, all quadrature points within a cell use a common stencil. The construction of the internal-face stencil $\mathcal{S}_f$ is illustrated in Figure \ref{fig:faceStencil}.
@@ -518,7 +522,7 @@ Stencil construction is adapted for boundary faces according to the imposed boun
 \begin{itemize}
 \item Traction boundary – no stencil is defined, since interpolation is not applied.
 \item Displacement boundary – the stencil, denoted $\mathcal{S}_b^{\text{disp}}$, is constructed in the same manner as for internal faces.
-\item Symmetry boundary – the stencil, denoted $\mathcal{S}_b^{\text{symm}} := \mathcal{S}_b^{\text{symm,p}} \cup \mathcal{S}_b^{\text{symm,g}}$, is divided equally: half of the points correspond to the physical domain $\mathcal{S}_b^{\text{symm,p}}$, while the remaining half are mirrored ghost points $\mathcal{S}_b^{\text{symm,g}}$ that mirror both the position and state variables.
+\item Symmetry boundary – the stencil, denoted $\mathcal{S}_b^{\text{symm}} := \mathcal{S}_b^{\text{symm,p}} \cup \mathcal{S}_b^{\text{symm,g}}$, is divided equally: half of the nodes correspond to the physical domain $\mathcal{S}_b^{\text{symm,p}}$, while the remaining half are mirrored ghost nodes $\mathcal{S}_b^{\text{symm,g}}$ that mirror both the position and state variables.
 \end{itemize}
 
 As an alternative, the stencil can be constructed by selecting layers of neighbouring cells around the reference point; however, this approach can lead to less predictable stencil sizes. More advanced stencil construction strategies, such as those that account for cell distribution and moment-matrix conditioning, may also be employed \cite{Khelladi2011,Tsoutsanis2023}, but a detailed assessment of these approaches in the context of solid mechanics is required and is left for future work.
@@ -550,13 +554,13 @@ Boundary conditions are imposed through modifications of the local polynomial re
 where the known tractions at the quadrature points are directly integrated and added to the surface term in Equation \eqref{eq:divStressDiscret}.
 
 At displacement boundaries, the prescribed displacement is enforced in a weak sense by introducing a penalty contribution into the polynomial reconstruction.
-This is achieved by extending the stencil of each boundary quadrature point with an additional ghost point, co-located with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$.
-The inclusion of this ghost point effectively augments the reconstruction matrices $\mathbf{W}$ and $\mathbf{Q}$.
+This is achieved by extending the stencil of each boundary quadrature point with an additional ghost nodes, co-located with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$.
+The inclusion of this ghost node effectively augments the reconstruction matrices $\mathbf{W}$ and $\mathbf{Q}$.
 Since the Taylor expansion in Equation \eqref{eq:te} is centred at the same location, the associated polynomial basis vector simplifies to
 $\mathbf{q}^{\mathrm{T}} = [1,\,0,\,0,\,\dots,\, 0]$, and its weight in $\mathbf{W}$ is typically set to unity.
 Increasing this weight enhances the local satisfaction of the prescribed displacement but does not affect the overall convergence rate.
 
-At symmetry boundaries, only the half of the stencil located inside the physical domain is available, and the remaining points are generated by reflecting this interior stencil across the symmetry plane. The polynomial basis vectors for these mirrored points are computed using their reflected coordinates. This approach guarantees enforcement of symmetry constraints; zero tangential component of boundary traction $(\mathbf{I}-2\bb{n}_b\otimes\bb{n}_b)\cdot \bb{T}_{b,q}= 0$, and zero normal component of displacement $\bb{n}_b \cdot \bb{u}_b = 0$.
+At symmetry boundaries, only the half of the stencil located inside the physical domain is available, and the remaining nodes are generated by reflecting this interior stencil across the symmetry plane. The polynomial basis vectors for these mirrored nodes are computed using their reflected coordinates. This approach guarantees enforcement of symmetry constraints; zero tangential component of boundary traction $(\mathbf{I}-2\bb{n}_b\otimes\bb{n}_b)\cdot \bb{T}_{b,q}= 0$, and zero normal component of displacement $\bb{n}_b \cdot \bb{u}_b = 0$.
 
 Achieving high-order convergence near boundaries requires careful attention to geometric representation. When curved surfaces are approximated by planar faces, the resulting geometric discretisation is second-order accurate, which inherently limits the overall convergence rate of the method. High-order accuracy can be recovered either by introducing isoparametric boundary representations or by maintaining flat faces while introducing a correction \cite{costa2019, Costa2022, Gooch2002}. Curved boundary treatment has not yet been tackled in literature (for finite volume solid mechanics) and is therefore left for future work, as it presents a challenging problem deserving dedicated study.
 %
@@ -572,14 +576,14 @@ For each quadrature point on internal faces, Equation \eqref{eq:lsA} is evaluate
 \end{equation}
 %
 where $\bb{c}_{\bb{x}_N}^{\mathrm{T}} = \left[ \,c_{x_N}, \; c_{y_N},\; c_{z_N} \right]$ is the interpolation vector (see Equation \eqref{eq:derInterp}).
-The same procedure is applied at displacement boundaries using the stencil $\mathcal{S}_b^{\text{disp}}$  extended by the ghost point:
+The same procedure is applied at displacement boundaries using the stencil $\mathcal{S}_b^{\text{disp}}$  extended by the ghost node:
 %
 \begin{equation}
 (\nabla \bb{u})_{b,q} = \left(\sum_{N \,\in\,  \mathcal{S}_b^{\text{disp}}}  \bb{c}_{\bb{x}_N} \otimes \bb{u}_N \right)+ \bb{c}_{\bb{b}_N} \otimes \bb{u}_{b,q},
 \end{equation}
 %
 where $\bb{u}_{b,q}$ is prescribed displacement at the boundary quadrature point. Coefficient vector $\bb{c}_{\bb{b}_N}$ is extracted from the corresponding location from the same matrix $\mathbf{\bar{A}}$ as for $\bb{c}_{\bb{x}_N}$ coefficients.
-For a symmetry boundary, the contribution of the mirrored (ghost) points is also included, giving:
+For a symmetry boundary, the contribution of the mirrored (ghost) nodes is also included, giving:
 %
 \begin{equation}
 (\nabla \bb{u})_{b,q} =
@@ -991,10 +995,15 @@ Na mrezi sa 165 cells je radena p konvergencija.
  		\label{fig:pressurisedCylinder:a}
     		\includegraphics[scale=1]{figures/pressurisedCylinder-geometry}
     }
-	\subfigure[Irregular triangular mesh (165 cells)]
+	\subfigure[Irregular triangular mesh (M1 mesh)]
  	{
  		\label{fig:pressurisedCylinder:b}
     		\includegraphics[scale=0.052]{figures/pressurisedCylinder-mesh}
+    }\quad
+    \subfigure[Reference configuration (red line) and deformed configuration, coloured by the $\sigma_{eq}$ field (M3 mesh)]
+ 	{
+ 		\label{fig:pressurisedCylinder:b}
+    		\includegraphics[scale=0.052]{figures/pressurisedCylinder-deformedMesh}
     }
  	\caption{Pressurised cylinder case: geometry and the coarsest mesh.}
  	\label{fig:pressurisedCylinder}
@@ -1024,7 +1033,7 @@ Na mrezi sa 165 cells je radena p konvergencija.
  		\label{fig:pressurisedCylinder:stress}
     	\includegraphics[scale=0.8]{figures/pressurisedCylinder_disp}
     }
- 	\subfigure[Radial and hoop stress profiles]
+ 	\subfigure[Radial and hoop stress profiles (M3 mesh)]
  	{
  		\label{fig:pressurisedCylinder:displacement}
     	\includegraphics[scale=0.8]{figures/pressurisedCylinder_stress}
@@ -1714,7 +1723,7 @@ The second term corresponds to symmetry and displacement boundaries (traction bo
 \end{equation}
 %
 Faces on the displacement boundary $\mathcal{S}_f^{\text{disp}}$ are discretised in the same way as internal faces.
-The ghost-point contribution on displacement boundaries is included to the right-hand side vector.
+The ghost node contribution on displacement boundaries is included to the right-hand side vector.
 For symmetry faces, the stencil is split into the physical part $\mathcal{F}_P^{\text{symm,p}}$ and the ghost part $\mathcal{F}_P^{\text{symm,g}}$.
 The physical part is again discretised as internal faces, while the ghost contribution includes the reflection tensor $\bb{R}$:
 %
@@ -1742,7 +1751,7 @@ Note that no stabilisation term is included here; however, it may be incorporate
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-For the unsteady problem considered in this study, the second-order backward Euler differentiation formula (BDF2) is employed for time integration. The inertia term (Equation~\eqref{eq:inertiaTerm}) is discretized using a single quadrature point per cell, located at the cell centre $P$, with the acceleration at that point computed as:
+For the unsteady problem considered in this study, the second-order backward Euler differentiation formula (BDF2) is employed for time integration. The inertia term (Equation~\eqref{eq:inertiaTerm}) is discretised using a single quadrature point per cell, located at the cell centre $P$, with the acceleration at that node computed as:
 %
 \begin{equation} \label{eq:inertia2}. 	\left(\dfrac{\partial^2 \boldsymbol{u}_P}{\partial t^2}\right)_P
  	\approx
