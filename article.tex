@@ -979,13 +979,11 @@ Figure \ref{fig:cantilever-stressErrors} shows the corresponding convergence of 
 In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner radius $R_i = 7$ m, outer radius $R_o = 18.625$ m, and loaded internally with pressure $p = 100$ MPa is analysed. Two types of material are considered:
 \begin{itemize}
 \item[i.] Small strain, linear-elastic \cite{Bijelonja2006}: $E=10$ GPa, $\nu=0.3$.
-\item[ii.] Finite strain, Mooney-Rivlin law \cite{Bijelonja2005a}: $c_{10} = 80$ MPa, $c_{01} = 20$ MPa, and $c_{11} = 0.0$ MPa and Poisson's ratio $\kappa=100$ MPa, see Appendix \ref{app:mechLaws:MR}.
+\item[ii.] Finite strain, Mooney-Rivlin law \cite{Bijelonja2005a}: $c_{10} = 80$ MPa, $c_{01} = 20$ MPa, and $c_{11} = 0.0$ MPa and penalty parameter (bulk modulus) $\kappa=400$ MPa, see Appendix \ref{app:mechLaws:MR}.
 \end{itemize}
-The problem is considered plane stress, with the 2-D computational domain comprising a quarter of the cylinder geometry. The cylinder is discretised with series of irregular triangular meshes. Gravitational and inertial effects are neglected. The linear elastic case is solved using one loading increment while the hyperelastic case is solved using 10 equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} and \cite{Green1992}.
+The problem is considered under plane-stress assumptions, with the 2-D computational domain corresponding to a quarter of the cylindrical geometry, as shown in Figure \ref{fig:pressurisedCylinder:a}. Symmetry boundary conditions are applied on edges AB and CD. Gravitational and inertial effects are neglected. The linear-elastic case is solved using a single loading increment, whereas the hyperelastic case is solved using ten equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} for the small-strain and in \cite{Green1992} for the finite-strain formulation.
 
-Na mrezi sa 165 cells je radena p konvergencija.
-%
-%Pogledaj reference sve jesu li dobre, Green1992 je u bijelonji starija knjiha, vidi da li ima jos ovaj cejs.
+The linear-elastic case is solved using a series of successively refined irregular triangular meshes. Results are presented in terms of the $L_2$ and $L_\infty$ error norms for displacement and stress, as shown in Figure \ref{fig:pressurisedCylinder-error}. Interestingly, the absence of boundary curvature treatment does not affect the order of convergence, and the expected rates are achieved. This behaviour can be explained by the fact that the problem effectively reduces to a one-dimensional \cite{Bijelonja2005a}, and by the uniform stress state along both the inner and outer boundaries.
 %
 %
 \begin{figure}[H]
@@ -1002,13 +1000,14 @@ Na mrezi sa 165 cells je radena p konvergencija.
     }\quad
     \subfigure[Reference configuration (red line) and deformed configuration, coloured by the $\sigma_{eq}$ field (M3 mesh)]
  	{
- 		\label{fig:pressurisedCylinder:b}
-    		\includegraphics[scale=0.052]{figures/pressurisedCylinder-deformedMesh}
+ 		\label{fig:pressurisedCylinder:c}
+    		\includegraphics[scale=0.72]{figures/pressurisedCylinder-deformedMesh}
     }
  	\caption{Pressurised cylinder case: geometry and the coarsest mesh.}
  	\label{fig:pressurisedCylinder}
 \end{figure}
 %
+The finite-strain case employs a Mooney–Rivlin material model with penalty parameter that yields a Poisson ratio of $\nu=0.4975$, close to the incompressibility limit. In general, accurately approaching the incompressible limit requires a mixed pressure–displacement formulation \cite{Bijelonja2005a, Horvat2025}; alternatively, in second-order discretisations, pressure oscillations may be mitigated using pressure-smoothing techniques \cite{oliveira2020}. However, no such stabilisation or smoothing procedure is applied here. Used Poisson ratio is sufficiently close to incompressibility and analytical  solution for incompressible material can be used to validate the resulting stress field. The case is solved on three meshes: M1 with 292 cells (Figure \ref{fig:pressurisedCylinder:b}), M2 with 645 cells, and M3 with 2507 cells. Mesh M3 in the deformed configuration, coloured by the $\sigma_{eq}$ field, is shown in Figure \ref{fig:pressurisedCylinder:c}. Figure \ref{fig:pressurisedCylinder:displacement} presents the radial displacement profiles for all three meshes and interpolation orders. It is evident that $p=3$ produces practically identical displacement profiles on all meshes, while $p=1$ converges toward the same solution more slowly than $p=2$, as expected. Figure \ref{fig:pressurisedCylinder:stress} shows the radial and hoop stress profiles, which agree closely with the analytical solution. Oscillations are observed in the stress field for $p=1$, likely due to the constant stress distribution and the fact that stresses are computed at cell centres but integrated at cell faces. The profiles in Figure \ref{fig:pressurisedCylinder:finiteStrain} are obtained by sampling a band of cells near the line $\theta = 45^\circ$ and plotting their corresponding values.
 %
 \begin{figure}[H]
  	\centering
@@ -1025,17 +1024,18 @@ Na mrezi sa 165 cells je radena p konvergencija.
  	\caption{Pressurised cylinder (small strain case): displacement and stress magnitude discretisation errors for linear elastic material.}
  	\label{fig:pressurisedCylinder-error}
  \end{figure}
- 
+ %
+ %
 \begin{figure}[H]
  	\centering
  	\subfigure[Radial displacement]
  	{
- 		\label{fig:pressurisedCylinder:stress}
+ 	 	\label{fig:pressurisedCylinder:displacement}
     	\includegraphics[scale=0.8]{figures/pressurisedCylinder_disp}
     }
  	\subfigure[Radial and hoop stress profiles (M3 mesh)]
  	{
- 		\label{fig:pressurisedCylinder:displacement}
+ 	 	\label{fig:pressurisedCylinder:stress}	
     	\includegraphics[scale=0.8]{figures/pressurisedCylinder_stress}
     }
  	\caption{Pressurised cylinder (finite strain case): radial displacement and stress profiles.}
@@ -1814,6 +1814,7 @@ Consequently, the displacement and velocity at the two previous time steps must 
 \item[•] \textbf{To be fixed:} Only first derivative is used when extracting displacement at reference point.
 \item[•] Consider using coarser mesh in vibration beam.
 \item[•] Time scheme integration - check with Philip is it ok to leave as this
+\item[•] Add other papers from CF
 \end{itemize}
 %
 %
