@@ -348,7 +348,7 @@ The cell partition is resolved at the quadrature weight calculation level, where
 %
 %------------------------------------------------------------------------------
 \subsection{Stabilisation Scheme}
-\label{sec:vol_int}
+\label{sec:alpha}
 %------------------------------------------------------------------------------
 %
 The evaluation of the surface term (diffusive flux) requires estimates of the solution gradient at the quadrature points $\bb{x}_{f,q}$ of a face.
@@ -1457,23 +1457,49 @@ It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK li
 \subsection{Different Choice for Approximate Jacobian}
 %------------------------------------------------------------------------------
 %
+It has previously been demonstrated that a compact-stencil approximate Jacobian, when used as a preconditioner within the Jacobian-Free Newton–Krylov (JFNK) algorithm, is highly effective for second-order finite-volume discretisations in solid mechanics \cite{Cardiff2025}. In the present work, the same preconditioning strategy is employed in conjunction with high-order residual evaluation.
 
-It has already been demonstrated that a compact-stencil \emph{approximate}
- Jacobian, when used as a preconditioner in the JFNK algorithm, 
-is highly effective for second-order finite-volume discretisations in solid mechanics \cite{Cardiff2025}. 
-In the present work, we confirm that this preconditioning strategy remains effective even when the residual is evaluated using a higher-order discretisation. 
+To assess the impact of the preconditioner, the computational performance of the \emph{true} Jacobian (TJ) is compared with that of the standard compact-stencil \emph{approximate} Jacobian (AJ) for the linear-elastic case, for which the TJ can be assembled considerably simpler than in the finite-strain case.
+It should be noted that, when the TJ is available, Newton iterations are not strictly required; however, they are retained here due to the JFNK solution framework, in which the TJ is used solely as a preconditioner. The assembly of the TJ, described in Appendix \ref{app:P}, excludes the stabilisation term introduced in Section \ref{sec:alpha}. Inclusion of the stabilisation contribution would require a onerous implementation, which is beyond the scope of this demonstration.
 
-To isolate the impact of the preconditioner, a linear elastic test case is employed where the \emph{true} (exact) Jacobian matrix can be assembled explicitly for comparison (see Appendix \ref{app:P}). 
-Although in a truly linear problem, Newton’s method would converge in a single iteration with the exact Jacobian, 
-we deliberately enforce multiple Newton iterations using the assembled \emph{true} Jacobian in this case. 
-This allows a direct comparison of convergence behaviour and computational cost against the standard compact-stencil approximate Jacobian preconditioner.
-The results show that using a fully assembled true Jacobian as the preconditioner provides no improvement in solver convergence or performance, 
-but dramatically increases the computational time. 
-For example, in the spherical cavity benchmark, presented in Section \ref{case:sphericalCavity}, employing the \emph{true} Jacobian preconditioner can make the solve from 2 to 92 times slower than using the compact-stencil approximation, see Table \ref{tab:AJvsTJ}. 
-These findings make it clear that using a more complete Jacobian representation yields no practical benefits; on the contrary, it severely penalises efficiency.
-This outcome strongly supports continuing to use the compact-stencil \emph{approximate} Jacobian for preconditioning, given its superior efficiency and significant memory savings with no loss of solver effectiveness. 
-Finally, this is consistent with the documented behavior of the \emph{approximate} Jacobians used in high-order finite volume computational fluid dynamics \cite{Mchugh1994, Qin2000, Geuzaine2001, Pernice2001, Knoll2004, Vaassen2008, Lucas2010, Nejat2011, Nishikawa2020}.
+Table \ref{tab:AJvsTJ-MMS} reports execution times for the manufactured solution case presented in Section \ref{case:mms}.
+For $p=1$, only minor differences in execution time are observed between the two preconditioning strategies. 
+For $p=2$, the use of the TJ leads to a performance improvement of approximately 10–15\%, while for $p=3$ a speed-up of 20–25\% is achieved. 
+This behaviour is consistent with expectations, as higher-order discretisations lead to increasingly complex operators for which a more accurate Jacobian representation improves preconditioning effectiveness. These results further confirm that the compact-stencil Laplacian provides an effective and efficient preconditioning strategy for $p=1$, while remaining a reasonable choice for $p=2$ and $p=3$.
+
+
+%To isolate the impact of the preconditioner, a linear elastic test case is employed where the \emph{true} (exact) Jacobian matrix can be assembled explicitly for comparison (see Appendix \ref{app:P}). 
+%Although in a truly linear problem, Newton’s method would converge in a single iteration with the exact Jacobian, 
+%we deliberately enforce multiple Newton iterations using the assembled \emph{true} Jacobian in this case. 
+%This allows a direct comparison of convergence behaviour and computational cost against the standard compact-stencil approximate Jacobian preconditioner.
+%The results show that using a fully assembled true Jacobian as the preconditioner provides no improvement in solver convergence or performance, 
+%but dramatically increases the computational time. 
+%For example, in the spherical cavity benchmark, presented in Section \ref{case:sphericalCavity}, employing the \emph{true} Jacobian preconditioner can make the solve from 2 to 92 times slower than using the compact-stencil approximation, see Table \ref{tab:AJvsTJ}. 
+%These findings make it clear that using a more complete Jacobian representation yields no practical benefits; on the contrary, it severely penalises efficiency.
+%This outcome strongly supports continuing to use the compact-stencil \emph{approximate} Jacobian for preconditioning, given its superior efficiency and significant memory savings with no loss of solver effectiveness. 
+%Finally, this is consistent with the documented behavior of the \emph{approximate} Jacobians used in high-order finite volume computational fluid dynamics \cite{Mchugh1994, Qin2000, Geuzaine2001, Pernice2001, Knoll2004, Vaassen2008, Lucas2010, Nejat2011, Nishikawa2020}.
 %
+
+\begin{table}[h]
+\centering
+\begin{tabular}{c|cc|cc|cc}
+\multicolumn{1}{l|}{} & \multicolumn{2}{c|}{$p=1$} & \multicolumn{2}{c|}{$p=2$} & \multicolumn{2}{c}{$p=3$} \\
+Mesh size             & AJ          & TJ           & AJ          & TJ           & AJ          & TJ        \\ \hline
+$5\;832$                  & 3.72           & 3.29            &  5.56          & 4.63          & 22.67         &  17.47        \\
+$9\;261$                 & 5.78           & 5.21            &  8.69         & 7.51         & 35.69      &  28.11            \\
+$17\;576$                  & 10.71          & 10.10            &  16.36          & 14.01       & 68.02         &  53.74           \\
+$29\;791$                  & 18.84           & 17.68            &  27.85          & 24.15        & 116.89    &   92.05              \\
+$54\;872$                 & 36.77           & 34.70            &  52.77          & 45.91         & 219.74  &   180.33                 \\
+$91\;125$                 & 61.85          & 61.86          &  89.99        & 80.12       & 376.08 &  304.09              \\ \hline
+\end{tabular}
+\caption{3D manufactured solution case (regular hexahedral mesh): computational time (in s) for different preconditioning matrices, comparing the AJ with the TJ.}
+\label{tab:AJvsTJ-MMS}
+\end{table}
+
+Table \ref{tab:AJvsTJ-SC} presents execution times for the spherical cavity case described in Section \ref{case:sphericalCavity}.
+In this case, the use of the TJ as a preconditioner results in solve times that are between 2 and 92 times larger than those obtained with the AJ.
+This degradation in performance is attributed to the absence of stabilisation terms in the TJ, which leads to poor numerical properties of the resulting system matrix on irregular meshes (see also Appendix \ref{app:stabilisation}). As a consequence, JFNK solver performance is significantly impaired. These results demonstrate the importance of stabilisation and highlight that increased Jacobian fidelity does not necessarily translate into improved computational efficiency when the preconditioning matrix exhibits unfavourable numerical properties.
+
 \begin{table}[h]
 \centering
 \begin{tabular}{c|cc|cc|cc}
@@ -1486,8 +1512,8 @@ $14\;891$                  & 8.15           & 30.89            & 10.96          
 $32\;864$                 & 18.40           & 90.45            & 24.95           & 1896.12         & 75.64  &   246.67                 \\
 $72\;945$                 & 43.48          & 1183.30          & 58.71         & 3841.79        & 189.71 &  1340.57              \\ \hline
 \end{tabular}
-\caption{Spherical cavity case: computational time (in s) for different preconditioning matrices, comparing the approximate Jacobian (AJ) with the high-order true Jacobian (TJ).}
-\label{tab:AJvsTJ}
+\caption{Spherical cavity case: computational time (in s) for different preconditioning matrices, comparing the AJ with the TJ.}
+\label{tab:AJvsTJ-SC}
 \end{table}
 %
 %
@@ -1515,7 +1541,7 @@ The principal findings of the study are:
 %
 \item \textbf{Stabilisation scheme}: The introduced $\alpha$-stabilisation scheme, adapted from high-order CFD, effectively damps spurious high-frequency errors on unstructured meshes. The stabilisation term scales with the order of the method, unlike the Rhie–Chow correction used in second-order finite volume solvers. An optimal value of $\alpha \approx 0.1$ is observed, which is also consistent with recommendations for Rhie-Chow stabilisation \cite{Cardiff2025}.
 %
-\item \textbf{Preconditioning choice}: The compact-stencil approximate Jacobian, originating from a second-order semi-implicit discretisation, remains highly effective when used as a preconditioner for high-order residual evaluations. Comparison against a fully assembled true Jacobian (linear elastic tests) shows that increased preconditioner fidelity does not improve convergence, confirming that compact approximate Jacobians offer the best balance of efficiency, robustness, and memory usage.
+\item \textbf{Preconditioning choice}: The compact-stencil approximate Jacobian, originating from a second-order semi-implicit discretisation, remains effective when used as a preconditioner in conjunction with high-order residual evaluation. Comparison against a fully assembled \emph{true} Jacobian (linear elastic tests) confirms that compact \emph{approximate} Jacobian offer reliable choice.
 %
 \item \textbf{Robustness}:
 The method is robust across linear, nonlinear, structured, and unstructured meshes. The main challenge arises from the ill-conditioning of the local least-squares reconstruction, particularly on structured 2-D grids. When conditioning is improved (e.g., via enlarged stencils), robustness is restored.
