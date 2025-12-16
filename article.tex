@@ -301,6 +301,8 @@ $\alpha_q$ is quadrature weight. Subscript ${f,q}$ indicates a quantity calculat
 For non-triangular faces, face quadrature weights are scaled by the ratio of each triangle’s area to the total face area,
 computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential here,
 as inconsistency can degrade overall accuracy.
+Additionally, a planar-face assumption is made by using a single outward unit normal \(\bb{n}_f\) for all quadrature points.
+For non-planar faces, this geometric approximation can affects the accuracy and may limit the achievable convergence rate.
 
 The stress tensor at a quadrature point $\bb{x}_{f,q}$, denoted $(\bb{\sigma}_s)_{f,q}$, is computed as a function of the displacement gradient according to the adopted mechanical constitutive law.
 For the case of small deformation engineering stress, it is given by:
@@ -973,7 +975,60 @@ Figure \ref{fig:cantilever-stressErrors} shows the corresponding convergence of 
  %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 3: Internally Pressurised Thick-walled Cylinder}
+\subsubsection{Case 3: Hole in a Infinite Plate Subjected to Remote Stress}
+\label{case:plateHole}
+%------------------------------------------------------------------------------
+%
+% Case can be also found in:
+% Finite volume method for stress analysis in complex domain
+% Application of the nite volume method and unstructured meshes to linear elasticity
+%
+This benchmark problem consists of a thin, infinitely large plate with a circular hole, subjected to uniaxial tension of  $\sigma_{xx} = T = 1$ MPa. Owing to the symmetry of the geometry and loading, only one quarter of the plate is modelled. To minimise the influence of the finite computational boundaries, the exact tractions obtained from the analytical solution \cite{Demirdzic1997} are prescribed on the outer edges BC and CD. Symmetry boundary conditions are applied on boundaries AB and DE, while zero traction is specified on the hole boundary. The material properties are defined by a Young’s modulus of $E = 200 \,\text{GPa}$ and a Poisson’s ratio of $\nu = 0.3$.
+Five successively refined irregular triangular meshes are used: 978 (Figure \ref{fig:plateHole:b}), $4\;050$, $16\;296$, $64\;257$ and $256\;512$ cells.
+
+Figure \ref{fig:plateHole:c} shows the predicted equivalent stress distribution, highlighting the steep stress gradients and stress concentration around the hole. The convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress discretisation errors is presented in Figure \ref{fig:plateHole-convergence}. As before, the expected convergence rates for both displacement and stress are achieved. Notably, the presence of the curved hole boundary does not impair the convergence behaviour, despite the absence of any special treatment for this curved edge.
+%
+\begin{figure}[H]
+ 	\centering
+ 	\subfigure[Case geometry]
+ 	{
+ 		\label{fig:plateHole:a}
+    		\includegraphics[scale=0.95]{figures/plateHole-geometry}
+    }
+ 	\subfigure[Tetrahedral unstructured mesh]
+ 	{
+ 		\label{fig:plateHole:b}
+    	\includegraphics[scale=0.051]{figures/plateHole-tet-unstruct-mesh}
+    }
+    \subfigure[Von Mises stress $\sigma_{eq}$  distribution (finest mesh, $p=3$)]
+ 	{
+ 		\label{fig:plateHole:c}
+    	\includegraphics[scale=0.79]{figures/plateHole-vonMises}
+    }
+ 	\caption{Plate hole case: geometry, mesh and resulting stress distribution.}
+ 	\label{fig:plateHole}
+\end{figure}
+%.
+%
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Displacement magnitude discretisation errors]
+ 	{
+ 		\label{fig:plateHole-disp}
+    	\includegraphics[scale=0.8]{figures/plateHole_dispErrors_tet-unstruct}
+    }
+ 	\subfigure[Stress magnitude discretisation errors]
+ 	{
+ 		\label{fig:plateHole-stress}
+    	\includegraphics[scale=0.8]{figures/plateHole_stressErrors_tet-unstruct}
+    }
+ 	\caption{Plate hole case: displacement and stress error convergence.}
+ 	\label{fig:plateHole-convergence}
+ \end{figure}
+%
+%
+%------------------------------------------------------------------------------
+\subsubsection{Case 4: Internally Pressurised Thick-walled Cylinder}
 %------------------------------------------------------------------------------
 %
 In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner radius $R_i = 7$ m, outer radius $R_o = 18.625$ m, and loaded internally with pressure $p = 100$ MPa is analysed. Two types of material are considered:
@@ -998,7 +1053,7 @@ The linear-elastic case is solved using a series of successively refined irregul
  		\label{fig:pressurisedCylinder:b}
     		\includegraphics[scale=0.052]{figures/pressurisedCylinder-mesh}
     }\quad
-    \subfigure[Reference configuration (red line) and deformed configuration, coloured by the $\sigma_{eq}$ field (M3 mesh)]
+    \subfigure[Reference configuration (red line) and deformed configuration, coloured by the $\sigma_{eq}$ field (M3 mesh, $p=3$)]
  	{
  		\label{fig:pressurisedCylinder:c}
     		\includegraphics[scale=0.72]{figures/pressurisedCylinder-deformedMesh}
@@ -1044,7 +1099,7 @@ The finite-strain case employs a Mooney–Rivlin material model with penalty par
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 4: Cook's Membrane}
+\subsubsection{Case 5: Cook's Membrane}
 %------------------------------------------------------------------------------
 %
 The Cook’s membrane configuration (Figure \ref{fig:CooksMembrane:a}) is a classic benchmark problem dominated by bending effects.
@@ -1075,16 +1130,16 @@ The location of this reference point differs by analysis type: it is the top-rig
     	\includegraphics[scale=1]{figures/CooksMembrane-geometry}
     }
     \quad
-	\subfigure[Irregular triangular mesh]
+	\subfigure[Irregular triangular mesh (second coarsest, 35 cells)]
  	{
  		\label{fig:CooksMembrane:b}
-    	\includegraphics[scale=0.06]{figures/CooksMembrane-mesh}
+    	\includegraphics[scale=0.055]{figures/CooksMembrane-mesh}
     }
     \quad
-    \subfigure[Equivalent (von Mises) stress distribution for hyperelastic case]
+    \subfigure[Reference configuration (red line) and deformed configuration for the hyperelastic case, coloured by the $\sigma_{eq}$ field (finest mesh, $p=3$)]
  	{
  		\label{fig:CooksMembrane:c}
-    	\includegraphics[scale=0.35]{figures/cooksMembrane-neoHookean-sigmaEq.pdf}
+    	\includegraphics[scale=0.34]{figures/cooksMembrane-neoHookean-sigmaEq.pdf}
     }
  	\caption{Cook's membrane case: geometry, mesh and deformation in the hyperelastic case.}
  	\label{fig:CooksMembrane}
@@ -1109,59 +1164,6 @@ The location of this reference point differs by analysis type: it is the top-rig
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 5: Hole in a Infinite Plate Subjected to Remote Stress}
-\label{case:plateHole}
-%------------------------------------------------------------------------------
-%
-% Case can be also found in:
-% Finite volume method for stress analysis in complex domain
-% Application of the nite volume method and unstructured meshes to linear elasticity
-%
-This benchmark problem consists of a thin, infinitely large plate with a circular hole, subjected to uniaxial tension of  $\sigma_{xx} = T = 1$ MPa. Owing to the symmetry of the geometry and loading, only one quarter of the plate is modelled. To minimise the influence of the finite computational boundaries, the exact tractions obtained from the analytical solution \cite{Demirdzic1997} are prescribed on the outer edges BC and CD. Symmetry boundary conditions are applied on boundaries AB and DE, while zero traction is specified on the hole boundary. The material properties are defined by a Young’s modulus of $E = 200 \,\text{GPa}$ and a Poisson’s ratio of $\nu = 0.3$.
-Five successively refined irregular triangular meshes are used: 978 (Figure \ref{fig:plateHole:b}), $4\;050$, $16\;296$, $64\;257$ and $256\;512$ cells.
-
-Figure \ref{fig:plateHole:c} shows the predicted equivalent stress distribution, highlighting the steep stress gradients and stress concentration around the hole. The convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress discretisation errors is presented in Figure \ref{fig:plateHole-convergence}. As before, the expected convergence rates for both displacement and stress are achieved. Notably, the presence of the curved hole boundary does not impair the convergence behaviour, despite the absence of any special treatment for this curved edge.
-%
-\begin{figure}[H]
- 	\centering
- 	\subfigure[Case geometry]
- 	{
- 		\label{fig:plateHole:a}
-    		\includegraphics[scale=0.95]{figures/plateHole-geometry}
-    }
- 	\subfigure[Tetrahedral unstructured mesh]
- 	{
- 		\label{fig:plateHole:b}
-    	\includegraphics[scale=0.051]{figures/plateHole-tet-unstruct-mesh}
-    }
-    \subfigure[Von Mises stress distribution]
- 	{
- 		\label{fig:plateHole:c}
-    	\includegraphics[scale=0.79]{figures/plateHole-vonMises}
-    }
- 	\caption{Plate hole case: geometry, mesh and resulting stress distribution.}
- 	\label{fig:plateHole}
-\end{figure}
-%.
-%
-\begin{figure}[H]
- 	\centering
-	\subfigure[Displacement magnitude discretisation errors]
- 	{
- 		\label{fig:plateHole-disp}
-    	\includegraphics[scale=0.8]{figures/plateHole_dispErrors_tet-unstruct}
-    }
- 	\subfigure[Stress magnitude discretisation errors]
- 	{
- 		\label{fig:plateHole-stress}
-    	\includegraphics[scale=0.8]{figures/plateHole_stressErrors_tet-unstruct}
-    }
- 	\caption{Plate hole case: displacement and stress error convergence.}
- 	\label{fig:plateHole-convergence}
- \end{figure}
-%
-%
-%------------------------------------------------------------------------------
 \subsubsection{Case 6: Spherical Cavity in an Infinite Solid Subjected to Remote Stress}
 \label{case:sphericalCavity}
 %------------------------------------------------------------------------------
@@ -1174,10 +1176,11 @@ Although the problem is inherently axisymmetric, it is solved here as a 3-D case
 The computational domain is taken as one-eighth of a $1 \times 1 \times 1$ m cube aligned with the Cartesian axes, with one corner at the centre of the sphere.
 The analytical expressions for stress \cite{Southwell1926} and displacement \cite{Goodier1933} can be found in \cite{Cardiff2025}.
 The analytical tractions are applied to the far-field boundaries to mitigate finite geometry effects. 
-The same analytical expressions are also used on the cavity surface, which theoretically corresponds to a zero-traction boundary; however, the quadrature points on the discretised faces do not lie exactly on the true zero-traction surface. Imposing a zero-traction condition directly on this curved boundary, without specialised boundary treatment, would therefore reduce the overall error convergence rate to second order, as it would be dominated by the second-order accurate geometrical approximation \cite{costa2019, Gooch2002}. Curved boundary treatment is outside the scope of this work and is left for future work.
+The same analytical expressions are also used on the cavity surface, which theoretically corresponds to a zero-traction boundary; however, the quadrature points on the discretised faces do not lie exactly on the true zero-traction surface. Imposing a zero-traction condition directly on this curved boundary, without specialised boundary treatment, would therefore reduce the overall error convergence rate to second order, as it would be dominated by the second-order accurate geometrical approximation \cite{costa2019, Gooch2002}.  
+Curved-boundary treatment is beyond the scope of the present work and is left for future investigation.
 The analysis is performed using six different irregular tetrahedral meshes with cell counts of $3\;802$, $7\;030$, $14\;891$, $32\;864$, $72\;945$ and $158\;870$, with the coarsest mesh shown in Figure \ref{fig:sphericalCavity:a}.
 
-Figure \ref{fig:sphericalCavity:b} shows the predicted von Mises stress field on the finest mesh. The convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress discretisation errors is presented in Figure \ref{fig:sphericalCavity:convergence}. As in the previous cases, consistent and expected convergence behaviour is observed.
+Figure \ref{fig:sphericalCavity:b} shows the predicted von Mises stress field on the finest mesh. The convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress discretisation errors is presented in Figure \ref{fig:sphericalCavity:convergence}. This figure also includes convergence of the $L_2$ norm computed by prescribing a zero-traction condition on the cavity boundary for the $p=3$ interpolation (denoted by the yellow $p^*$ curves). Corresponding results for $p=1$ and $p=2$ are omitted for clarity, as they closely match existing solutions. Both displacement and stress convergence associated with the zero-traction boundary condition exhibit second-order accuracy, consistent with the geometric approximation of the curved cavity surface.
 %
 \begin{figure}[H]
  	\centering
@@ -1186,7 +1189,7 @@ Figure \ref{fig:sphericalCavity:b} shows the predicted von Mises stress field on
  		\label{fig:sphericalCavity:a}
     	\includegraphics[scale=1]{figures/sphericalCavity-mesh}
     }
-	\subfigure[Von Mises stress distribution]
+	\subfigure[Von Mises stress $\sigma_{eq}$ distribution (finest mesh, $p=3$)]
  	{
  		\label{fig:sphericalCavity:b}
     	\includegraphics[scale=1]{figures/sphericalCavity-vonmises}
@@ -1271,56 +1274,89 @@ Results obtained using \texttt{solids4foam} are included for reference; they are
 \subsection{Error-Cost Relationship}
 %------------------------------------------------------------------------------
 %
-\hl{section not finished, text missing}
-%\cite{syrakos} cell centred grad is second order, stranica 10.
+To properly assess efficiency, the relevant metric is the computational cost required to achieve a given error level \cite{wang2013}. 
+For example, higher-order method can reach a prescribed error threshold on a significantly coarser mesh and at a lower computational cost. 
+In other words, comparing execution time or memory usage on a fixed mesh is not meaningful, since different method order produce different error levels on the same mesh. Accordingly, efficiency is evaluated by comparing the $L_2$ error against the total CPU time required for a complete simulation.
+All reported results are obtained from serial executions and measured using the GNU time utility on macOS, running on an Apple M4 Pro CPU with the Clang 17.0.0 compiler.
 
-%Clock times and memory usage
-%(measured with the GNU time utility) were generated using a Mac Studio with an M1 Ultra CPU
-%on one core, where the code was built with the Clang compiler (version 16.0.0). Examination of
-%multi-CPU-core parallelisation is left to Section
-\hl{High-Order CFD Methods: Current Status and Perspective}
-An additional clarification regarding the notation used in the next sections is needed. The abbreviations are as follows: “$S4F^{seg}$” stands for solids4foam segregated solver whereas “$S4F^{snes}$” is the same solver with the JFNK algorithm. Both solvers are second-order accurate, meaning that their accuracy is comparable with the high-order discretisation using $p=1$.
-% napomenut da se konstruiraju interpolacije, ako je isplativo za jedan korak to je pouzdan znak da je motodologija primjenjiva na update lagrangian pristup
-% opisat da se puno vremena trosi na racuanje koeficijenata
-% ovo je samo okvirna procjena jer se radi o akademskim implementacijama
-%they reach the same accuracy under different timings and memory requirements
-%MMS case is one iteration + volume source term. 
-%Hex from S4F have good timings becouse it is showing "overconvergence" on such regular grids
+
+Figures \ref{fig:error-time-MMS-struct-hex}, \ref{fig:error-time-MMS-struct-tet}, and \ref{fig:error-time-MMS-struct-poly} present the error–cost (error-time) relationship for the three-dimensional manufactured solution described in Section \ref{case:mms}, considering three mesh types: hexahedral, tetrahedral, and polyhedral. 
+Each figure shows error-cost convergence for both the displacement (a) and the stress (b). Results are reported for the conventional solids4foam (S4F) segregated solver (denoted 
+S4F$_{\text{SEG}}$) and the solids4foam Jacobian-Free Newton–Krylov solver (denoted S4F$_{\text{JFNK}}$). Both solids4foam solvers are second-order accurate; their accuracy is therefore comparable to that of the high-order discretisation with $p=1$. The timings obtained from these solvers provide a meaningful baseline for comparison, as the segregated solver is built upon a mature and highly optimised OpenFOAM infrastructure.
+
+From Figure \ref{fig:error-time-MMS-struct-hex}, it can be observed that, for the hexahedral mesh, the $p=2$ interpolation reaches a level of efficiency comparable to that of the solids4foam solvers. It is important to note that, on regular hexahedral meshes, stress calculations using the solids4foam solvers exhibit convergence rates that are slightly higher than expected \cite{Syrakos2023, Cardiff2025}. This behaviour is not observed for tetrahedral meshes (Figure \ref{fig:error-time-MMS-struct-tet}), where $p=1$ is sufficient to achieve comparable efficiency for stress, while $p=2$ is required to reach similar efficiency in displacement for the JFNK solver. Results for the polyhedral mesh, shown in Figure 
+\ref{fig:error-time-MMS-struct-poly}, indicate that $p=2$ is insufficient to match the efficiency achieved for tetrahedral and hexahedral meshes. This is attributed to the larger number of quadrature points required per face in polyhedral meshes due to their geometric complexity, which increases the computational cost. As a result, face–edge connectivity has a direct impact on efficiency, making tetrahedral meshes the most efficient choice among those considered, owing to their minimal face–edge connectivity.
+%
 \begin{figure}[H]
  	\centering
 	\subfigure[Displacement error]
  	{
- 		\label{fig:error-time:a}
+ 		\label{fig:error-time-MMS-struct-hex:a}
     	\includegraphics[scale=0.8]{figures/mms_3D_dispEfficiency_hex_struct}
     }
  	\subfigure[Stress error]
  	{
- 		\label{fig:perror-time:b}
+ 		\label{fig:error-time-MMS-struct-hex:b}
     	\includegraphics[scale=0.8]{figures/mms_3D_stressEfficiency_hex_struct}
     }
- 	\caption{Error-time relationship for 3D MMS case, hexahedral structured mesh.}
+ 	\caption{Error-time relationship for 3D MMS case, regular hexahedral mesh.}
  	\label{fig:error-time-MMS-struct-hex}
- \end{figure}
- 
- \begin{figure}[H]
+\end{figure}
+%
+\begin{figure}[H]
  	\centering
 	\subfigure[Displacement error]
  	{
- 		\label{fig:error-time:a}
+ 		\label{fig:error-time-MMS-struct-tet:a}
     	\includegraphics[scale=0.8]{figures/mms_3D_dispEfficiency_tet_struct}
     }
  	\subfigure[Stress error]
  	{
- 		\label{fig:perror-time:b}
+ 		\label{fig:error-time-MMS-struct-tet:b}
     	\includegraphics[scale=0.8]{figures/mms_3D_stressEfficiency_tet_struct}
     }
- 	\caption{Error-time relationship for 3D MMS case, tetrahedral structured mesh.}
- 	\label{fig:error-time-MMS-unstruct-tet}
- \end{figure}
- 
-% Slika za spherical cavity (nema MMS)
-% Slika za dynamic case (vremenski)
-% Dvije slike za memoriju koja se koristi
+ 	\caption{Error-memory relationship for 3D MMS case, regular tetrahedral mesh.}
+ 	\label{fig:error-time-MMS-struct-tet}
+\end{figure}
+%
+In all cases, the wall-clock time increases exponentially with decreasing error, resulting in an approximately linear trend on a log–log plot. Similar slopes are observed for 
+$p=1$, $p=2$, and the S4F solvers, indicating comparable asymptotic efficiency. An exception is observed for the stress results on tetrahedral meshes, where distinct slopes arise for different interpolation orders, reflecting differences in their asymptotic convergence behaviour. Across all mesh types, the $p=3$ discretisation demonstrates a clear efficiency advantage once the mesh is sufficiently refined. Beyond the crossover point at which the efficiency curves of $p=2$ (or the S4F solvers) intersect that of $p=3$, higher-order discretisation yields performance that cannot be matched by lower-order methods.
+%
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Displacement error]
+ 	{
+ 		\label{fig:error-time-MMS-struct-poly:a}
+    	\includegraphics[scale=0.8]{figures/mms_3D_dispEfficiency_poly_struct}
+    }
+ 	\subfigure[Stress error]
+ 	{
+ 		\label{fig:error-time-MMS-struct-poly:b}
+    	\includegraphics[scale=0.8]{figures/mms_3D_stressEfficiency_poly_struct}
+    }
+ 	\caption{Error-memory relationship for 3D MMS case, regular polyhedral mesh.}
+ 	\label{fig:error-time-MMS-struct-poly}
+\end{figure}
+%
+Figure \ref{fig:error-memory} shows the maximal memory usage for tetrahedral and hexahedral meshes. The observed memory consumption follows trends consistent with the error–cost results presented in Figures \ref{fig:error-time-MMS-struct-hex}--\ref{fig:error-time-MMS-struct-poly}, indicating that trends in memory efficiency mirror those observed for time efficiency. Consequently, consistent conclusions can be drawn regarding the performance in terms of memory usage.
+%
+\begin{figure}[H]
+ 	\centering
+	\subfigure[Regular hexahedral mesh]
+ 	{
+ 		\label{fig:error-time-MMS-struct-poly:a}
+    	\includegraphics[scale=0.8]{figures/mms_3D_memoryEfficiency_hex_struct}
+    }
+ 	\subfigure[Regular tetrahedral mesh]
+ 	{
+ 		\label{fig:error-time-MMS-struct-poly:b}
+    	\includegraphics[scale=0.8]{figures/mms_3D_memoryEfficiency_tet_struct}
+    }
+ 	\caption{Error-memory relationship for 3D MMS case}
+ 	\label{fig:error-memory}
+\end{figure}
+%
+The reported timings should be regarded as indicative and may evolve as the implementation develops. Nevertheless, based on the current formulation, it is expected that the efficiency of the S4F solvers will lie between those of the $p=1$ and $p=2$ interpolation. In particular, the $p=1$ method is not expected to outperform S4F, as it requires the storage and computation of interpolation coefficients.
 %
 %------------------------------------------------------------------------------
 \subsection{Stabilisation Scheme Effects}
@@ -1341,11 +1377,11 @@ From these diagrams, one can see that $\alpha=0.1$ and $\alpha=0.01$ are the bes
 it is clear that $\alpha=0.1$ is the optimal choice for efficiency. 
 It should be emphasised that, $\alpha=0.1$, is the same as the one for Rhie-Chow stabilisation in standard second-order solvers \cite{Cardiff2025}.This agreement arises because, for $p=1$, the Rhie–Chow stabilisation coincide to the $\alpha$-stabilisation.
 
-As an alternative to the proposed $\alpha$-stabilisation, a comparable stabilising effect can be achieved by increasing the interpolation stencil and employing more integration points than the minimum required—an approach often referred to as \emph{over-integration} or \emph{antialiasing}. 
+As an alternative to the proposed $\alpha$-stabilisation, a comparable stabilising effect can be achieved by increasing the interpolation stencil and employing more integration points than the minimum required, an approach often referred to as \emph{over-integration} or \emph{antialiasing}. 
 This strategy has been adopted in previous studies \citep{Castrillo2022, Castrillo2024}. 
 However, its main drawbacks are the higher computational cost, arising from both the enlarged stencil and the increased number of integration points. 
-Moreover, while this approach can be effective for structured meshes, 
-its impact is significantly reduced for unstructured meshes, where the present $\alpha$-stabilisation scheme demonstrates clear advantages (see Appendix \ref{app:stabilisation}).
+Moreover, while this approach can be effective enough for regular meshes, 
+its impact is significantly reduced for irregularu meshes, where the present $\alpha$-stabilisation scheme demonstrates clear advantages (see Appendix \ref{app:stabilisation}).
 %
 %
  \begin{figure}[H]
@@ -1475,7 +1511,7 @@ The principal findings of the study are:
 %
 \begin{itemize}
 %
-\item \textbf{Accuracy}: The proposed discretisation delivers consistent high-order accuracy across diverse test cases. Linear reconstruction yields second-order displacement and first-order stress accuracy. Quadratic reconstruction achieves second-order accuracy for both displacement and stress; the expected third-order displacement behaviour is not observed, consistent with prior reports in the literature. Cubic reconstruction attains fourth-order displacement and third-order stress accuracy, confirming the effectiveness of the underlying high-order flux integration and least squares interpolation.
+\item \textbf{Accuracy}: The proposed discretisation delivers consistent high-order accuracy across diverse test cases. Linear reconstruction yields second-order displacement and first-order stress accuracy. Quadratic reconstruction achieves second-order accuracy for both displacement and stress; the expected third-order displacement behaviour is not observed, consistent with prior reports in the literature \cite{Nishikawa2025a}. Cubic reconstruction attains fourth-order displacement and third-order stress accuracy, confirming the effectiveness of the underlying high-order flux integration and least squares interpolation.
 %
 \item \textbf{Stabilisation scheme}: The introduced $\alpha$-stabilisation scheme, adapted from high-order CFD, effectively damps spurious high-frequency errors on unstructured meshes. The stabilisation term scales with the order of the method, unlike the Rhie–Chow correction used in second-order finite volume solvers. An optimal value of $\alpha \approx 0.1$ is observed, which is also consistent with recommendations for Rhie-Chow stabilisation \cite{Cardiff2025}.
 %
@@ -1642,13 +1678,12 @@ where $\bb{B}_{\mathrm{iso}}=J^{-2/3}\bb{F}\cdot\bb{F}^{\mathrm{T}}$ is isochori
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-The reconstruction of higher-order derivatives is performed for each component of the displacement vector field $\bb{u} = [u_x,\,u_y,\,u_z]^{\mathrm{T}}$.
-Specifically, the second $(\nabla \nabla \bb{u})$ and the third  derivative tensor $(\nabla \nabla \nabla \bb{u})$ appearing in Equation \eqref{eq:alphaJump} are obtained by independently reconstructing the corresponding scalar derivatives of $u_x$, $u_y$, and $u_z$.
-
-For a scalar field $u$ representing one displacement component, the Hessian at the cell centre $P$ is reconstructed as a weighted sum of the neighbouring cell values contained in the stencil $\mathcal{S}_P$:
+The reconstruction of higher-order derivatives is performed independently for each displacement component $\alpha$ of the vector field
+$\bb{u} = [u_x,\,u_y,\,u_z]^{\mathrm{T}}$.
+For a scalar field $u_{\alpha}$ representing a single displacement component, the second derivative at the cell centre $P$ is reconstructed as a weighted sum of neighbouring cell values contained in the stencil $\mathcal{S}_P$:
 \begin{equation}
-(\nabla \nabla \bb{u})_P^{u}
-= \sum_{N \in \mathcal{S}_P} \bb{c}_{{\bb{x}\bb{x}}_N} \phi_N,
+(\nabla \nabla {u_{\alpha}})_{P} = \left( \dfrac{\partial^2 u_{\alpha}}{\partial x_i \partial x_j} \right)_P
+= \sum_{N \in \mathcal{S}_P} \bb{c}_{{\bb{x}\bb{x}}_N} ({u}_{\alpha})_N,
 \label{eq:hessianComponent}
 \end{equation}
 %
@@ -1661,20 +1696,30 @@ c_{xx_N} & c_{xy_N} & c_{xz_N} \\
 c_{xy_N} & c_{yy_N} & c_{yz_N} \\
 c_{xz_N} & c_{yz_N} & c_{zz_N}
 \end{bmatrix}.
-\label{eq:thirdTensor}
+\label{eq:secondTensor}
 \end{equation}
 Coefficients in tensor $\bb{c}_{{\bb{x}\bb{x}}_N}$ are derived from the rows of the reconstruction matrix $\mathbf{\bar{A}}$ corresponding to the second-order monomials.
-The second derivative displacement tensor $(\nabla \nabla \bb{u})$ is assembled from the derivatives of its three scalar components.
-
-For $p = 3$, the third-order derivative tensor $(\nabla \nabla \nabla u)_P$ for each displacement component is computed as:
+The second-derivative displacement tensor $(\nabla \nabla \bb{u})$ is assembled from the derivatives of the three scalar displacement components.
+%
+For $p = 3$, the third-derivative tensor $(\nabla \nabla \nabla \boldsymbol{u})_P$ is reconstructed for each displacement component as:
 %
 \begin{equation}
-(\nabla \nabla \nabla \bb{u})_P^u
-= \sum_{N \in \mathcal{S}_P} \mathbf{c}_{\bb{x}\bb{x}\bb{x}_N} u_N,
+(\nabla \nabla \nabla {u}_{\alpha})_P = \left( \dfrac{\partial^3 u_{\alpha}}{\partial x_i \partial x_j \partial x_k} \right)_P
+= \sum_{N \in \mathcal{S}_P} \mathbf{c}_{\bb{x}\bb{x}\bb{x}_N}({u}_{\alpha})_N,
 \label{eq:thirdTensor}
 \end{equation}
 where $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N}$ is a symmetric third-order coefficient tensor $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N} =\big[c_{xxx_N},c_{xxy_N},c_{xxz_N},c_{xyy_N},c_{xyz_N},c_{xzz_N},c_{yyy_N},c_{yyz_N},c_{yzz_N},c_{zzz_N}\big]^{\mathrm{T}}$
-derived from the rows of the reconstruction matrix $\mathbf{\bar{A}}$.
+derived from the rows of the matrix $\mathbf{\bar{A}}$.
+
+The second- and third-order terms appearing in Equation \eqref{eq:alphaJump}, namely $\bb{d}_{Nf}^2 \!:\! (\nabla \nabla \bb{u})_N$ and $\bb{d}_{Nf}^3 \!::\! (\nabla \nabla \nabla \bb{u})_N$, are vectors whose components are obtainer through successive tensor contraction performed independently for each displacement component:
+%
+\begin{equation}
+\begin{split}
+ &\left(\bb{d}^2 \!:\! \nabla \nabla \bb{u} \right)_{\alpha} = \sum_{i,j} d_i d_j \dfrac{\partial^2 u_{\alpha}}{\partial x_i \partial x_j}, \\
+ & \left(\bb{d}^3 \!::\! \nabla \nabla \nabla \bb{u} \right)_{\alpha} = \sum_{i,j,k} d_i d_j d_k \dfrac{\partial^3 u_{\alpha}}{\partial x_i \partial x_j \partial x_k},
+\end{split}
+\end{equation}
+where indices $i,j,k$ denote spatial coordinates.
 
 To mitigate ill-conditioning in the reconstruction procedure, the polynomial basis $\mathbf{q}$ in Equation \eqref{eq:qAnda} is scaled using the characteristic stencil size $h = 2r_s$:
 \begin{equation}
@@ -1751,28 +1796,29 @@ Note that no stabilisation term is included here; however, it may be incorporate
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-For the unsteady problem considered in this study, the second-order backward Euler differentiation formula (BDF2) is employed for time integration. The inertia term (Equation~\eqref{eq:inertiaTerm}) is discretised using a single quadrature point per cell, located at the cell centre $P$, with the acceleration at that node computed as:
+For the unsteady problem considered in this study, the second-order backward Euler differentiation formula (BDF2) is employed for time integration. The inertia term in Equation~\eqref{eq:inertiaTerm} is calculated by summing contribution of cell quadrature points $\bb{x}_{\Omega, q}$ values, with acceleration computed as:
 %
-\begin{equation} \label{eq:inertia2}. 	\left(\dfrac{\partial^2 \boldsymbol{u}_P}{\partial t^2}\right)_P
+\begin{equation} \label{eq:inertia2}. 	\left(\dfrac{\partial^2 \boldsymbol{u}}{\partial t^2}\right)_{\Omega, q}
  	\approx
- 	\dfrac{3\boldsymbol{v}_P^{[t+1]} - 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t}
+ 	\dfrac{3\boldsymbol{v}_{\Omega, q}^{[t+1]} - 4\boldsymbol{v}_{\Omega, q}^{[t]} + \boldsymbol{v}_{\Omega, q}^{[t-1]}}{2\Delta t}
  	\approx
  	\frac{3\left(
- 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t}
+ 		\dfrac{3\boldsymbol{u}_{\Omega, q}^{[t+1]} - 4\boldsymbol{u}_{\Omega, q}^{[t]} + \boldsymbol{u}_{\Omega, q}^{[t-1]}}{2\Delta t}
  		\right)
- 	- 4\boldsymbol{v}_P^{[t]} + \boldsymbol{v}_P^{[t-1]}}{2\Delta t}
+ 	- 4\boldsymbol{v}_{\Omega, q}^{[t]} + \boldsymbol{v}_{\Omega, q}^{[t-1]}}{2\Delta t}
 \end{equation}
 %
 where $\Delta t$ is the time increment -- assumed constant here.
-Superscript $[t]$ indicates the time level, with $\bb{u}_P^{[t+1]}$ corresponding to the unknown displacement at the current time step.
+Superscript $[t]$ indicates the time level, with $\bb{u}_{\Omega, q}^{[t+1]}$ corresponding to the unknown displacement at the current time step.
 The velocity vector $\bb{v} = \partial \bb{u}/\partial t$ at the current time step is also updated using the BDF2 scheme as
 %
 \begin{equation}
- 	\boldsymbol{v}_P^{[t+1]}	\approx
- 		\dfrac{3\boldsymbol{u}_P^{[t+1]} - 4\boldsymbol{u}_P^{[t]} + \boldsymbol{u}_P^{[t-1]}}{2\Delta t}.
+ 	\boldsymbol{v}_{\Omega, q}^{[t+1]}	\approx
+ 		\dfrac{3\boldsymbol{u}_{\Omega, q}^{[t+1]} - 4\boldsymbol{u}_{\Omega, q}^{[t]} + \boldsymbol{u}_{\Omega, q}^{[t-1]}}{2\Delta t}.
 \end{equation}
 %
-Consequently, the displacement and velocity at the two previous time steps must be stored, or alternatively, the displacement at the previous four time steps. The discretisation of the acceleration term in Equation~\ref{eq:inertiaTerm} can also be performed using higher-order time integration schemes. However, such formulations require integration over multiple volume quadrature points, rather than a single point, which is sufficient for the second-order scheme employed here.
+Consequently, the displacement and velocity at the two previous time steps must be stored, or alternatively, the displacement at the previous  four preceding time levels.
+The displacement value at a cell quadrature point, $\boldsymbol{u}_{\Omega,q}$, is obtained by extrapolation from the cell centre. A Taylor-based extrapolation, identical to that used in Equation \eqref{eq:alphaJump}, is employed using derivatives evaluated at the cell centre, which are already available and stored as part of the $\alpha$ -stabilisation scheme.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -1781,41 +1827,42 @@ Consequently, the displacement and velocity at the two previous time steps must 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\hl{Image below are placeholder figures, i need to run those cases}
- \begin{figure}[H]
+Stabilisation by over-integration has been employed in previous studies \cite{Castrillo2022,Castrillo2024} to alleviate high-frequency numerical errors. For regular meshes, over-integration can be sufficient; however, on irregular meshes the stabilisation it provides is insufficient to adequately suppress such errors. This limitation is demonstrated in Figures \ref{fig:noalpha-disp:a} and \ref{fig:noalpha-disp:b} for the three-dimensional manufactured solution case presented in Section \ref{case:mms}. Figure \ref{fig:noalpha-disp:a} shows results obtained on a regular hexahedral mesh, for which the solution remains stable, whereas Figure \ref{fig:noalpha-disp:b} presents results for an irregular tetrahedral mesh, where high-frequency oscillations persist despite the use of over-integration. This behaviour manifests as abrupt increases in the error norms and prevents the observation of a clear convergence trend, as the $L_{\infty}$ error exhibits sudden localised spikes at random locations within the computational domain.
+All results were generated using 12 quadrature points per triangular element for all interpolation orders, which is sufficient to exactly integrate up to sixth-order polynomial. The stencil employed is larger than that used with the $\alpha$-stabilisation approach, with $n^{+}=60$ for $p=1$, $n^{+}=70$ for $p=2$, and $n^{+}=80$ for $p=3$. When stabilisation is insufficient, the linear solver within the JFNK solution procedure stalls and fails to converge. For this reason, the results presented in Figure \ref{fig:noalpha-disp} were obtained without JFNK, i.e. by solving directly the true Jacobian, whose construction is described in  Appendix \ref{app:P}.
+%
+\begin{figure}[H]
  	\centering
-	\subfigure[Structured hexahedral mesh]
+	\subfigure[Regular hexahedral mesh]
  	{
- 		\label{fig:alpha-disp:a}
-    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_disp_hex_struct}
+ 		\label{fig:noalpha-disp:a}
+    	\includegraphics[scale=0.8]{figures/mms_3D_dispErrors_hex_struct_noAlpha}
     }
- 	\subfigure[Unstructured tetrahedral mesh]
+ 	\subfigure[Irregular tetrahedral mesh]
  	{
- 		\label{fig:alpha-disp:b}
-    	\includegraphics[scale=0.8]{figures/mms_3D_alpha_disp_ho-tet_unstruct}
+ 		\label{fig:noalpha-disp:b}
+    	\includegraphics[scale=0.8]{figures/mms_3D_dispErrors_ho-tet_unstruct_noAlpha}
     }
- 	\caption{Convergence of the $L_2$ displacement error norm for case \ref{case:mms} with varying stabilisation parameter: $\alpha = 0.001, 0.01, 0.1,$ and $1.0$.}
- 	\label{fig:alpha-disp}
+ 	\caption{Convergence of the $L_2$ and $L_\infty$ displacement error norm for case \ref{case:mms} with over-integration as stabilisation.}
+ 	\label{fig:noalpha-disp}
  \end{figure}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
+\iffalse
+
 \section{List of things to check/discuss/improve in the paper}
 \label{app:time}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 \begin{itemize}
-\item[•] \textbf{That would be helpful}: High-order derivatives appendix is not going into details how product $d : \nabla \nabla \bb{u}$ and $d :: \nabla \nabla \nabla \bb{u}$ is calculated.
-\item[•] \textbf{Maybe insightfold}  Spherical cavity, maybe we should add results when there is no analytical traction on cavity surface.
-\item[•] \textbf{Add comment:} We use openFoam normal in momentum balance when integrating over quadrature points. This assumes that face is flat. When face is not flat this affects convergence behaviour and fourth order method is affected. This is not commented in the text.
-\item[•] Check appendix B, I'm using $\otimes$ notation
+%\item[•] \textbf{Add comment:} We use openFoam normal in momentum balance when integrating over quadrature points. This assumes that face is flat. When face is not flat this affects convergence behaviour and fourth order method is affected. This is not commented in the text.
 \item[•] Finish idealised ventricle case, consider adding it later.
-\item[•] \textbf{To be fixed:} Only first derivative is used when extracting displacement at reference point.
 \item[•] Consider using coarser mesh in vibration beam.
 \item[•] Time scheme integration - check with Philip is it ok to leave as this
 \item[•] Add other papers from CF
 \end{itemize}
+\fi
 %
 %
 \end{appendices}
