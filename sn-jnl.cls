@@ -751,7 +751,7 @@
 	\ifnum\emailcnt>0\relax%
            \ifx\corrauthemail\@empty\else{\ifnum\aucount>1*\fi}%
 	   %Corresponding author(s). E-mail(s): \corrauthemail\par\fi%
-	   Corresponding author. E-mail: philip.cardiff@ucd.ie%
+	   Corresponding author. E-mail: pablo.castrillo@ucd.ie%
 	   \ifx\authemail\@empty\else Contributing author:\ \authemail\fi%
         \fi%
         \ifequalcont{\par$^{\dagger}$\@equalconttext\par}\fi%
