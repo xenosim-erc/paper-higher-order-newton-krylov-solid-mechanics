@@ -103,13 +103,21 @@ Jacobian-free Newton-Krylov \sep higher-order \sep cell-centred finite volume me
 %expected order of accuracy, e.g. on the irregular hexahedra/polyhedra meshes.
 %
 %
-High-order finite-volume discretisations are generally defined as schemes that achieve at least third-order accuracy \cite{wang2013}. Over the past two decades, such methods have attracted growing interest within the computational fluid dynamics (CFD) community, leading to continuous development and refinement \cite{Tsoutsanis2025, Nishikawa2025, Costa2022, Costa2023, Antoniadis2022}. In contrast, the application of high-order finite volume discretisations to solid mechanics remains relatively underexplored  \cite{Demirdzic2016, Castrillo2022, Castrillo2024}, despite several recent advances. {\color{violet}Very-high-order pointwise finite-volume schemes have also been developed for transient simulations on polyhedral unstructured grids; see, e.g., Costa \& Albuquerque (2022), who discuss space–time efficiency and memory considerations in a cell-centred framework.} The untapped potential of these formulations is significant: for a given level of accuracy, high-order methods can be computationally more efficient and reduce data movement, an increasingly important factor for large-scale simulations on high-performance computing systems, where memory bandwidth is often the main bottleneck. As noted in \cite{Tzanio2021}, these two criteria, computational efficiency and reduced data movement, are guiding principles in the development of next-generation discretisations. {\color{orange}While high-order discretisations can offer substantial efficiency gains for sufficiently smooth solid mechanics problems, we recognise that many practical applications feature limited solution regularity (e.g. singularities, sharp material interfaces, and contact). In such cases, mesh refinement and adaptivity may be more effective than increasing polynomial order, and the asymptotic high-order regime may not be observed. In this work, we therefore focus on demonstrating a robust high-order cell-centred finite-volume framework for problems with smooth reference solutions and on quantifying accuracy–cost trade-offs in that regime.} Within the solid mechanics community, the development of such methods lags decades behind the finite-element counterparts \cite{Bathe1996}. Their greatest promise lies in multiphysics simulations, where solving the coupled problem within a unified finite volume framework is particularly advantageous. {\color{orange}The objective of the present work is not to compete with high-order finite-element methods in general, but to enable higher-order accuracy within a cell-centred finite-volume framework, particularly in settings where a unified finite-volume treatment is advantageous, such as multiphysics problems on general polyhedral meshes.} 
+High-order finite-volume discretisations are generally defined as schemes that achieve at least third-order accuracy \cite{wang2013}. Over the past two decades, such methods have attracted growing interest within the computational fluid dynamics (CFD) community, leading to continuous development and refinement \cite{Tsoutsanis2025, Nishikawa2025, Costa2022, Costa2023, Antoniadis2022}. 
+%
+%In contrast, the application of high-order finite volume discretisations to solid mechanics remains relatively underexplored 
+%
+{\color{orange}In contrast, although finite-volume methods have been successfully applied in several solid mechanics, geomechanics, and multiphysics settings \cite{Nordbotten2015,Keilegavlen2017,Nilsen2018}, high-order cell-centred finite-volume discretisations for solid mechanics remain comparatively less explored} \cite{Demirdzic2016, Castrillo2022, Castrillo2024}, despite several recent advances. {\color{violet}Very-high-order pointwise finite-volume schemes have also been developed for transient simulations on polyhedral unstructured grids \cite{Costa2022b}, who discuss space–time efficiency and memory considerations in a cell-centred framework.} The untapped potential of these formulations is significant: for a given level of accuracy, high-order methods can be computationally more efficient and reduce data movement, an increasingly important factor for large-scale simulations on high-performance computing systems, where memory bandwidth is often the main bottleneck. As noted in \cite{Tzanio2021}, these two criteria, computational efficiency and reduced data movement, are guiding principles in the development of next-generation discretisations. {\color{orange}While high-order discretisations can offer substantial efficiency gains for sufficiently smooth solid mechanics problems, we recognise that many practical applications feature limited solution regularity (e.g. singularities, sharp material interfaces, and contact). In such cases, mesh refinement and adaptivity may be more effective than increasing polynomial order, and the asymptotic high-order regime may not be observed. In this work, we therefore focus on demonstrating a robust high-order cell-centred finite-volume framework for problems with smooth reference solutions and on quantifying accuracy–cost trade-offs in that regime.} {\color{orange}At the same time, for nonlinear constitutive models with expensive local updates, particularly those involving internal state variables, the overall benefit of increasing spatial order remains problem-dependent; accordingly, the present work focuses primarily on establishing the accuracy, convergence, and algorithmic feasibility of the proposed framework, rather than on providing an exhaustive cost--benefit assessment across all material classes.} 
+%
+%Within the solid mechanics community, the development of such methods lags decades behind the finite-element counterparts
+%
+{\color{orange}Moreover, within mainstream computational solid mechanics, their development remains less mature and less widespread than that of their finite-element counterparts} \cite{Bathe1996}. Their greatest promise lies in multiphysics simulations, where solving the coupled problem within a unified finite volume framework is particularly advantageous. {\color{orange}The objective of the present work is not to compete with high-order finite-element methods in general, but to enable higher-order accuracy within a cell-centred finite-volume framework, particularly in settings where a unified finite-volume treatment is advantageous, such as multiphysics problems on general polyhedral meshes.} {\color{orange}Beyond its relevance to solid mechanics, the present work is motivated by a broader computational objective: the development of a robust and reproducible high-order finite-volume framework that combines advanced reconstruction, matrix-free nonlinear solution methods, and compact preconditioning in a form suitable for general nonlinear partial differential equation systems.}
 
-The first high-order, cell-centred finite volume method for solid mechanics was introduced by Demirdžić \cite{Demirdzic2016}, who also pioneered the general finite volume approach for solids \cite{Demirdzic1988, Cardiff2021}. In his work, a fourth-order discretisation for two-dimensional structured hexahedral meshes was proposed, and it was shown that shear locking is not inherent to high-order finite volume formulations but is a limitation of conventional second-order schemes. However, Demirdžić’s formulation was not easily generalisable to irregular meshes, and he suggested adopting a Moving Least-Squares (MLS) reconstruction, similar to those already used in CFD \cite{Felgueroso2007, Ramirez2014}. This step was realised later by Castrillo et. al. \cite{Castrillo2022, Castrillo2023}, where it was demonstrated that higher-order accuracy can be achieved through gradient reconstruction using least-squares interpolation, specifically the Local Regression Estimator (LRE) technique, and face-flux integration via Gaussian quadrature.
+The first high-order, cell-centred finite volume method for solid mechanics was introduced by Demirdžić \cite{Demirdzic2016}, who also pioneered the general finite volume approach for solids \cite{Demirdzic1988, Cardiff2021}. In his work, a fourth-order discretisation for two-dimensional structured hexahedral meshes was proposed, and it was shown that shear locking is not inherent to high-order finite volume formulations but is a limitation of conventional second-order schemes. However, Demirdžić’s formulation was not easily generalisable to irregular meshes, and he suggested adopting a Moving Least-Squares (MLS) reconstruction, similar to those already used in CFD \cite{Felgueroso2007, Ramirez2014, SaezMischlich2022}. This step was realised later by Castrillo et. al. \cite{Castrillo2022, Castrillo2023}, where it was demonstrated that higher-order accuracy can be achieved through gradient reconstruction using least-squares interpolation, specifically the Local Regression Estimator (LRE) technique, and face-flux integration via Gaussian quadrature.
 
 A major distinction between these studies lies in their solution strategies. Demirdžić \cite{Demirdzic2016} employed a semi-implicit, segregated framework with Picard iterations, whereas Castrillo et. al. \cite{Castrillo2022,Castrillo2024} adopted a fully implicit, block-coupled Newton–Raphson approach. While segregated solvers are simpler to implement, they typically exhibit only linear convergence and limited robustness. The Newton–Raphson method, in contrast, achieves quadratic convergence but requires the explicit formation and storage of the Jacobian matrix, which is both computationally expensive and memory-intensive. Moreover, constructing an exact Jacobian for nonlinear material models is often non-trivial, further complicating implementation. 
 
-To overcome these limitations, Jacobian-free Newton–Krylov (JFNK) methods have emerged as a powerful alternative. JFNK algorithms retain the quadratic convergence properties of Newton’s method while avoiding explicit Jacobian construction by estimating matrix-vector products through finite differencing of the residual. These methods were first introduced in the 1980s and early 1990s for solving ordinary and partial differential equations \cite{Gear1983, Chan1984, Brown1986, Brown1990}, and subsequently applied to the Navier–Stokes equations with various preconditioners and linear solvers  \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008}. Despite their potential, JFNK methods are still not widely adopted in CFD, although some codes provide them as built-in options \cite{Nakashima2025}. Of particular relevance is that recent developments in high-order finite volume schemes increasingly rely on JFNK formulations, due to their natural compatibility with compact-stencil preconditioners and flexible treatment of nonlinearities \cite{Nishikawa2025}. Notably, the preconditioning matrix can be constructed from a lower-order spatial discretisation, which provides a good approximation to the true Jacobian while maintaining computational efficiency and robustness \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008, Mchugh1994,  Knoll2004, Vaassen2008, Lucas2010,  Nishikawa2020}. 
+To overcome these limitations, Jacobian-free Newton–Krylov (JFNK) methods have emerged as a powerful alternative. JFNK algorithms retain the quadratic convergence properties of Newton’s method while avoiding explicit Jacobian construction by estimating matrix-vector products through finite differencing of the residual. These methods were first introduced in the 1980s and early 1990s for solving ordinary and partial differential equations \cite{Gear1983, Chan1984, Brown1986, Brown1990}, and subsequently applied to the Navier–Stokes equations with various preconditioners and linear solvers  \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008}. Despite their potential, JFNK methods are still not widely adopted in CFD, although some codes provide them as built-in options \cite{Nakashima2025}. Of particular relevance is that recent developments in high-order finite volume schemes increasingly rely on JFNK formulations, due to their natural compatibility with compact-stencil preconditioners and flexible treatment of nonlinearities \cite{Nishikawa2025, Qin2018}. Notably, the preconditioning matrix can be constructed from a lower-order spatial discretisation, which provides a good approximation to the true Jacobian while maintaining computational efficiency and robustness \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008, Mchugh1994,  Knoll2004, Vaassen2008, Lucas2010,  Nishikawa2020}. 
 
 The application of JFNK methods to cell-centred finite volume solid mechanics was first demonstrated by the present authors in previous work \cite{Cardiff2025}. There, it was shown that a compact-stencil approximate Jacobian is highly effective as a preconditioner and that the resulting JFNK solution procedure, when combined with a second-order finite volume discretisation, offers a feasible, efficient, and robust framework applicable to static, dynamic, linear, and nonlinear solid mechanics problems. However, the combination of JFNK with high-order finite volume formulations for solids has remained unexplored prior to the current study.
 
@@ -118,7 +126,11 @@ The present work addresses this gap by extending the JFNK framework to third- an
 Another key contribution of this study is its implementation within a conventional open-source framework, which distinguishes it from earlier custom-code prototypes.
 Specifically, we build our solver using the OpenFOAM-based solids4foam toolbox \cite{Weller1998, Cardiff2025a}, maintaining its support for arbitrary polyhedral cells by decomposing cells and faces into tetrahedral and triangles.
 This \emph{conventional} implementation means that the high-order JFNK solver can handle general unstructured meshes and can be directly compared against standard second-order solvers.
-The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} which required different treatment of boundary conditions. Finally, we introduce the $\alpha$-stabilisation scheme \cite{Antoniadis2022, Nishikawa2010, Nishikawa2011, Nishikawa2025a}, and show its effectiveness in stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations (zero-energy modes). The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order solid mechanics finite volume discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (e.g. second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies. {\color{orange}Accordingly, the discussion in Sections \ref{case:Stabilisation_Scheme_Effects}-\ref{case:Different_Choice_for_Approximate_Jacobian} is framed from a robustness-first standpoint, emphasizing not only accuracy but also the stability and conditioning properties of the formulation under different numerical settings.}
+The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} which required different treatment of boundary conditions. Finally, we introduce the $\alpha$-stabilisation scheme \cite{Antoniadis2022, Nishikawa2010, Nishikawa2011, Nishikawa2025a}, and show its effectiveness in stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations (zero-energy modes). The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order solid mechanics finite volume discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (e.g. second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. {\color{orange}The aim of this paper is therefore twofold: to advance high-order cell-centred finite-volume methodology for solid mechanics, and to assess, within an open-source and reproducible setting, the computational performance of its combination with Jacobian-free Newton--Krylov methods and compact-stencil preconditioning on general polyhedral meshes.}
+%
+%The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
+%
+{\color{orange}Accordingly, the discussion in Sections \ref{case:Stabilisation_Scheme_Effects}-\ref{case:Different_Choice_for_Approximate_Jacobian} is framed from a robustness-first standpoint, emphasizing not only accuracy but also the stability and conditioning properties of the formulation under different numerical settings.}
 
 The remainder of this paper is structured as follows: Section~\ref{sec:math_model} presents the governing equations, followed by the formulation of the high-order finite volume discretisation in Section~\ref{sec:HO-FVD}. Section~\ref{sec:Sol_Alg} summarises the JFNK solution algorithm. Section~\ref{sec:test_cases} reports the performance of the proposed solver across a series of benchmark problems, analysing accuracy, computational cost, robustness and memory requirements. Finally, Section~\ref{sec:conclusion} provides concluding remarks and outlines future research directions.
 %
@@ -677,6 +689,7 @@ Polyhedral meshes were subsequently produced by converting a tetrahedral mesh us
 %
 %------------------------------------------------------------------------------
 \subsection{Testing the Accuracy and Order of Accuracy}
+\label{case:Testing_the_Accuracy_and_Order_of_Accuracy}
 %------------------------------------------------------------------------------
 %
 The accuracy and convergence behaviour of the method are evaluated for interpolation orders $p = 1$, $p = 2$, and $p = 3$.
@@ -694,6 +707,8 @@ Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x
 \begin{eqnarray}
 	\sigma_\text{eq}=\sqrt{\frac{1}{2}\left[  (\sigma_{xx}-\sigma_{yy})^2+(\sigma_{yy}-\sigma_{zz})^2+(\sigma_{zz}-\sigma_{xx})^2 \right]+3\left(\sigma_{xy}^2+\sigma_{yz}^2+\sigma_{zx}^2\right)}.
 \end{eqnarray}
+
+{\color{violet}In the following subsections, the convergence of the $L_2$ and $L_\infty$ error norms is presented. The numerical values of the slopes associated with the corresponding log--log convergence curves are reported in Table~\ref{tab:observed_convergence_orders_1}.}
 %
 %------------------------------------------------------------------------------
 \subsubsection{Case 1: Order Verification via the Manufactured Solution Procedure}
@@ -1561,9 +1576,11 @@ Additionally, the authors wish to acknowledge the DJEI/DES/SFI/HEA Irish Centre 
 
 \appendix
 
+\setcounter{table}{0}
 \setcounter{figure}{0}
 \setcounter{subfigure}{0}
 
+\renewcommand{\thetable}{\Alph{section}.\arabic{table}}
 \renewcommand{\thefigure}{\Alph{section}.\arabic{figure}}
 
 \renewcommand{\thesubfigure}{(\alph{subfigure})}
@@ -1572,6 +1589,7 @@ Additionally, the authors wish to acknowledge the DJEI/DES/SFI/HEA Irish Centre 
 \renewcommand{\p@subfigure}{\thefigure}
 \makeatother
 
+\renewcommand{\theHtable}{\Alph{section}.\arabic{table}}
 \renewcommand{\theHfigure}{\Alph{section}.\arabic{figure}}
 \renewcommand{\theHsubfigure}{\Alph{section}.\arabic{figure}.\alph{subfigure}}
 
@@ -1723,7 +1741,7 @@ Then, the Cauchy stress is then given by \cite{oliveira2020}:
 where
 %
 \begin{eqnarray}
-\mathrm{dev}(\mathbf{A})=\mathbf{A}-\frac{1}{3}\mathrm{tr}(\mathbf{A})\mathbf{I}.
+\mathrm{dev}(\bb{A})=\bb{A}-\frac{1}{3}\mathrm{tr}(\bb{A})\bb{I}.
 \end{eqnarray}
 %
 and $\kappa$ is \emph{penalty parameter} which value is typically taken to be equal to the material bulk modulus.}
@@ -1968,52 +1986,10 @@ All results were generated using 12 quadrature points per triangular element for
 		\hline
 	\end{tabular}%
 	}
-	\caption{{\color{violet}Observed convergence orders for the variables studied in each numerical case, for different mesh refinements and reconstruction orders $p=1,2,3$. The entries represent the slopes obtained from the corresponding log--log convergence curves.}}
+	\caption{{\color{violet}Observed convergence orders for the variables studied in each numerical case in Section~\ref{case:Testing_the_Accuracy_and_Order_of_Accuracy}, for different mesh refinements and reconstruction orders $p=1,\,2,\,3$. The entries correspond to the slopes of the associated log--log convergence curves, with the average cell edge used as the characteristic mesh size in all cases.}}
 	\label{tab:observed_convergence_orders_1}
 \end{table}
 
-
-\begin{table}[h]
-	\centering
-	\setlength{\tabcolsep}{4pt}
-	\renewcommand{\arraystretch}{1.15}%
-	{\color{violet}
-	\begin{tabular}{lc|c|c|ccc|}
-		
-		\multirow{2}{3.5cm}{Description} & \multirow{2}{*}{Figure} & \multirow{2}{*}{Variables} & \multirow{2}{*}{Type of mesh}
-		& \multicolumn{3}{c|}{Order of $L_2$} \\ 
-		
-		& & & & $p=1$ & $p=2$ & $p=3$ \\
-		\hline
-		
-		\multirow{8}{4.8cm}{Error-Cost Relationship - \ref{case:error_cost_relationship}} & \ref{fig:error-time-MMS-struct-hex:a} & $|\mathbf{u}|-t$ & Hexahedral structured & -- & -- & -- \\
-		& \ref{fig:error-time-MMS-struct-hex:b} & $\sigma_{\mathrm{eq}}-t$ & Hexahedral structured & -- & -- & -- \\
-		& \ref{fig:error-time-MMS-struct-tet:a} & $|\mathbf{u}|-t$ & Tetrahedral structured & -- & -- & -- \\
-		& \ref{fig:error-time-MMS-struct-tet:b} & $\sigma_{\mathrm{eq}}-t$ & Tetrahedral structured & -- & -- & -- \\
-		& \ref{fig:error-time-MMS-struct-poly:a} & $|\mathbf{u}|-t$ & Polyhedral structured & -- & -- & -- \\
-		& \ref{fig:error-time-MMS-struct-poly:b} & $\sigma_{\mathrm{eq}}-t$ & Polyhedral structured & -- & -- & -- \\		
-		& \ref{fig:error-time-MMS-struct-memory:a} & $|\mathbf{u}|-{\mathrm{memory}}$ & Hexahedral structured & -- & -- & -- \\
-		& \ref{fig:error-time-MMS-struct-memory:b} & $|\mathbf{u}|-{\mathrm{memory}}$ & Tetrahedral structured & -- & -- & -- \\
-		\hline
-		
-		
-		\multirow{4}{4.8cm}{Stabilisation Scheme Effects using $\alpha=0.1$ - \ref{case:Stabilisation_Scheme_Effects}}  & \ref{fig:alpha-disp:a} & $|\mathbf{u}|-h_{\mathrm{avg}}$ & Hexahedral structured & -- & -- & -- \\
-		& \ref{fig:alpha-disp:b} & $|\mathbf{u}|-h_{\mathrm{avg}}$ & Tetrahedral structured & -- & -- & -- \\
-		& \ref{fig:alpha-timing:a} & $|\mathbf{u}|-t$ & Hexahedral structured & -- & -- & -- \\
-		& \ref{fig:alpha-timing:b} & $|\mathbf{u}|-t$ & Tetrahedral structured & -- & -- & -- \\
-		\hline
-		
-		\multirow{1}{4.8cm}{Plate hole case - \ref{case:error_cost_relationship}} & \ref{fig:plateHole-conditioning:b} & $|\mathbf{u}|-h_{\mathrm{avg}}$ & Hexahedral structured & -- & -- & -- \\
-		\hline
-		
-		\multirow{2}{4.8cm}{Stabilisation using \emph{over-integration} - \ref{app:stabilisation}} & \ref{fig:noalpha-disp:a} & $|\mathbf{u}|-h_{\mathrm{avg}}$ & Hexahedral structured & -- & -- & -- \\
-		& \ref{fig:noalpha-disp:b} & $|\mathbf{u}|-h_{\mathrm{avg}}$ & Tetrahedral unstructured & -- & -- & -- \\
-		\hline
-	\end{tabular}%
-	}
-	\caption{{\color{violet}Observed convergence orders for the variables studied in each numerical case, for different mesh refinements and reconstruction orders $p=1,2,3$. The entries represent the slopes obtained from the corresponding log--log convergence curves.}}
-	\label{tab:observed_convergence_orders_2}
-\end{table}
 
 
 \end{document}
