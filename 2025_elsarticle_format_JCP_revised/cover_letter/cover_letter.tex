@@ -1,0 +1,107 @@
+% ---------------
+% based on http://en.wikibooks.org/wiki/LaTeX/Letters
+% ------------
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[utf8]{inputenc}
+%\usepackage[spanish]{babel}
+%\usepackage[portuguese]{babel}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{color}
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{}{}{}
+\usepackage{hyperref}
+%\usepackage[OT1]{fontenc}
+%\usepackage{boisik}
+
+%\usepackage[T1]{fontenc}
+%\usepackage{PTSerifCaption} 
+
+%\usepackage[T1]{fontenc}
+%\usepackage{libertine}
+%\renewcommand*\familydefault{\sfdefault}  %% Only if the base font of the document is to be sans serif
+
+%\usepackage[LGR,T1]{fontenc} %% LGR encoding is needed for loading the package gfsneohellenic
+%\usepackage[default]{gfsneohellenic}
+
+%\usepackage[T1]{fontenc}
+%\usepackage{lxfonts}
+
+% \clubpenalty 10000
+% \widowpenalty 10000
+% \sloppy  % espaciamento entre palabras en una frase
+
+%\usepackage[dvips]{graphicx}  % lo agregue para poder usar el dvips
+
+\setlength\parindent{0pt}
+
+
+
+
+% ====== MARGIN =========
+\topmargin	15mm
+\evensidemargin	-5mm
+\textwidth	160mm
+\textheight	250mm
+\oddsidemargin	-5mm
+% =======================
+
+% \setlength{\parindent}{0.25in}
+
+\bibliographystyle{elsarticle-num}
+
+\begin{document}
+
+\pagestyle{empty}
+
+
+\vspace{5mm}
+
+\begin{center}
+Paper submission to the Journal of Computational Physics.
+\end{center}
+
+\vspace{5mm}
+
+\begin{flushright}
+Dublin, Ireland\\
+\today
+\end{flushright}
+
+
+\begin{flushleft}
+Prof.  Frederic G. Gibou, Prof. Dongbin Xiu\\
+Editor board, Journal of Computational Physics\\
+\end{flushleft}
+
+\vspace{5mm}
+
+We are pleased to submit our manuscript entitled ``A Jacobian-free Newton-Krylov method for high-order cell-centred finite volume solid mechanics'' for consideration in the Journal of Computational Physics.  The article was written by Ivan Batisti\'{c}, Pablo Castrillo and Philip Cardiff.
+
+\vspace{5mm}
+
+Motivated by the increasing interest in the engineering community in high-order methods for solid and fluid mechanics, and in line with recent studies presented in this journal by Nishikawa, Tsoutsanis and others, this work introduces third- and fourth-order cell-centred finite-volume schemes for solid mechanics, coupled with a Jacobian-free Newton–Krylov solver that eliminates the need to assemble complex Jacobians. By combining high-order accuracy, robustness on irregular meshes through an $\alpha$-stabilisation scheme, and computational efficiency, our methodology advances the application of finite-volume methods to solid mechanics and is particularly attractive for multiphysics simulations within unified finite-volume frameworks.
+%
+We believe the manuscript will interest readers focused on numerical methods, as it demonstrates a practical, high-performance approach that can be readily adopted in existing frameworks. All implementations are openly released in the solids4foam toolbox for OpenFOAM, promoting reproducibility and further research.
+
+
+
+\vspace{5mm}
+
+Finally, we remark that this is an original paper which has neither previously, nor simul-
+taneously, been submitted anywhere else.
+
+\vspace{5mm}
+Thank you for considering our work. We look forward to your feedback.
+
+\vspace{5mm}
+
+Sincerely yours,
+
+\vspace{2cm} 
+Pablo Castrillo
+
+
+\end{document}
