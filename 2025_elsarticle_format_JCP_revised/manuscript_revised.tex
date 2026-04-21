@@ -108,30 +108,35 @@ High-order finite-volume discretisations are generally defined as schemes that a
 %
 %In contrast, the application of high-order finite volume discretisations to solid mechanics remains relatively underexplored 
 %
-{\color{orange}In contrast, although finite-volume methods have been successfully applied in several solid mechanics, geomechanics, and multiphysics settings \cite{Nordbotten2015,Keilegavlen2017,Nilsen2018}, high-order cell-centred finite-volume discretisations for solid mechanics remain comparatively less explored} \cite{Demirdzic2016, Castrillo2022, Castrillo2024}, despite several recent advances. {\color{violet}Very-high-order pointwise finite-volume schemes have also been developed for transient simulations on polyhedral unstructured grids \cite{Costa2022b}, who discuss space–time efficiency and memory considerations in a cell-centred framework.} The untapped potential of these formulations is significant: for a given level of accuracy, high-order methods can be computationally more efficient and reduce data movement, an increasingly important factor for large-scale simulations on high-performance computing systems, where memory bandwidth is often the main bottleneck. As noted in \cite{Tzanio2021}, these two criteria, computational efficiency and reduced data movement, are guiding principles in the development of next-generation discretisations. {\color{orange}While high-order discretisations can offer substantial efficiency gains for sufficiently smooth solid mechanics problems, we recognise that many practical applications feature limited solution regularity (e.g. singularities, sharp material interfaces, and contact). In such cases, mesh refinement and adaptivity may be more effective than increasing polynomial order, and the asymptotic high-order regime may not be observed. In this work, we therefore focus on demonstrating a robust high-order cell-centred finite-volume framework for problems with smooth reference solutions and on quantifying accuracy–cost trade-offs in that regime.} {\color{orange}At the same time, for nonlinear constitutive models with expensive local updates, particularly those involving internal state variables, the overall benefit of increasing spatial order remains problem-dependent; accordingly, the present work focuses primarily on establishing the accuracy, convergence, and algorithmic feasibility of the proposed framework, rather than on providing an exhaustive cost--benefit assessment across all material classes.} 
+{\color{orange}In contrast, although finite-volume methods have been successfully applied in several solid mechanics, geomechanics, and multiphysics settings \cite{Nordbotten2015,Keilegavlen2017,Nilsen2018}, high-order cell-centred finite-volume discretisations for solid mechanics remain comparatively less explored} \cite{Demirdzic2016, Castrillo2022, Castrillo2024}, despite several recent advances.
+%{\color{violet} So-called \emph{Very-high-order} pointwise finite-volume schemes have also been developed for transient simulations on polyhedral unstructured grids \cite{Costa2022b}, who discuss space–time efficiency and memory considerations in a cell-centred framework.}
+{\color{violet} Pointwise finite-volume schemes of order higher than fourth have also been developed for transient simulations on polyhedral unstructured grids \cite{Costa2022b}, with discussion of space--time efficiency and memory considerations in a cell-centred framework.}
+ The untapped potential of these formulations is significant: for a given level of accuracy, high-order methods can be computationally more efficient and reduce data movement, an increasingly important factor for large-scale simulations on high-performance computing systems, where memory bandwidth is often the main bottleneck. As noted in \cite{Tzanio2021}, these two criteria, computational efficiency and reduced data movement, are guiding principles in the development of next-generation discretisations. {\color{orange}While high-order discretisations can offer substantial efficiency gains for sufficiently smooth solid mechanics problems, we recognise that many practical applications feature limited solution regularity (e.g. singularities, sharp material interfaces, and contact). In such cases, mesh refinement and adaptivity may be more effective than increasing polynomial order, and the asymptotic high-order regime may not be observed. In this work, we therefore focus on demonstrating a robust high-order cell-centred finite-volume framework for problems with smooth reference solutions and on quantifying accuracy–cost trade-offs in that regime.} {\color{orange}At the same time, for nonlinear constitutive models with expensive local updates, particularly those involving internal state variables, the overall benefit of increasing spatial order remains problem-dependent; accordingly, the present work focuses primarily on establishing the accuracy, convergence, and algorithmic feasibility of the proposed framework, rather than on providing an exhaustive cost--benefit assessment across all material classes.} 
 %
 %Within the solid mechanics community, the development of such methods lags decades behind the finite-element counterparts
 %
 {\color{orange}Moreover, within mainstream computational solid mechanics, their development remains less mature and less widespread than that of their finite-element counterparts} \cite{Bathe1996}. Their greatest promise lies in multiphysics simulations, where solving the coupled problem within a unified finite volume framework is particularly advantageous. {\color{orange}The objective of the present work is not to compete with high-order finite-element methods in general, but to enable higher-order accuracy within a cell-centred finite-volume framework, particularly in settings where a unified finite-volume treatment is advantageous, such as multiphysics problems on general polyhedral meshes.} {\color{orange}Beyond its relevance to solid mechanics, the present work is motivated by a broader computational objective: the development of a robust and reproducible high-order finite-volume framework that combines advanced reconstruction, matrix-free nonlinear solution methods, and compact preconditioning in a form suitable for general nonlinear partial differential equation systems.}
 
-The first high-order, cell-centred finite volume method for solid mechanics was introduced by Demirdžić \cite{Demirdzic2016}, who also pioneered the general finite volume approach for solids \cite{Demirdzic1988, Cardiff2021}. In his work, a fourth-order discretisation for two-dimensional structured hexahedral meshes was proposed, and it was shown that shear locking is not inherent to high-order finite volume formulations but is a limitation of conventional second-order schemes. However, Demirdžić’s formulation was not easily generalisable to irregular meshes, and he suggested adopting a Moving Least-Squares (MLS) reconstruction, similar to those already used in CFD \cite{Felgueroso2007, Ramirez2014, SaezMischlich2022}. This step was realised later by Castrillo et. al. \cite{Castrillo2022, Castrillo2023}, where it was demonstrated that higher-order accuracy can be achieved through gradient reconstruction using least-squares interpolation, specifically the Local Regression Estimator (LRE) technique, and face-flux integration via Gaussian quadrature.
+The first high-order, cell-centred finite volume method for solid mechanics was introduced by Demirdžić \cite{Demirdzic2016}, who also pioneered the general finite volume approach for solids \cite{Demirdzic1988, Cardiff2021}. In his work, a fourth-order discretisation for two-dimensional structured hexahedral meshes was proposed, and it was shown that shear locking is not inherent to high-order finite volume formulations but is a limitation of conventional second-order schemes. However, Demirdžić’s formulation was not easily generalisable to irregular meshes, and he suggested adopting a Moving Least-Squares (MLS) reconstruction, similar to those already used in CFD \cite{Felgueroso2007, Ramirez2014, SaezMischlich2022}.
+%This step was realised later by Castrillo et al.\ \cite{Castrillo2022, Castrillo2023}, where it was demonstrated that higher-order accuracy can be achieved through gradient reconstruction using least-squares interpolation, specifically the Local Regression Estimator (LRE) technique, and face-flux integration via Gaussian quadrature.
+This step was realised later by Castrillo et al. \cite{Castrillo2022, Castrillo2023}, who demonstrated that higher-order accuracy can be achieved on irregular meshes through gradient reconstruction using least-squares interpolation via the Local Regression Estimator (LRE) technique, together with face-flux integration by Gaussian quadrature.
 
-A major distinction between these studies lies in their solution strategies. Demirdžić \cite{Demirdzic2016} employed a semi-implicit, segregated framework with Picard iterations, whereas Castrillo et. al. \cite{Castrillo2022,Castrillo2024} adopted a fully implicit, block-coupled Newton–Raphson approach. While segregated solvers are simpler to implement, they typically exhibit only linear convergence and limited robustness. The Newton–Raphson method, in contrast, achieves quadratic convergence but requires the explicit formation and storage of the Jacobian matrix, which is both computationally expensive and memory-intensive. Moreover, constructing an exact Jacobian for nonlinear material models is often non-trivial, further complicating implementation. 
+A major distinction between these studies lies in their solution strategies. Demirdžić \cite{Demirdzic2016} employed a semi-implicit, segregated framework with Picard iterations, whereas Castrillo et al.\ \cite{Castrillo2022,Castrillo2024} adopted a fully implicit, block-coupled Newton–Raphson approach. While segregated solvers are simpler to implement, they typically exhibit only linear convergence and limited robustness. The Newton–Raphson method, in contrast, achieves quadratic convergence but requires the explicit formation and storage of the Jacobian matrix, which is both computationally expensive and memory-intensive. Moreover, constructing an exact Jacobian for nonlinear material models is often non-trivial, further complicating implementation. 
 
-To overcome these limitations, Jacobian-free Newton–Krylov (JFNK) methods have emerged as a powerful alternative. JFNK algorithms retain the quadratic convergence properties of Newton’s method while avoiding explicit Jacobian construction by estimating matrix-vector products through finite differencing of the residual. These methods were first introduced in the 1980s and early 1990s for solving ordinary and partial differential equations \cite{Gear1983, Chan1984, Brown1986, Brown1990}, and subsequently applied to the Navier–Stokes equations with various preconditioners and linear solvers  \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008}. Despite their potential, JFNK methods are still not widely adopted in CFD, although some codes provide them as built-in options \cite{Nakashima2025}. Of particular relevance is that recent developments in high-order finite volume schemes increasingly rely on JFNK formulations, due to their natural compatibility with compact-stencil preconditioners and flexible treatment of nonlinearities \cite{Nishikawa2025, Qin2018}. Notably, the preconditioning matrix can be constructed from a lower-order spatial discretisation, which provides a good approximation to the true Jacobian while maintaining computational efficiency and robustness \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008, Mchugh1994,  Knoll2004, Vaassen2008, Lucas2010,  Nishikawa2020}. 
+To overcome these limitations, Jacobian-free Newton–Krylov (JFNK) methods have emerged as a powerful alternative. JFNK algorithms retain the quadratic convergence properties of Newton’s method while avoiding explicit Jacobian construction by estimating matrix-vector products through finite differencing of the residual. These methods were first introduced in the 1980s and early 1990s for solving ordinary and partial differential equations \cite{Gear1983, Chan1984, Brown1986, Brown1990} and were subsequently applied to the Navier–Stokes equations using various preconditioners and linear solvers \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008}. Despite their potential, JFNK methods are still not widely adopted in CFD, although some codes provide them as built-in options \cite{Nakashima2025}. Of particular relevance is that recent developments in high-order finite volume schemes increasingly rely on JFNK formulations, due to their natural compatibility with compact-stencil preconditioners and flexible treatment of nonlinearities \cite{Nishikawa2025, Qin2018}. Notably, the preconditioning matrix can be constructed from a lower-order spatial discretisation, which provides a good approximation to the true Jacobian while maintaining computational efficiency and robustness \cite{Qin2000, Geuzaine2001, Pernice2001, Nejat2008, Mchugh1994,  Knoll2004, Vaassen2008, Lucas2010,  Nishikawa2020}. 
 
-The application of JFNK methods to cell-centred finite volume solid mechanics was first demonstrated by the present authors in previous work \cite{Cardiff2026}. There, it was shown that a compact-stencil approximate Jacobian is highly effective as a preconditioner and that the resulting JFNK solution procedure, when combined with a second-order finite volume discretisation, offers a feasible, efficient, and robust framework applicable to static, dynamic, linear, and nonlinear solid mechanics problems. However, the combination of JFNK with high-order finite volume formulations for solids has remained unexplored prior to the current study.
+The application of JFNK methods to cell-centred finite volume solid mechanics was first demonstrated by the present authors in previous work \cite{Cardiff2026}. There, it was shown that a compact-stencil approximate Jacobian is highly effective as a preconditioner and that the resulting JFNK solution procedure, when combined with a second-order finite volume discretisation, offers a feasible, efficient, and robust framework applicable to static, dynamic, linear, and nonlinear solid mechanics problems. However, the combination of JFNK with high-order finite-volume formulations for solids has remained unexplored until now.
 
 The present work addresses this gap by extending the JFNK framework to third- and fourth-order cell-centred finite volume formulations for both linear and nonlinear solid mechanics. High-order accuracy is achieved through least-squares-based gradient reconstruction and high-order flux integration, following the approaches validated in prior studies \cite{Castrillo2022, Castrillo2024}. We show that even in this higher-order setting, a compact-stencil Jacobian derived from a lower-order scheme remains an effective preconditioner for the Krylov solver, thereby preserving the efficiency and fast convergence of the JFNK approach. To our knowledge, this work provides the first demonstration of a JFNK solver successfully applied to high-order (beyond second-order) finite-volume solid mechanics formulations.
 
 Another key contribution of this study is its implementation within a conventional open-source framework, which distinguishes it from earlier custom-code prototypes.
 Specifically, we build our solver using the OpenFOAM-based solids4foam toolbox \cite{Weller1998, Cardiff2025a}, maintaining its support for arbitrary polyhedral cells by decomposing cells and faces into tetrahedral and triangles.
 This \emph{conventional} implementation means that the high-order JFNK solver can handle general unstructured meshes and can be directly compared against standard second-order solvers.
-The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024} which required different treatment of boundary conditions. Finally, we introduce the $\alpha$-stabilisation scheme \cite{Antoniadis2022, Nishikawa2010, Nishikawa2011, Nishikawa2025a}, and show its effectiveness in stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations (zero-energy modes). The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order solid mechanics finite volume discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (e.g. second order Rhie–Chow-type stabilisation \cite{Cardiff2025a}) used in segregated solvers. {\color{orange}The aim of this paper is therefore twofold: to advance high-order cell-centred finite-volume methodology for solid mechanics, and to assess, within an open-source and reproducible setting, the computational performance of its combination with Jacobian-free Newton--Krylov methods and compact-stencil preconditioning on general polyhedral meshes.}
+The implementation is streamlined to be more consistent with the OpenFOAM paradigm, removing the additional boundary unknowns required in \cite{Castrillo2022, Castrillo2024}, which required different treatment of boundary conditions. Finally, we introduce the $\alpha$-stabilisation scheme \cite{Antoniadis2022, Nishikawa2010, Nishikawa2011, Nishikawa2025a}, and show its effectiveness in stabilising solutions on unstructured (irregular) grids and suppressing high-frequency oscillations (zero-energy modes). The concept of $\alpha$-stabilisation originates from CFD but is shown here to be naturally compatible with high-order solid mechanics finite volume discretisations. Importantly, it scales consistently with the order of accuracy, unlike conventional second-order stabilisations (e.g., second–order Rhie–Chow–type stabilisation \cite{Cardiff2025a}) used in segregated solvers. {\color{orange}The aim of this paper is therefore twofold: to advance high-order cell-centred finite-volume methodology for solid mechanics, and to assess, within an open-source and reproducible setting, the computational performance of its combination with Jacobian-free Newton--Krylov methods and compact-stencil preconditioning on general polyhedral meshes.}
 %
 %The aim of this paper is therefore twofold: to contribute to the relatively sparse literature on high-order cell-centred finite-volume methods for solids, and to explore the powerful synergy between such methods and Jacobian-free Newton-Krylov solution strategies.
 %
-{\color{orange}Accordingly, the discussion in Sections \ref{case:Stabilisation_Scheme_Effects}-\ref{case:Different_Choice_for_Approximate_Jacobian} is framed from a robustness-first standpoint, emphasizing not only accuracy but also the stability and conditioning properties of the formulation under different numerical settings.}
+{\color{orange}Accordingly, the discussion in Sections \ref{case:Stabilisation_Scheme_Effects}-\ref{case:Different_Choice_for_Approximate_Jacobian} is framed from a robustness-first standpoint, emphasising not only accuracy but also the stability and conditioning properties of the formulation under different numerical settings.}
 
 The remainder of this paper is structured as follows: Section~\ref{sec:math_model} presents the governing equations, followed by the formulation of the high-order finite volume discretisation in Section~\ref{sec:HO-FVD}. Section~\ref{sec:Sol_Alg} summarises the JFNK solution algorithm. Section~\ref{sec:test_cases} reports the performance of the proposed solver across a series of benchmark problems, analysing accuracy, computational cost, robustness and memory requirements. Finally, Section~\ref{sec:conclusion} provides concluding remarks and outlines future research directions.
 %
@@ -142,8 +147,7 @@ The remainder of this paper is structured as follows: Section~\ref{sec:math_mode
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-For an arbitrary body of volume $\Omega$ bounded by surface $\Gamma$ with outward facing unit normal $\bb{n}$
-the strong integral form of linear momentum in \emph{total} Lagrangian form  in the initial reference configuration is:
+For an arbitrary body of volume $\Omega$, bounded by surface $\Gamma$ with outward facing unit normal $\bb{n}$, the strong integral form of linear momentum in \emph{total} Lagrangian form  in the initial reference configuration is:
 %
 \begin{eqnarray} \label{eqn:momentum_TL}
 	\int_{\Omega_o} \rho_o \frac{\partial^2 \bb{u} }{\partial t^2} \text{d}\Omega_o
@@ -154,8 +158,8 @@ the strong integral form of linear momentum in \emph{total} Lagrangian form  in 
 %
 where $\rho$ is density, $\bb{u}$ is the displacement vector, $\bb{P}$ is the first Piola–Kirchhoff stress tensor,
 and $\bb{f}_b$ is a body force per unit volume, e.g., $\rho \bb{g}$, where $\bb{g}$ is gravity.
-Subscript $o$ is used to indicate quantities in the initial reference configuration.
-Through Nanson's formula it is possible to relate the first Piola–Kirchhoff stress tensor with the Cauchy stress tensor, $\bb{\sigma}$, in the current configuration \cite{Gurtin1981, Gurtin2010}:
+The subscript $o$ denotes quantities in the initial reference configuration.
+Through Nanson's formula, it is possible to relate the first Piola–Kirchhoff stress tensor with the Cauchy stress tensor, $\bb{\sigma}$, in the current configuration \cite{Gurtin1981, Gurtin2010}:
 %
 \begin{eqnarray} \label{eqn:nanson}
 	\bb{P}=J \bb{\sigma} \bb{F}^{-\text{T}},
@@ -172,11 +176,11 @@ This work also considers linear geometry formulation, i.e. small strain assumpti
 	+ \int_{\Omega}  \bb{f}_b \, \text{d}\Omega,
 \end{eqnarray}
 %
-where $\bb{\sigma}_\text{s}$ is the engineering (small strain) stress tensor which coincide with Piola stress tensor in the limit of small strains and rotations.
+where $\bb{\sigma}_\text{s}$ is the engineering (small strain) stress tensor, which coincides with the Piola stress tensor in the limit of small strains and rotations.
 
-The constitutive relation for Cauchy stress tensor in Eqs.~\eqref{eqn:nanson}~and~\eqref{eqn:momentum_lingeom} is given by a chosen mechanical law.
+The constitutive relation for the Cauchy stress tensor in Eqs.~\eqref{eqn:nanson}~and~\eqref{eqn:momentum_lingeom} is given by a chosen mechanical law.
 Mechanical laws considered in this work (Hooke's law, Mooney–Rivlin and neo-Hookean) are briefly outlined in \ref{app:mechLaws}.
-The governing equations are complemented by boundary conditions, with three types considered here: prescribed displacement, prescribed traction, and symmetry.
+The governing equations are complemented by three types of boundary conditions: prescribed displacement, prescribed traction, and symmetry.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -226,17 +230,13 @@ To facilitate this, in 3D cases, each polygonal face $f$ is subdivided into tria
 on which quadrature points $\bb{x}_{f,g}$ are defined for numerical flux evaluation.
 The fan triangulation method is adopted for face decomposition to minimise the number of integration points.
 %For robustness, centre-point decomposition is used whenever the fan triangulation produces degenerate or near-zero-area triangles.
-Although the computational mesh is always three-dimensional,
-two-dimensional problems are treated as planar, where the surface integration reduces to line integration along edges,
-therefore, no subdivision is required.
-Each cell volume $P$ is decomposed into tetrahedral
-(in 3D) or triangles (in 2D) subelements, with volume quadrature points $\bb{x}_{\Omega,q}$ defined within each subelement.
+Although the computational mesh is always three-dimensional, two-dimensional problems are treated as planar, where the surface integration reduces to line integration along edges; therefore, no subdivision is required.
+Each cell volume $P$ is decomposed into tetrahedral (in 3D) or triangles (in 2D) subelements, with volume quadrature points $\bb{x}_{\Omega,q}$ defined within each subelement.
 For all geometric entities, Gaussian quadrature rules are employed.
 Specifically, Gauss–Legendre quadrature is used for line integrals,
 Dunavant’s symmetric Gaussian quadrature rules \cite{Dunavant1985} are applied for triangular subelements,
 and Shunn and Ham’s symmetric quadrature rules \cite{Shunn2012} are adopted for volume integration over tetrahedral subelements.
-A key advantage of this geometric framework is its unified treatment of arbitrary convex polyhedral topologies, where all control
-volumes are handled consistently using the same reconstruction and integration procedures.
+A key advantage of this geometric framework is its unified treatment of arbitrary convex polyhedral topologies, where all control volumes are handled consistently using the same reconstruction and integration procedures.
 
 Before proceeding with the discretisation of the volume and surface integrals, we introduce the following sets of cell faces.
 The set of faces of a cell $P$ is denoted $\mathcal{F}_P=\mathcal{F}^{\text{int}}_P \cup \mathcal{F}^{\text{bnd}}_P$, 
@@ -268,12 +268,12 @@ The surface integral term in Eq.~\eqref{eqn:momentum_lingeom} (or Eq.~\eqref{eqn
 where $\Gamma_P$ indicates the surface of cell $P$,
 vector $\bb{T}_{b,g}$ represents the prescribed traction at the traction boundary quadrature point,
 $N_{f,q}$ is the number of face quadrature points and
-$\alpha_q$ is quadrature weight. Subscript ${f,q}$ indicates a quantity calculated at quadrature point location $\bb{x}_{f,q}$.
+$\alpha_q$ is the quadrature weight. Subscript ${f,q}$ indicates a quantity calculated at quadrature point location $\bb{x}_{f,q}$.
 For non-triangular faces, face quadrature weights are scaled by the ratio of each triangle’s area to the total face area,
 computed as the sum of all sub-triangle areas. Using a consistent definition of face area is essential here,
 as inconsistency can degrade overall accuracy.
 Additionally, a planar-face assumption is made by using a single outward unit normal \(\bb{n}_f\) for all quadrature points.
-For non-planar faces, this geometric approximation can affects the accuracy and may limit the achievable convergence rate.
+For non-planar faces, this geometric approximation can affect the accuracy and may limit the achievable convergence rate.
 
 The stress tensor at a quadrature point $\bb{x}_{f,q}$, denoted $(\bb{\sigma}_\text{s})_{f,q}$, is computed as a function of the displacement gradient according to the adopted mechanical constitutive law.
 For the case of small deformation engineering stress, it is given by:
@@ -342,14 +342,14 @@ For hyperelastic constitutive laws, the values of $\mu$ and $\lambda$ correspond
 The vector $\bb{d}_{PN}=\bb{x}_N-\bb{x}_P$ connects the centroid of cell $P$ with that of its neighboring cell $N$,
 while the product $\bb{d}_{PN} \cdot \bb{n}_f$ serves as a skewness measure, increasing the stabilisation on highly skewed cells \cite{Nishikawa2011}.
 The quantities $\bb{u}_{f,N}^*$ and $\bb{u}_{f,P}^*$ denote the displacements at the face center $f$,
-extrapolated from the adjacent cell centers using the displacement gradients evaluated at $N$ and $P$, respectively:
+extrapolated from the adjacent cell centres using the displacement gradients evaluated at $N$ and $P$, respectively:
 \begin{eqnarray}\label{eq:alphaJump}
 	\begin{split}
 		\bb{u}_{f,N}^* &= \bb{u}_N + \bb{d}_{Nf} \cdot (\nabla \bb{u})_N + \frac{1}{2}\bb{d}_{Nf}^2 \!:\! (\nabla \nabla \bb{u})_N + \frac{1}{6}\bb{d}_{Nf}^3 \!::\! (\nabla \nabla \nabla \bb{u})_N, \\
 		\bb{u}_{f,P}^*& = \bb{u}_P + \bb{d}_{Pf} \cdot (\nabla \bb{u})_P + \frac{1}{2}\bb{d}_{Pf}^2 \!:\! (\nabla \nabla \bb{u})_P + \frac{1}{6}\bb{d}_{Pf}^3 \!::\! (\nabla \nabla \nabla \bb{u})_P,
 	\end{split}
 \end{eqnarray}
-where $\bb{d}_{Pf} = \bb{x}_f - \bb{x}_P$ and $\bb{d}_{Nf} = \bb{x}_f - \bb{x}_N$ represent the vectors from the cell centers to the face center.
+where $\bb{d}_{Pf} = \bb{x}_f - \bb{x}_P$ and $\bb{d}_{Nf} = \bb{x}_f - \bb{x}_N$ represent the vectors from the cell centres to the face centre.
 The squared and cubed forms of the vector denote outer (tensor) products ($\bb{d}_{Nf}^3=\bb{d}_{Nf}\otimes \bb{d}_{Nf} \otimes  \bb{d}_{Nf}$), while the symbols $:$ and $\!::\!$ represent double and triple tensor contractions, respectively.
 The second and third derivatives in Eq.~\eqref{eq:alphaJump} are employed only for third- and fourth-order discretisations, respectively, and their computation is described in Section \ref{sec:ho_scheme}.
 
@@ -445,7 +445,7 @@ Minimizing Eq.~\eqref{eq:ls} with respect to $\bar{\mathbf{a}}(\tilde{\boldsymbo
 \end{eqnarray}
 %
 where $\mathbf{M}(\tilde{\bb{x}})=\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})\mathbf{Q}^{\mathrm{T}}(\tilde{\bb{x}})$, $\mathbf{Q}(\tilde{\bb{x}})$ is the $N_t \times |\mathcal{S}|$ matrix whose $N-$th column is $\mathbf{q}^{\mathrm{T}}(\bb{x}_N-\tilde{\bb{x}})$, $\mathbf{W}(\tilde{\bb{x}})$ is a diagonal weighting matrix of size $|\mathcal{S}| \times |\mathcal{S}|$ and $\mathbf{u}^\text{T}_\alpha=\left[u_{\alpha,1}, u_{\alpha,2},\dots,u_{\alpha,|\mathcal{S}|} \right] $.
-Although Eq.~\eqref{eq:maQw} represents the normal-equation form of the least-squares problem, it is not solved directly; instead, a QR factorization via Householder transformations \cite{strang2012} is used to obtain the coefficients in a more robust way.
+Although Eq.~\eqref{eq:maQw} represents the normal-equation form of the least-squares problem, it is not solved directly; instead, a QR factorisation via Householder transformations \cite{strang2012} is used to obtain the coefficients in a more robust way.
 Defining $\bar{\mathbf{A}}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathbf{Q}(\tilde{\bb{x}})\mathbf{W}(\tilde{\bb{x}})$, the system becomes:
 %
 \begin{eqnarray}\label{eq:lsA}
@@ -453,7 +453,7 @@ Defining $\bar{\mathbf{A}}(\tilde{\bb{x}})=\mathbf{M}(\tilde{\bb{x}})^{-1}\mathb
 \end{eqnarray}
 %
 The rows of $\bar{\mathbf{A}}(\tilde{\boldsymbol{x}})$ correspond to the interpolation coefficients used in
-Eqs.~\eqref{eq:interp}~and~\eqref{eq:derInterp} depending on order they were defined in Eq.~\eqref{eq:qAnda}.
+Eqs.~\eqref{eq:interp}~and~\eqref{eq:derInterp} depending on the order they were defined in Eq.~\eqref{eq:qAnda}.
 The interpolation coefficients from matrix $\bar{\mathbf{A}}(\tilde{\boldsymbol{x}})$ depend only on the mesh (geometry), so they can be computed once (or whenever the mesh moves) and stored.
 The inversion of ${\mathbf{M}}(\tilde{\boldsymbol{x}})$ may be ill-conditioned, for poor spatial distribution of stencil nodes.
 This issue is mitigated by scaling the Taylor basis, ensuring sufficient stencil size and restricting the weights in $\mathbf{W}(\tilde{\boldsymbol{x}})$ to positive values, see \cite{Castrillo2022, Castrillo2023}.
@@ -466,7 +466,7 @@ The weight function in Eq.~\eqref{eq:ls} is chosen here as a radially symmetric 
 \end{eqnarray}
 where $d=|\bb{\tilde{x}}-\bb{x}_N|$, $d_{\mathrm{s}}=2r_{\mathrm{s}}$ is the stencil diameter, $\tilde{d}=d/d_{\mathrm{s}}$ and $r_{\mathrm{s}}$ is the stencil radius, defined as the maximum distance $|\bb{\tilde{x}}-\bb{x}_N|$ in stencil $\mathcal{S}$. The weighting function in Eq.~\eqref{eq:weightFunc} has been previously used in the context of the Navier–Stokes equations
 \cite{Ramirez2014, Khelladi2011} and solid mechanics problems \cite{Castrillo2022, Castrillo2024, Castrillo2023}.
-Following these studies, the shape parameter $k = 6$ is adopted herein for both 2D and 3D cases, as it was shown to provide optimal performance \cite{Castrillo2022, Castrillo2024, Castrillo2023}.
+Following these studies, the shape parameter $k = 6$ is adopted herein for both 2D and 3D cases, as it has been shown to yield optimal performance \cite{Castrillo2022, Castrillo2024, Castrillo2023}.
 %
 %------------------------------------------------------------------------------
 \subsubsection{Interpolation Stencil}
@@ -498,7 +498,7 @@ Stencil construction is adapted for boundary faces according to the imposed boun
 	\item Symmetry boundary – the stencil, denoted $\mathcal{S}_b^{\text{symm}} := \mathcal{S}_b^{\text{symm,p}} \cup \mathcal{S}_b^{\text{symm,g}}$, is divided equally: half of the nodes correspond to the physical domain $\mathcal{S}_b^{\text{symm,p}}$, while the remaining half are mirrored ghost nodes $\mathcal{S}_b^{\text{symm,g}}$ that mirror both the position and state variables.
 \end{itemize}
 
-As an alternative, the stencil can be constructed by selecting layers of neighbouring cells around the reference point; however, this approach can lead to less predictable stencil sizes. More advanced stencil construction strategies, such as those that account for cell distribution and moment-matrix conditioning, may also be employed \cite{Khelladi2011,Tsoutsanis2023}, but a detailed assessment of these approaches in the context of solid mechanics is required and is left for future work.
+As an alternative, the stencil can be constructed by selecting layers of neighbouring cells around the reference point; however, this approach can lead to less predictable stencil sizes. More advanced stencil construction strategies, such as those that account for cell distribution and moment-matrix conditioning, may also be employed \cite{Khelladi2011,Tsoutsanis2023}, but a detailed assessment of these approaches in the context of solid mechanics is left to future work.
 %
 \begin{figure}[h]
 	\centering
@@ -527,13 +527,13 @@ Boundary conditions are imposed through modifications of the local polynomial re
 where the known tractions at the quadrature points are directly integrated and added to the surface term in Eq.~\eqref{eq:divStressDiscret}.
 
 At displacement boundaries, the prescribed displacement is enforced in a weak sense by introducing a penalty contribution into the polynomial reconstruction.
-This is achieved by extending the stencil of each boundary quadrature point with an additional ghost nodes, co-located with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$.
+This is achieved by extending the stencil of each boundary quadrature point with an additional ghost node, co-located with the quadrature point itself and assigned the prescribed displacement value $\mathbf{u}_{b,q}$.
 The inclusion of this ghost node effectively augments the reconstruction matrices $\mathbf{W}$ and $\mathbf{Q}$.
 Since the Taylor expansion in Eq.~\eqref{eq:te} is centred at the same location, the associated polynomial basis vector simplifies to
 $\mathbf{q}^{\mathrm{T}} = [1,\,0,\,0,\,\dots,\, 0]$, and its weight in $\mathbf{W}$ is typically set to unity.
-Increasing this weight enhances the local satisfaction of the prescribed displacement but does not affect the overall convergence rate.
+Increasing this weight improves the local satisfaction of the prescribed displacement without affecting the overall convergence rate.
 
-At symmetry boundaries, only the half of the stencil located inside the physical domain is available, and the remaining nodes are generated by reflecting this interior stencil across the symmetry plane. The polynomial basis vectors for these mirrored nodes are computed using their reflected coordinates. This approach guarantees enforcement of symmetry constraints; zero tangential component of boundary traction $(\bb{I}-2\bb{n}_b\otimes\bb{n}_b)\cdot \bb{T}_{b,q}= 0$, and zero normal component of displacement $\bb{n}_b \cdot \bb{u}_b = 0$.
+At symmetry boundaries, only half of the stencil located inside the physical domain is available, and the remaining nodes are generated by reflecting this interior stencil across the symmetry plane. The polynomial basis vectors for these mirrored nodes are computed using their reflected coordinates. This approach guarantees enforcement of symmetry constraints; zero tangential component of boundary traction $(\bb{I}-2\bb{n}_b\otimes\bb{n}_b)\cdot \bb{T}_{b,q}= 0$, and zero normal component of displacement $\bb{n}_b \cdot \bb{u}_b = 0$.
 
 Achieving high-order convergence near boundaries requires careful attention to geometric representation. When curved surfaces are approximated by planar faces, the resulting geometric discretisation is second-order accurate, which inherently limits the overall convergence rate of the method. High-order accuracy can be recovered either by introducing isoparametric boundary representations \cite{Coppeans2026} or by maintaining flat faces while introducing a correction \cite{Costa2022, costa2021,  Gooch2002}. Curved boundary treatment has not yet been tackled in literature (for finite volume solid mechanics) and is therefore left for future work, as it presents a challenging problem deserving dedicated study.
 %
@@ -569,7 +569,7 @@ Note that only first derivatives are stored at face quadrature points, as higher
 %In the present solution procedure, the displacements $\bb{u}_N$ are known, making the gradient evaluation straightforward.
 %However, if $\bb{u}_N$ are treated as unknowns, the interpolation coefficients must be incorporated into the left-hand-side system matrix, as %shown in \cite{Castrillo2022,Castrillo2024} and \ref{app:P}.
 
-The stabilisation scheme requires the evaluation of first and higher derivatives at cell centres when computing Eq.~\eqref{eq:alphaJump}.
+The stabilisation scheme requires evaluating first- and higher-order derivatives at cell centres when computing Eq.~\eqref{eq:alphaJump}.
 For this purpose, each cell is associated with a stencil $\mathcal{S}_P$, constructed in the same manner as the face stencil.
 At each cell centre, the gradient is computed according to Eq.~\eqref{eq:faceQuadGrad}, while the second derivative is evaluated for $p = 2$, and the third derivative tensor for $p = 3$.
 The formulation and computation of the second and the third derivative tensors are described in \ref{app:derivatives}.
@@ -617,7 +617,7 @@ Imposing $\bb{R}(\bb{u}_{k+1}) = \bb{0}$ yields the standard Newton update equat
 %
 where $\delta \bb{u}=\bb{u}_{k+1} - \bb{u}_{k}$.
 In the Jacobian-free Newton–Krylov approach, the Jacobian matrix is not formed explicitly.
-Instead, a Krylov subspace method (e.g., GMRES) is used to solve the linear system iteratively, requiring only the action of the Jacobian on a arbitrary vector $\bb{v}$:
+Instead, a Krylov subspace method (e.g., GMRES) is used to solve the linear system iteratively, requiring only the action of the Jacobian on an arbitrary vector $\bb{v}$:
 %
 \begin{eqnarray}
 	\bb{J} \bb{v} \approx \frac{\bb{R}(\bb{u}+\epsilon \bb{v})-\bb{R}(\bb{u})}{\epsilon},
@@ -627,7 +627,7 @@ where $\epsilon$ is a small scalar perturbation.
 To mitigate the effect of ill-conditioned Jacobian matrices on convergence and robustness, a left preconditioning strategy is employed:
 %
 \begin{eqnarray}\label{eq:jfnk}
-	\bb{P}^{-1}\bb{J}  \bb{v}\approx 	\frac{\bb{P}^{-1}(\bb{R}(\bb{u} + \epsilon  \bb{v}) - \bb{R}(\bb{u}))}{\epsilon},
+	\bb{P}^{-1}\bb{J}  \bb{v}\approx 	\frac{\bb{P}^{-1}\left[\bb{R}(\bb{u} + \epsilon  \bb{v}) - \bb{R}(\bb{u})\right]}{\epsilon},
 \end{eqnarray}
 %
 where $\bb{P}$ denotes the preconditioning matrix.
@@ -651,10 +651,10 @@ The approximate Jacobian, for cell $P$, corresponds to the discretised diffusion
 where $\bb{\Delta}_{f}=\bb{d_{PN}}/(\bb{d}_{PN} \cdot \bb{n}_f)$ is \emph{over-relaxed orthogonal} vector \cite{Demirdzic2015}.
 Note that the non-orthogonal correction, which is normally required to preserve accuracy when discretising the diffusion term on skewed meshes, is omitted here.
 Including it would enlarge the stencil (molecule) and compromise the compactness achieved with the central-difference approximation.
-As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is governed entirely by the residual evaluation itself.
+As will be shown later, this simplification does not degrade robustness or accuracy, since the overall accuracy of the discretisation is determined entirely by the residual evaluation.
 
 For the JFNK solver, the PETSc library (version 3.22.2) \cite{PETSc} is used, where the interfaces for evaluating the approximate Jacobian (matrix $\bb{P}$) and the high-order residual ($\boldsymbol{R}(\bb{u})$) are implemented within the \texttt{solids4foam} toolbox \cite{Cardiff2025a, Cardiff2018, Tukovic2018}, which is built on OpenFOAM-v2312 \cite{Weller1998}.
-An extended discussion with additional implementation details is provided in the authors’ previous work \cite{Cardiff2026}, where the JFNK solver is coupled with a second-order residual evaluation.
+An extended discussion, including additional implementation details, is provided in the authors’ previous work \cite{Cardiff2026}, where the JFNK solver is coupled with a second-order residual evaluation.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -670,9 +670,9 @@ In addition, the influence of the stabilisation factor, different choices of pre
 
 The benchmark cases are selected to cover a broad range of features, including both two- and three-dimensional problems, small- and large-strain regimes,
 and various material models.
-The convergence behaviour is studied on a sequence of mesh refinements to detect potential oscillatory convergence trends, which may arise in high-order finite-volume formulations \cite{Nishikawa2025a}.
+The convergence behaviour is studied over a sequence of mesh refinements to detect potential oscillatory convergence trends that may arise in high-order finite-volume formulations \cite{Nishikawa2025a}.
 
-In all simulations, the convergence criterion corresponds to a six-order-of-magnitude reduction in the residual, and a line-search procedure is employed driving the Newton-step solution update \cite{Cardiff2026}.
+In all simulations, the convergence criterion corresponds to a six-order-of-magnitude reduction in the residual, and a line-search procedure is employed, driving the Newton-step solution update \cite{Cardiff2026}.
 The number of quadrature points per tetrahedral, triangular, or line element is kept to the minimum required for exact integration of the displacement gradient $\nabla \bb{u}$, from which the stresses are computed.
 For example, triangular elements with $p=1$ and $p=2$ interpolation require one integration point, whereas $p=3$ uses three.
 The interpolation stencil size for all cases is used as specified in Section~\ref{sec:stencil}.
@@ -699,7 +699,7 @@ where the $L_2$ norm represents the root mean square error:
 \begin{eqnarray}
 	L_2 = \sqrt{\frac{1}{N_{\text{c}}}\sum_{i=1}^{N_{\text{c}}} \Delta \phi_i^2},
 \end{eqnarray}
-and $L_\infty$ is infinity norm representing the maximum absolute error:
+and $L_\infty$ is the infinity norm representing the maximum absolute error:
 \begin{eqnarray}
 	L_{\infty} = \max_{1 \leq i \leq N_{\text{c}}} |\Delta \phi_i|,
 \end{eqnarray}
@@ -717,7 +717,7 @@ Both norms are calculated for displacement magnitude $|\boldsymbol{u}|=\sqrt{u_x
 %------------------------------------------------------------------------------
 %
 The first test case consists of a  $0.2\,\text{m} \times 0.2$ m square or $0.2\,\text{m} \times 0.2\,\text{m} \times 0.2$ m cube with linear elastic (Young's modulus of $E = 200$ GPa and Poisson's ratio of $\nu = 0.3$) properties.
-A manufactured solution for displacement, prescribed on domain boundaries, is employed in the form or trigonometric function in 3D \cite{Mazzanti2024} and mixed form in 2D \cite{Castrillo2022}:
+A manufactured solution for displacement, prescribed on domain boundaries, is employed in the form of a trigonometric function in 3D \cite{Mazzanti2024} and mixed form in 2D \cite{Castrillo2022}:
 %
 \begin{itemize}
 	\item[•] \textbf{2D}
@@ -746,10 +746,10 @@ The corresponding manufactured body force term ($\bb{f}_b$ in Eq.~\eqref{eqn:mom
 
 Both manufactured-solution cases were examined using four mesh types: (i) \emph{regular} hexahedral meshes, (ii) \emph{regular} tetrahedral meshes, (iii) \emph{regular} polyhedral meshes, and (iv) \emph{irregular} tetrahedral meshes. In two dimensions, these correspond to quadrilateral, triangular, and polygonal meshes. For reference, the finest 2D quadrilateral mesh contains $1\;024$ cells, while the finest irregular triangular mesh contains $2\;048$ cells. In 3D, the finest regular hexahedral mesh consists of $91\;125$ cells, whereas the finest regular tetrahedral mesh contains $511\;104$ cells.
 
-Figs.~\ref{fig:mms2D-disp}~and~\ref{fig:mms2D-stress} show the $L_2$ and $L_\infty$ norms of the displacement and stress magnitude errors plotted against the average cell spacing. For visual reference, an image of the corresponding mesh is included in the lower-right corner of each plot. Across all mesh types, the convergence behaviour of both displacement and stress is smooth. The stress errors exhibit the expected orders of accuracy: first-order for $p=1$, second-order for $p=2$, and third-order for $p=3$. Regular hexahedral and polyhedral meshes exhibit slightly higher than expected convergence rates, attributed to error cancellation effects commonly observed on regular grids. 
+Figs.~\ref{fig:mms2D-disp}~and~\ref{fig:mms2D-stress} show the $L_2$ and $L_\infty$ norms of the displacement and stress magnitude errors plotted against the average cell spacing. For visual reference, an image of the corresponding mesh is included in the lower-right corner of each plot. Across all mesh types, the convergence behaviour of both displacement and stress is smooth. The stress errors exhibit the expected orders of accuracy: first-order for $p=1$, second-order for $p=2$, and third-order for $p=3$. Regular hexahedral and polyhedral meshes exhibit slightly higher-than-expected convergence rates, attributed to error-cancellation effects commonly observed on regular grids. 
 Theoretical expectations for displacement errors are reached for second- and fourth-order discretisation, i.e, for $p=1$ and $p=3$. For 
-$p=2$, the displacement error exhibits a transition from an initial third-order to second-order convergence as the mesh is refined. Despite the convergence rate degradation, the $p=2$ discretisation consistently yields displacement errors approximately an order of magnitude smaller. Importantly, this reduction in displacement convergence rate does not degrade the stress convergence rate, which remains uniformly second-order. Such behaviour has been reported by several authors \cite{Nishikawa2025a}, although, to the best of the author’s knowledge, a definitive explanation for why odd-order schemes often converge as if they were of the next lower even order has not yet been established.
-
+$p=2$, the displacement error exhibits a transition from an initial third-order to second-order convergence as the mesh is refined.
+Despite the degradation in convergence rate, the $p=2$ discretisation consistently yields displacement errors approximately an order of magnitude smaller. Importantly, this reduction in displacement convergence rate does not degrade the stress convergence rate, which remains uniformly second-order. Such behaviour has been reported by several authors \cite{Nishikawa2025a}, although, to the best of the author’s knowledge, a definitive explanation for why odd-order schemes often converge as if they were of the next lower even order has not yet been established.
 
 %
 \begin{figure}[h!]
@@ -823,7 +823,7 @@ $p=2$, the displacement error exhibits a transition from an initial third-order 
 	\label{fig:mms2D-stress}
 \end{figure}
 %
-Figs.~\ref{fig:mms3D-disp}~and~\ref{fig:mms3D-stress} present the corresponding 3D results: convergence of the $L_2$ and $L_\infty$ norms of the displacement and stress magnitude errors.  The trends closely mirror those observed in the 2D case: smooth convergence, expected order of accuracy for the stress field, and the same characteristic reduction of displacement convergence from third- to second-order for $p=2$. These results confirm that the observed behaviour is not specific to mesh dimensionality or topology, but rather intrinsic to the reconstruction order.
+Figs.~\ref{fig:mms3D-disp}~and~\ref{fig:mms3D-stress} present the corresponding 3D results: convergence of the $L_2$ and $L_\infty$ norms of the errors in the displacement and stress magnitudes.  The trends closely mirror those observed in the 2D case: smooth convergence, expected order of accuracy for the stress field, and the same characteristic reduction of displacement convergence from third- to second-order for $p=2$. These results confirm that the observed behaviour is not specific to mesh dimensionality or topology, but rather intrinsic to the reconstruction order.
 %
 \begin{figure}[h!]
 	\centering
@@ -904,12 +904,12 @@ Figs.~\ref{fig:mms3D-disp}~and~\ref{fig:mms3D-stress} present the corresponding 
 \label{case:cantilever_beam}
 %------------------------------------------------------------------------------
 %
-The test case geometry, shown in Fig.~\ref{fig:cantilever-geometry}, is a rectangular 2D beam with dimensions of $L\times D=2\,\text{m}\times0.1\,\text{m}$ (unit depth), a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. Beam edges AB and CF are traction-free, and plane strain conditions are assumed. The edge AF is constrained by the analytical displacement, while the edge BC is subjected to the load $P=1 \cdot 10^{5}$ N. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end \cite{augarde2008}. Convergence is assessed using 15 successively refined regular and irregular triangular meshes, shown at Fig.~\ref{fig:cantilever-tetstruct-mesh} and \ref{fig:cantilever-tetunstruct-mesh}, respectively. The finest irregular triangular mesh consists of $12\;290$ cells while the finest regular triangular mesh of $10\;368$ cells.
+The test case geometry, shown in Fig.~\ref{fig:cantilever-geometry}, is a rectangular 2D beam with dimensions of $L\times D=2\,\text{m}\times0.1\,\text{m}$ (unit depth), a Young’s modulus of $E = 200$ GPa, and a Poisson’s ratio of $\nu = 0.3$. Beam edges AB and CF are traction-free, and plane strain conditions are assumed. The edge AF is constrained by the analytical displacement, while the edge BC is subjected to the load $P=1 \cdot 10^{5}$ N. This setup enables quantification of the difference between the predicted displacement and the analytical solution as a measure of convergence across the entire domain, rather than only at the beam end \cite{augarde2008}. Convergence is assessed using 15 successively refined regular and irregular triangular meshes, shown at Fig.~\ref{fig:cantilever-tetstruct-mesh} and \ref{fig:cantilever-tetunstruct-mesh}, respectively. The finest irregular triangular mesh consists of $12\;290$ cells, while the finest regular triangular mesh consists of $10\;368$ cells.
 %
 
 The analytical displacement field is a third-order polynomial, implying that a fourth-order discretisation should reproduce the solution exactly. In this sense, the problem serves as a patch test for the fourth-order scheme. Fig.~\ref{fig:cantilever-dispErrors} presents the $L_2$ and $L_\infty$ convergence of the displacement error. As expected, the fourth-order discretisation ($p=3$) achieves the exact displacement field over the entire domain, reaching machine precision, across all meshes. The second and third-order schemes both converge at a second-order rate.
 
-Fig.~\ref{fig:cantilever-stressErrors} shows the corresponding convergence of the stress error norms. As expected, the $p=1$ and $p=2$ discretisation converge with first- and second-order accuracy, respectively.
+Fig.~\ref{fig:cantilever-stressErrors} shows the corresponding convergence of the stress error norms. As expected, the $p=1$ and $p=2$ discretisations converge with first- and second-order accuracy, respectively.
 %
 \begin{figure}[h]
 	\centering
@@ -968,7 +968,7 @@ Fig.~\ref{fig:cantilever-stressErrors} shows the corresponding convergence of th
 %
 %
 %------------------------------------------------------------------------------
-\subsubsection{Case 3: Hole in a Infinite Plate Subjected to Remote Stress}
+\subsubsection{Case 3: Hole in an Infinite Plate Subjected to Remote Stress}
 \label{case:plateHole}
 %------------------------------------------------------------------------------
 %
@@ -1032,7 +1032,7 @@ In this case, a homogeneous thick-wall cylindrical pressure vessel with an inner
 \end{itemize}
 The problem is considered under plane-stress assumptions, with the 2D computational domain corresponding to a quarter of the cylindrical geometry, as shown in Fig.~\ref{fig:pressurisedCylinder:a}. Symmetry boundary conditions are applied on edges AB and CD. Gravitational and inertial effects are neglected. The linear-elastic case is solved using a single loading increment, whereas the hyperelastic case is solved using ten equal loading increments. Analytical solutions are available in \cite{Timoshenko1970} for the small-strain and in \cite{Green1992} for the finite-strain formulation.
 
-The linear-elastic case is solved using a series of successively refined irregular triangular meshes. Results are presented in terms of the $L_2$ and $L_\infty$ error norms for displacement and stress, as shown in Fig.~\ref{fig:pressurisedCylinder-error}. Interestingly, the absence of a specialised boundary curvature treatment does not affect the order of convergence, and the expected rates are achieved. This behaviour can be explained by the fact that the problem effectively reduces to a one-dimensional \cite{Bijelonja2005a}, and by the uniform stress state along both the inner and outer boundaries.
+The linear-elastic case is solved using a series of successively refined irregular triangular meshes. Results are presented in terms of the $L_2$ and $L_\infty$ error norms for displacement and stress, as shown in Fig.~\ref{fig:pressurisedCylinder-error}. Interestingly, the absence of a specialised treatment for boundary curvature does not affect the order of convergence, and the expected rates are achieved. This behaviour can be explained by the fact that the problem effectively reduces to a one-dimensional \cite{Bijelonja2005a}, and by the uniform stress state along both the inner and outer boundaries.
 %
 %
 \begin{figure}[h]
@@ -1056,7 +1056,7 @@ The linear-elastic case is solved using a series of successively refined irregul
 	\label{fig:pressurisedCylinder}
 \end{figure}
 %
-The finite-strain case employs a Mooney–Rivlin material model with penalty parameter that yields a Poisson ratio of $\nu=0.4975$, close to the incompressibility limit. In general, accurately approaching the incompressible limit requires a mixed pressure–displacement formulation \cite{Bijelonja2005a, Horvat2025}; alternatively, in second-order discretisations, pressure oscillations may be mitigated using pressure-smoothing techniques \cite{oliveira2020}. However, no such stabilisation or smoothing procedure is applied here. The used Poisson ratio is sufficiently close to incompressibility, and the analytical  solution for incompressible material can be used to validate the resulting stress field. The case is solved on three meshes: M1 with 292 cells (Fig.~\ref{fig:pressurisedCylinder:b}), M2 with 645 cells, and M3 with 2507 cells. Mesh M3 in the deformed configuration, coloured by the $\sigma_\text{eq}$ field, is shown in Fig.~\ref{fig:pressurisedCylinder:c}. Fig.~\ref{fig:pressurisedCylinder:displacement} presents the radial displacement profiles for all three meshes and interpolation orders. It is evident that $p=3$ produces practically identical displacement profiles on all meshes, while $p=1$ converges toward the same solution more slowly than $p=2$, as expected. Fig.~\ref{fig:pressurisedCylinder:stress} shows the radial and hoop stress profiles, which agree closely with the analytical solution. Oscillations are observed in the stress field for $p=1$, which is expected for linear interpolation in a displacement-based formulation when approaching the incompressibility limit \cite{Horvat2025, oliveira2020}. The profiles in Fig.~\ref{fig:pressurisedCylinder:finiteStrain} are obtained by sampling a band of cells near the line $\theta = 45^\circ$ and plotting their corresponding values.
+The finite-strain case employs a Mooney–Rivlin material model with a penalty parameter $\kappa$ that yields a Poisson ratio of $\nu=0.4975$, close to the incompressibility limit. In general, accurately approaching the incompressible limit requires a mixed pressure–displacement formulation \cite{Bijelonja2005a, Horvat2025}; alternatively, in second-order discretisations, pressure oscillations may be mitigated using pressure-smoothing techniques \cite{oliveira2020}. However, no such stabilisation or smoothing procedure is applied here. The used Poisson ratio is sufficiently close to incompressibility, and the analytical solution for incompressible material can be used to validate the resulting stress field. The case is solved on three meshes: M1 with 292 cells (Fig.~\ref{fig:pressurisedCylinder:b}), M2 with 645 cells, and M3 with 2507 cells. Mesh M3 in the deformed configuration, coloured by the $\sigma_\text{eq}$ field, is shown in Fig.~\ref{fig:pressurisedCylinder:c}. Fig.~\ref{fig:pressurisedCylinder:displacement} presents the radial displacement profiles for all three meshes and interpolation orders. It is evident that $p=3$ produces practically identical displacement profiles on all meshes, while $p=1$ converges toward the same solution more slowly than $p=2$, as expected. Fig.~\ref{fig:pressurisedCylinder:stress} shows the radial and hoop stress profiles, which agree closely with the analytical solution. Oscillations are observed in the stress field for $p=1$, which is expected for linear interpolation in a displacement-based formulation when approaching the incompressibility limit \cite{Horvat2025, oliveira2020}. The profiles in Fig.~\ref{fig:pressurisedCylinder:finiteStrain} are obtained by sampling a band of cells near the line $\theta = 45^\circ$ and plotting their corresponding values.
 %
 \begin{figure}[h]
 	\centering
@@ -1114,7 +1114,7 @@ The linear case is solved in a single step, whereas the hyperelastic case is sol
 Eight successively refined irregular tetrahedral meshes are used 11, 35 (Fig.~\ref{fig:CooksMembrane:b}), 164, 177, 263, 389, 1~457, 5~637, 22~119 and 88~012 cells.
 
 Fig.~\ref{fig:CooksMembrane:c} shows the predicted equivalent stress distribution on the deformed geometry (using the mesh with 88012 cells) for the hyperelastic cases.  To verify the results, Fig.~\ref{fig:CooksMembrane-tipConvergence} plots the vertical displacement of a key reference point against the average cell spacing, comparing the predictions to literature data and Abaqus (C3D8 element) results. 
-The location of this reference point differs by analysis type: it is the top-right corner (48, 60) mm for the elastic case but the midpoint of the loaded edge (48, 52) mm for the hyperelastic case.  
+The location of this reference point varies by analysis type: it is the top-right corner (48, 60) mm for the elastic case, whereas for the hyperelastic case it is the midpoint of the loaded edge (48, 52) mm.  
 %
 %
 \begin{figure}[h]
@@ -1153,7 +1153,7 @@ The location of this reference point differs by analysis type: it is the top-rig
 		\label{fig:CooksMembrane-tip:b}
 		\includegraphics[scale=0.9]{Figure_53}
 	}
-	\caption{Cook’s membrane vertical displacement predictions at the reference point as a function of the average cell spacing. Comparisons are given with the results from the literature  \cite{Zienkiewicz2000, Simplas, Pelteret2018}. Case with $p=1$ uses $n+=7$ instead of $n+=10$ to get results on the first mesh with 11 cells.}
+	\caption{Cook’s membrane vertical displacement predictions at the reference point as a function of the average cell spacing. Comparisons are provided with results from the literature \cite{Zienkiewicz2000, Simplas, Pelteret2018}. The case with $p=1$ uses $n+=7$ instead of $n+=10$ to obtain results on the first mesh with 11 cells.}
 	\label{fig:CooksMembrane-tipConvergence}
 \end{figure}
 %
@@ -1163,15 +1163,14 @@ The location of this reference point differs by analysis type: it is the top-rig
 \label{case:sphericalCavity}
 %------------------------------------------------------------------------------
 %
-This problem considers a spherical cavity embedded within an infinite and isotropic medium with linear elastic material properties ($E = 200$ GPa, $\nu = 0.3$).
+This problem considers a spherical cavity embedded in an infinite, isotropic medium with linear elastic material properties ($E = 200$ GPa, $\nu = 0.3$).
 The solid is subjected to a far-field uniaxial tensile stress of $\sigma_{zz} = T = 1$ MPa, with all other stress components being zero.
-A key feature of this problem is the pronounced stress concentration that forms near the cavity on the plane perpendicular to the applied load; 
-this stress rapidly diminishes further from the cavity. 
+A key feature of this problem is the pronounced stress concentration that forms near the cavity on the plane perpendicular to the applied load; this stress rapidly diminishes further from the cavity. 
 Although the problem is inherently axisymmetric, it is solved here as a 3D case with a mesh graded towards the cavity.
 The computational domain is taken as one-eighth of a $1\,\text{m}~\times~1\,\text{m}~\times~1\,\text{m}$ cube aligned with the Cartesian axes, with one corner at the centre of the sphere, see Fig.~\ref{fig:sphericalCavity:a}.
-The analytical expressions for stress \cite{Southwell1926} and displacement \cite{Goodier1933} can be found in \cite{Cardiff2026}.
+The analytical expressions for stress \cite{Southwell1926} and displacement \cite{Goodier1933} are given in \cite{Cardiff2026}.
 The analytical tractions are applied to the far-field boundaries to mitigate finite geometry effects. 
-The same analytical expressions are also used on the cavity surface, which theoretically corresponds to a zero-traction boundary; however, the quadrature points on the discretised faces do not lie exactly on the true zero-traction surface. Imposing a zero-traction condition directly on this curved boundary, without specialised boundary treatment, would therefore reduce the overall error convergence rate to second order, as it would be dominated by the second-order accurate geometrical approximation \cite{costa2021, Gooch2002}.  
+The same analytical expressions are also used on the cavity surface, which, in principle, corresponds to a zero-traction boundary; however, the quadrature points on the discretised faces do not lie exactly on the true zero-traction surface. Imposing a zero-traction condition directly on this curved boundary, without specialised boundary treatment, would therefore reduce the overall error convergence rate to second order, as it would be dominated by the second-order accurate geometrical approximation \cite{costa2021, Gooch2002}.  
 Curved-boundary treatment is beyond the scope of the present work and is left for future investigation.
 The analysis is performed using six different irregular tetrahedral meshes with cell counts of $3\;802$, $7\;030$, $14\;891$, $32\;864$, $72\;945$ and $158\;870$, with the coarsest mesh shown in Fig.~\ref{fig:sphericalCavity:a}.
 
@@ -1222,14 +1221,14 @@ The beam is clamped on its bottom face, and its upper face is subjected to a sud
 A neo-Hookean hyperelastic material is assumed with $E = 15.293\ \text{MPa}$, $\nu = 0.3$, and density $\rho = 1000$ $\text{kg/m}^3$.
 The beam dimensions are $0.2\,\text{m} \times 0.2\, \text{m}$ and $6\,\text{m}$ in length.
 $p$-refinement is performed on the mesh containing $1250$ cells, using a $1$ ms time step and a total simulation time of $1$ s.
-The inertia term in Eq.~\eqref{eq:inertiaTerm} is integrated with the second-order backward Euler (BDF2) scheme and one integration point per cell, see \ref{app:time}.
+The inertia term in Eq.~\eqref{eq:inertiaTerm} is integrated using the second-order backward Euler (BDF2) scheme with one integration point per cell; see \ref{app:time}.
 %The main objective of this problem is to illustrate the robustness of the solution procedure when large rotations and strains are present.
 
 
 The corresponding displacement magnitude at the centre of the upper surface as a function of time is shown in Fig.~\ref{fig:vibratingCantilever:a}.
 A visualisation of the maximum displacement magnitude is provided in Fig.~\ref{fig:vibratingCantilever:b} for $t = 0.3$ s, at which point the upper surface has deflected below the fixed end.
 From Fig.~\ref{fig:vibratingCantilever:a}, it can be seen that the predictions converge toward those obtained using Abaqus with the C3D8 element on a mesh containing $138\;240$ elements.
-The results for $p = 3$ lie on top of the Abaqus reference solution, while the $p = 2$ and $p = 1$ results show slight offset, with the $p = 1$ solution closer to the $p = 3$ result.
+The results for $p = 3$ lie on top of the Abaqus reference solution, while the $p = 2$ and $p = 1$ results show a slight offset, with the $p = 1$ solution closer to the $p = 3$ result.
 Results obtained using \texttt{solids4foam} are included for reference; they are comparable to the $p = 2$ predictions and also converge toward the Abaqus solution upon mesh refinement \cite{Cardiff2026}.
 
 
@@ -1273,15 +1272,15 @@ Results obtained using \texttt{solids4foam} are included for reference; they are
 %
 To properly assess efficiency, the relevant metric is the computational cost required to achieve a given error level \cite{wang2013}. 
 In other words, comparing execution time or memory usage on a fixed mesh is not meaningful, since different method orders produce different error levels on the same mesh. Accordingly, efficiency is evaluated by comparing the $L_2$ error against the total CPU time required for a complete simulation.
-All reported results are obtained from serial executions and measured using the GNU time utility on macOS, running on an Apple M4 Pro CPU with the Clang 17.0.0 compiler. {\color{orange}In this context, the relevant comparison is not performance on a fixed mesh, but the overall cost required to achieve a prescribed error level. Consequently, a crossover is expected: lower-order discretisations may remain preferable at coarse resolutions, while higher-order schemes become advantageous when sufficiently high accuracy is required. The benefit of the proposed approach should therefore be assessed in terms of target error, not simply in terms of nominal order.}
+All reported results are obtained from serial executions and measured using the GNU time utility on macOS, running on an Apple M4 Pro CPU with the Clang 17.0.0 compiler. {\color{orange}In this context, the relevant comparison is not performance on a fixed mesh, but the overall cost required to achieve a prescribed error level. Consequently, a crossover is expected: lower-order discretisations may remain preferable at coarse resolutions, while higher-order schemes become advantageous when sufficiently high accuracy is required. The benefit of the proposed approach should therefore be assessed in terms of target error rather than simply nominal order.}
 
 
 Figs.~\ref{fig:error-time-MMS-struct-hex},~\ref{fig:error-time-MMS-struct-tet},~and \ref{fig:error-time-MMS-struct-poly} present the error–cost (error-time) relationship for the three-dimensional manufactured solution described in Section~\ref{case:mms}, considering three mesh types: hexahedral, tetrahedral, and polyhedral. 
 Each figure shows error-cost convergence for both the displacement (a) and the stress (b). Results are reported for the conventional solids4foam (S4F) segregated solver (denoted 
-S4F$_{\text{SEG}}$) and the solids4foam Jacobian-Free Newton–Krylov solver (denoted S4F$_{\text{JFNK}}$). Both solids4foam solvers are second-order accurate; their accuracy is therefore comparable to that of the high-order discretisation developed in this work with $p=1$. The timings obtained from these solvers provide a meaningful baseline for comparison, as the segregated solver is built upon a mature and highly optimised OpenFOAM infrastructure.
+S4F$_{\text{SEG}}$) and the solids4foam Jacobian-Free Newton–Krylov solver (denoted S4F$_{\text{JFNK}}$). Both solids4foam solvers are second-order accurate; their accuracy is therefore comparable to that of the high-order discretisation developed in this work with $p=1$. The timings obtained from these solvers provide a meaningful baseline for comparison, as the segregated solver is built on a mature, highly optimised OpenFOAM infrastructure.
 
 From Fig.~\ref{fig:error-time-MMS-struct-hex}, it can be observed that, for the hexahedral mesh, the $p=2$ interpolation reaches a level of efficiency comparable to that of the solids4foam solvers. It is important to note that, on regular hexahedral meshes, stress calculations using the solids4foam solvers exhibit convergence rates that are slightly higher than expected \cite{Cardiff2026, Syrakos2023}. This behaviour is not observed for tetrahedral meshes (Fig.~\ref{fig:error-time-MMS-struct-tet}), where $p=1$ is sufficient to achieve comparable efficiency for stress, while $p=2$ is required to reach similar efficiency in displacement for the JFNK solver. Results for the polyhedral mesh, shown in Fig.~
-\ref{fig:error-time-MMS-struct-poly}, indicate that $p=2$ is insufficient to match the efficiency achieved for tetrahedral and hexahedral meshes. This is attributed to the larger number of quadrature points required per face in polyhedral meshes due to their geometric complexity, which increases the computational cost. As a result, face–edge connectivity has a direct impact on efficiency, making tetrahedral meshes the most efficient choice among those considered, owing to their minimal face–edge connectivity.
+\ref{fig:error-time-MMS-struct-poly} indicates that $p=2$ is insufficient to match the efficiency achieved for tetrahedral and hexahedral meshes. This is attributed to the larger number of quadrature points required per face in polyhedral meshes, due to their geometric complexity, thereby increasing the computational cost. As a result, face–edge connectivity directly impacts efficiency, making tetrahedral meshes the most efficient among those considered, owing to their minimal face–edge connectivity.
 %
 \begin{figure}[h]
 	\centering
@@ -1315,7 +1314,7 @@ From Fig.~\ref{fig:error-time-MMS-struct-hex}, it can be observed that, for the 
 	\label{fig:error-time-MMS-struct-tet}
 \end{figure}
 %
-In all cases, the wall-clock time increases exponentially with decreasing error, resulting in an approximately linear trend on a log–log plot. Similar slopes are observed for 
+In all cases, the wall-clock time increases exponentially as the error decreases, yielding an approximately linear trend on a log–log plot. Similar slopes are observed for 
 $p=1$, $p=2$, and the S4F solvers, indicating comparable asymptotic efficiency. An exception is observed for the stress results on tetrahedral meshes, where distinct slopes arise for different interpolation orders, reflecting differences in their asymptotic convergence behaviour. Across all mesh types, the $p=3$ discretisation demonstrates a clear efficiency advantage once the mesh is sufficiently refined. Beyond the crossover point at which the efficiency curves of $p=2$ (or the S4F solvers) intersect that of $p=3$, higher-order discretisation yields performance that cannot be matched by lower-order methods.
 %
 \begin{figure}[h]
@@ -1334,7 +1333,7 @@ $p=1$, $p=2$, and the S4F solvers, indicating comparable asymptotic efficiency. 
 	\label{fig:error-time-MMS-struct-poly}
 \end{figure}
 %
-Fig.~\ref{fig:error-memory} shows the maximal memory usage for tetrahedral and hexahedral meshes. The observed memory consumption follows trends consistent with the error–cost results presented in Figs.~\ref{fig:error-time-MMS-struct-hex}--\ref{fig:error-time-MMS-struct-poly}, indicating that trends in memory efficiency mirror those observed for time efficiency. Consequently, consistent conclusions can be drawn regarding the performance in terms of memory usage.
+Fig.~\ref{fig:error-memory} shows the maximal memory usage for tetrahedral and hexahedral meshes. The observed memory consumption follows trends consistent with the error–cost results presented in Figs.~\ref{fig:error-time-MMS-struct-hex}--\ref{fig:error-time-MMS-struct-poly}, indicating that trends in memory efficiency mirror those observed for time efficiency. Consequently, consistent conclusions can be drawn regarding performance with respect to memory usage.
 %
 \begin{figure}[h]
 	\centering
@@ -1352,17 +1351,17 @@ Fig.~\ref{fig:error-memory} shows the maximal memory usage for tetrahedral and h
 	\label{fig:error-memory}
 \end{figure}
 %
-The reported timings should be regarded as indicative and may evolve as the implementation develops. Nevertheless, based on the current formulation, it is expected that the efficiency of the S4F solvers will lie between those of the $p=1$ and $p=2$ interpolation. In particular, the $p=1$ method is not expected to outperform S4F, as it requires the storage and computation of interpolation coefficients. {\color{orange}For more complex nonlinear constitutive models, the overall runtime may be dominated by the constitutive update, especially when internal variables are present. Even so, the present error–cost comparison remains meaningful, as higher-order discretisations can reach a prescribed accuracy with fewer degrees of freedom and hence fewer total constitutive evaluations. In this sense, the potential benefit of the proposed approach is not limited to the spatial discretisation alone, but extends to the total cost required to achieve a given solution quality.}
+The reported timings should be treated as indicative and may change as the implementation matures. Nevertheless, based on the current formulation, it is expected that the efficiency of the S4F solvers will lie between those of the $p=1$ and $p=2$ interpolation. In particular, the $p=1$ method is not expected to outperform S4F, as it requires storing and computing interpolation coefficients. {\color{orange}For more complex nonlinear constitutive models, the overall runtime may be dominated by the constitutive update, especially when internal variables are present. Even so, the present error–cost comparison remains meaningful, as higher-order discretisations can reach a prescribed accuracy with fewer degrees of freedom and hence fewer total constitutive evaluations. In this sense, the potential benefit of the proposed approach is not limited to the spatial discretisation alone, but extends to the total cost required to achieve a given solution quality.}
 %
 %------------------------------------------------------------------------------
 \subsection{Stabilisation Scheme Effects}
 \label{case:Stabilisation_Scheme_Effects}
 %------------------------------------------------------------------------------
 %
-This section analyses the effect of the scaling factor, $\alpha$, which is a user-defined parameter in the stabilisation scheme (Eq.~\eqref{eq:alpha}) used to suppress spurious zero-energy modes. While $\alpha=0.1$ is used as the default value for results in all examples, the investigation here focuses on how a different choice of $\alpha$ impacts solution accuracy and computational timing.
-The effect on timing is indirect: while the stabilisation calculation itself has a constant computational cost, different $\alpha$ values alter the properties of the system matrix, in particular the matrix condition number. 
-This change in system behavior directly affects the linear solver's performance. 
-Accordingly, selecting $\alpha$ involves a balance between introducing numerical dissipation (which impacts accuracy) and maintaining solver efficiency and robustness. 
+This section analyses the effect of the scaling factor $\alpha$, a user-defined parameter in the stabilisation scheme (Eq.~\eqref{eq:alpha}) that suppresses spurious zero-energy modes. While $\alpha=0.1$ is used as the default value for all results, this investigation examines how a different choice of $\alpha$ affects solution accuracy and computational time.
+The effect on timing is indirect: while the stabilisation calculation itself has a constant computational cost, different $\alpha$ values alter the properties of the system matrix, in particular, its condition number. 
+This change in system behaviour directly affects the linear solver's performance. 
+Accordingly, selecting $\alpha$ involves balancing the introduction of numerical dissipation (which affects accuracy) against maintaining solver efficiency and robustness. 
 To quantify this trade-off, the Method of Manufactured Solutions (case \ref{case:mms}) is used with structured hexahedral and unstructured tetrahedral meshes.
 
 Four values for the scaling factor, 
@@ -1370,9 +1369,9 @@ each differing by an order of magnitude, are investigated: $\alpha = 0.001, 0.01
 Fig.~\ref{fig:alpha:disp-mms} presents the $L_2$ error norm convergence for displacement, while Fig.~\ref{fig:alpha-timing} presents computational timings. 
 Different values of $\alpha$ do not affect the convergence order; the exception is for $p=2$ (hexahedral mesh), where $\alpha=1$ forces an earlier transition to second-order. 
 In terms of robustness, $\alpha=0.001$ is too low to stabilise the unstructured (irregular) mesh, and the solver converges only on some meshes. 
-From these diagrams, one can see that $\alpha=0.1$ and $\alpha=0.01$ are the best values in terms of accuracy. However, when looking at Fig.~\ref{fig:alpha-timing}, 
-it is clear that $\alpha=0.1$ is the optimal choice for efficiency. 
-It should be emphasised that, $\alpha=0.1$, is the same as the one for Rhie-Chow stabilisation in standard second-order solvers \cite{Cardiff2026}.This agreement arises because, for $p=1$, the Rhie–Chow stabilisation coincide to the $\alpha$-stabilisation.
+From these diagrams, one can see that $\alpha=0.1$ and $\alpha=0.01$ yield the highest accuracy. However, when looking at Fig.~\ref{fig:alpha-timing}, it is clear that $\alpha=0.1$ is the optimal choice for efficiency. 
+It should be emphasised that $\alpha=0.1$ is the same as the one for Rhie-Chow stabilisation in standard second-order solvers \cite{Cardiff2026}.
+This agreement arises because, for $p=1$, the Rhie–Chow stabilisation coincides with the $\alpha$-stabilisation.
 
 As an alternative to the proposed $\alpha$-stabilisation, a comparable stabilising effect can be achieved by increasing the interpolation stencil and employing more integration points than the minimum required, an approach often referred to as \emph{over-integration} or \emph{antialiasing}. 
 This strategy has been adopted in previous studies \cite{Castrillo2022, Castrillo2024}. 
@@ -1424,11 +1423,11 @@ When the matrix ${\mathbf{M}}$ is highly ill-conditioned, the resulting coeffici
 which can cause the linear solver to stall or converge very slowly. 
 In this context, \emph{artificially stiff discretisation} means that the residual vector $\bb{R}(\bb{u})$ becomes highly sensitive to displacements of some neighbouring cells within the interpolation stencil.
 
-The problem of ill-conditioning is of particular importance for high-order discretisations and is often regarded as one of their key challenges. While irregular meshes naturally help to alleviate ill-conditioning, the issue becomes especially severe on regular meshes, particularly on stretched regular grids, where the structured node distribution tends to amplify ill-conditioning \cite{Gooch2002, jalali2013}.
+The problem of ill-conditioning is particularly important for high-order discretisations and is often regarded as a key challenge. While irregular meshes naturally help to alleviate ill-conditioning, the issue becomes especially severe on regular meshes, particularly on stretched regular grids, where the structured node distribution tends to amplify ill-conditioning \cite{Gooch2002, jalali2013}.
 
-The objective of this section is to illustrate the impact of this phenomenon and to demonstrate a simple remedy to mitigate it. Numerical tests reveal that ill-conditioning is most pronounced in structured two-dimensional meshes, where the absence of a third dimension prevents natural improvement of the condition number. To investigate this effect, the plate-hole benchmark from Section~\ref{case:plateHole} is considered, discretised with quadrilateral control volumes. As shown in Fig.~\ref{fig:plateHole:hex-mesh}, the condition number of the least-squares system rises sharply for the boundary cells, revealing that stencil node arrangement leads to severe ill-conditioning
+The objective of this section is to illustrate the impact of this phenomenon and to demonstrate a simple remedy to mitigate it. Numerical tests reveal that ill-conditioning is most pronounced on structured two-dimensional meshes, where the absence of a third dimension prevents the condition number from improving naturally. To investigate this effect, the plate-hole benchmark from Section~\ref{case:plateHole} is considered and discretised using quadrilateral control volumes. As shown in Fig.~\ref{fig:plateHole:hex-mesh}, the condition number of the least-squares system rises sharply for the boundary cells, revealing that stencil node arrangement leads to severe ill-conditioning
 
-Fig.~\ref{fig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix ${\mathbf{M}}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with a reduction in the accuracy level.
+Fig.~\ref{fig:plateHole-conditioning:b} presents the $L_2$-error convergence of the displacement field for two values of the stencil-expansion parameter: $n^+ = 10$, the default used in all previous examples, and $n^+ = 20$. Increasing $n^+$ effectively enlarges the interpolation stencil and reduces the condition number of the least-squares matrix ${\mathbf{M}}$, leading to improved solver robustness. As shown, with $n^+ = 10$ it is not possible to obtain results for $p = 3$ because the linear solver fails to converge, whereas for $n^+ = 20$ convergence is achieved, albeit with reduced accuracy.
 It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK linear solver stalls, a fully implicit discretisation combined with a direct linear solver (as in \cite{Castrillo2022, Castrillo2024}) can still produce a solution; however, the accuracy of these results is typically affected.
 
 
@@ -1446,7 +1445,7 @@ It should be noted that in the case of $p = 3$ and $n^+ = 10$, where the JFNK li
 		\label{fig:plateHole-conditioning:b}
 		\includegraphics[scale=1]{Figure_73}
 	}
-	\caption{Plate hole case: effects of least square ill-conditioning when using regular quadrilateral mesh.}
+	\caption{Plate hole case: effects of least square ill-conditioning when using a regular quadrilateral mesh.}
 	\label{fig:plateHole-conditioning}
 \end{figure}
 %
@@ -1468,7 +1467,7 @@ assembly procedure for the NEJ is described in \ref{app:P}.
 Table \ref{tab:AJvsTJ-MMS} reports execution times for the manufactured solution case presented in Section~\ref{case:mms}.
 For $p=1$, only minor differences in execution time are observed between the two preconditioning strategies. 
 For $p=2$, the use of the NEJ leads to a performance improvement of approximately 10–15\%, while for $p=3$ a speed-up of 20–25\% is achieved. 
-This behaviour is consistent with expectations, as higher-order discretisations lead to increasingly complex operators for which a more accurate Jacobian representation improves preconditioning effectiveness. These results further confirm that the compact-stencil Laplacian provides an effective and efficient preconditioning strategy for $p=1$, while remaining a reasonable choice for $p=2$ and $p=3$.
+This behaviour is consistent with expectations, as higher-order discretisations yield increasingly complex operators, for which a more accurate Jacobian representation improves preconditioner effectiveness. These results further confirm that the compact-stencil Laplacian provides an effective and efficient preconditioning strategy for $p=1$, while remaining a reasonable choice for $p=2$ and $p=3$.
 
 \begin{table}[h]
 	\centering
@@ -1487,7 +1486,7 @@ This behaviour is consistent with expectations, as higher-order discretisations 
 \end{table}
 
 Table \ref{tab:AJvsTJ-SC} presents execution times for the spherical cavity case described in Section~\ref{case:sphericalCavity}.
-In this case, the use of the NEJ as a preconditioner results in solve times that are between 2 and 92 times larger than those obtained with the AJ.
+In this case, using the NEJ as a preconditioner yields solve times that are between 2 and 92 times larger than those obtained with the AJ.
 This degradation in performance is attributed to the absence of stabilisation terms in the NEJ, which leads to unfavourable numerical properties of the resulting system matrix on irregular meshes (see also \ref{app:stabilisation}). Consequently, JFNK solver performance is significantly impaired. These results demonstrate the importance of stabilisation and highlight that increased Jacobian fidelity does not necessarily translate into improved computational efficiency when the preconditioning matrix exhibits unfavourable numerical properties.
 
 \begin{table}[h]
@@ -1517,32 +1516,32 @@ This degradation in performance is attributed to the absence of stabilisation te
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions} \label{sec:conclusion}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-This work presents a high-order cell-centred finite volume formulation for solid mechanics combined with a Jacobian-free Newton–Krylov nonlinear solution strategy. 
+This work presents a high-order cell-centred finite-volume formulation for solid mechanics, combined with a Jacobian-free Newton–Krylov nonlinear solution strategy. 
 Third- and fourth-order spatial accuracy is achieved through Gaussian quadrature and a least-squares (LRE) gradient reconstruction procedure.
 To ensure stability on unstructured meshes, an $\alpha$-stabilisation scheme is introduced to suppress high-frequency error modes. 
-Solver efficiency is maintained through the use of a compact-stencil second-order approximate Jacobian as a preconditioner within the JFNK solver.
+Solver efficiency is maintained by using a compact-stencil second-order approximate Jacobian as a preconditioner in the JFNK solver.
 The formulation does not require additional boundary unknowns, supports arbitrary convex polyhedral cells and is demonstrated across a range of linear and nonlinear benchmark problems.
 \\
 The principal findings of the study are:
 %
 \begin{itemize}
 	%
-	\item \textbf{Accuracy}: The proposed discretisation delivers consistent high-order accuracy across diverse test cases. Linear reconstruction yields second-order displacement and first-order stress accuracy. Quadratic reconstruction achieves second-order accuracy for both displacement and stress; the expected third-order displacement behaviour is not observed in all cases, consistent with prior reports in the literature \cite{Nishikawa2025a}. Cubic reconstruction attains fourth-order displacement and third-order stress accuracy, confirming the effectiveness of the underlying high-order flux integration and least squares interpolation.
+	\item \textbf{Accuracy}: The proposed discretisation delivers consistent high-order accuracy across diverse test cases. Linear reconstruction yields second-order accuracy in displacement and first-order accuracy in stress. Quadratic reconstruction achieves second-order accuracy for both displacement and stress; the expected third-order displacement behaviour is not observed in all cases, consistent with prior reports in the literature \cite{Nishikawa2025a}. Cubic reconstruction achieves fourth-order accuracy in displacement and third-order accuracy in stress, confirming the effectiveness of the underlying high-order flux integration and least-squares interpolation.
 	%
-	\item \textbf{Stabilisation scheme}: The introduced $\alpha$-stabilisation scheme, adapted from high-order CFD, effectively damps spurious high-frequency errors on unstructured meshes. The stabilisation term scales with the order of the method, unlike the Rhie–Chow correction used in second-order finite volume solvers. An optimal value of $\alpha \approx 0.1$ is observed, which is also consistent with recommendations for Rhie-Chow stabilisation \cite{Cardiff2026}.
+	\item \textbf{Stabilisation scheme}: The introduced $\alpha$-stabilisation scheme, adapted from high-order CFD, effectively damps spurious high-frequency errors on unstructured meshes. The stabilisation term scales with the method's order, unlike the Rhie–Chow correction used in second-order finite volume solvers. An optimal value of $\alpha \approx 0.1$ is observed, which is also consistent with recommendations for Rhie-Chow stabilisation \cite{Cardiff2026}.
 	%
 	\item \textbf{Preconditioning choice}: The compact-stencil approximate Jacobian, originating from a second-order semi-implicit discretisation, remains effective when used as a preconditioner in conjunction with high-order residual evaluation. Comparison against a fully assembled \emph{near-exact} Jacobian (linear elastic tests) confirms that compact \emph{approximate} Jacobian offers a reliable choice.
 	%
 	\item \textbf{Robustness}:
-	The method is robust across linear, nonlinear, structured, and unstructured meshes. The main challenge arises from the ill-conditioning of the local least-squares reconstruction, particularly on structured 2D grids. When conditioning is improved (e.g., via enlarged stencils), robustness is restored.
+	The method is robust across linear, nonlinear, structured, and unstructured meshes. The main challenge arises from the ill-conditioning of the local least-squares reconstruction, particularly on structured 2D grids. When conditioning is improved (e.g., by enlarging the stencils), robustness is restored.
 	%
-	\item \textbf{Efficiency}: The OpenFOAM implementation enabled direct comparison with conventional second-order finite volume solvers. Tetrahedral meshes provide the best performance between accuracy and computational cost due to fewer quadrature points. Efficiency decreases with increasing face-edge count because this enlarges the quadrature stencil and increases storage requirements for interpolation coefficients. Despite a non-optimised implementation, the method shows competitive performance and substantial potential.
+	\item \textbf{Efficiency}: The OpenFOAM implementation enabled direct comparison with conventional second-order finite volume solvers. Tetrahedral meshes offer the best trade-off between accuracy and computational cost because they require fewer quadrature points. Efficiency decreases with increasing face-edge count because this enlarges the quadrature stencil and increases storage requirements for interpolation coefficients. Despite a non-optimised implementation, the method shows competitive performance and substantial potential.
 	%
 	\item \textbf{Integration into existing JFNK frameworks}: The high-order formulation requires only modifications to the residual evaluation and therefore integrates seamlessly into existing second-order JFNK infrastructure. The complete implementation is released within \texttt{solids4foam}, enabling community use, evaluation, and extension.
 	%
 \end{itemize}
-Future work will be directed in several key areas. First, the treatment of curved boundaries in the context of high-order finite volume for solid mechanics is a critical and unresolved challenge that warrants special attention. 
-Second, more efficient high-order implementations should be explored to further reduce computational cost. Efficiency gains may be achieved by reducing the number of least-squares systems, for example by forming a single reconstruction per face, per cell, or at mesh vertices, as in the economical approach proposed by Nishikawa \cite{Nishikawa2025}. {\color{orange}Third, extend the proposed framework to problems with limited solution regularity, such as contact and stress singularities. In these settings, the benefits of high-order discretisations may be reduced, and additional treatments such as local mesh refinement, adaptive stencils, or dedicated stabilisation may be required.} This strategy has the potential to significantly improve both time and memory efficiency while preserving the overall order of accuracy.
+Future work will focus on several key areas. First, the treatment of curved boundaries in high-order finite-volume methods for solid mechanics is a critical, unresolved challenge that warrants special attention. 
+Second, more efficient high-order implementations should be explored to further reduce computational cost. Efficiency gains may be achieved by reducing the number of least-squares systems, for example, by forming a single reconstruction per face, per cell, or at mesh vertices, as in the economical approach proposed by Nishikawa \cite{Nishikawa2025}. {\color{orange}Third, extend the proposed framework to problems with limited solution regularity, such as contact and stress singularities. In these settings, the benefits of high-order discretisations may be reduced, and additional treatments such as local mesh refinement, adaptive stencils, or dedicated stabilisation may be required.} This strategy has the potential to significantly improve both time and memory efficiency while preserving the overall order of accuracy.
 Finally, the successful application of the high-order JFNK algorithm to solid mechanics opens a promising avenue for its extension to a monolithic, high-order fluid–solid interaction framework.
 %
 %
@@ -1561,7 +1560,7 @@ The codes presented are publicly available at \url{https://github.com/solids4foa
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 During the preparation of this work, the authors used ChatGPT and Grammarly as writing assistants.
-After using these tools, the authors reviewed and edited the content as needed and takes full responsibility for the content of the publication.
+After using these tools, the authors reviewed and edited the content as needed and take full responsibility for the content of the publication.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Acknowledgments}
@@ -1570,7 +1569,7 @@ After using these tools, the authors reviewed and edited the content as needed a
 This project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (Grant Agreement No. 101088740).
 Financial support is gratefully acknowledged from I-Form, funded by Research Ireland (formerly Science Foundation Ireland)
 Grant Number {21/RC/10295\_P2}, co-funded under European Regional Development Fund and by I-Form industry partners, and from NexSys, funded by Research Ireland Grant Number 21/SPP/3756.
-Additionally, the authors wish to acknowledge the DJEI/DES/SFI/HEA Irish Centre for High-End Computing (ICHEC) for the provision of computational facilities and support (www.ichec.ie), and part of this work has been carried out using the UCD ResearchIT Sonic cluster which was funded by UCD IT Services and the UCD Research Office. None of the funding sources mentioned above had any role in study design, data collection and analysis, decision to publish, or preparation of the manuscript.
+Additionally, the authors wish to acknowledge the DJEI/DES/SFI/HEA Irish Centre for High-End Computing (ICHEC) for the provision of computational facilities and support (www.ichec.ie), and part of this work has been carried out using the UCD ResearchIT Sonic cluster, which was funded by UCD IT Services and the UCD Research Office. None of the funding sources mentioned above had any role in study design, data collection and analysis, decision to publish, or preparation of the manuscript.
 %
 
 \bibliography{mybibfile}
@@ -1612,7 +1611,7 @@ The definition of engineering stress $\bb{\sigma}_\text{s}$ for linear elasticit
 \end{eqnarray}
 %
 where $\lambda$ is the first Lam\'{e} parameter, and $\mu$ is the second Lam\'{e} parameter, synonymous with the shear modulus.
-The Lam\'{e} parameters can be expressed in term of the Young's modulus ($E$) and Poisson's ratio $\nu$ as:
+The Lam\'{e} parameters can be expressed in terms of the Young's modulus ($E$) and Poisson's ratio $\nu$ as:
 %
 \begin{eqnarray}
 	\mu = \frac{E}{2(1 + \nu)}, \quad \lambda = \frac{E \nu}{(1+\nu)(1 - 2\nu)}.
@@ -1645,16 +1644,16 @@ The Lam\'{e} parameters can be expressed in term of the Young's modulus ($E$) an
 The definition of true (Cauchy) stress $\bb{\sigma}$ for neo-Hookean hyperelasticity can be given as:
 \begin{eqnarray} \label{eq:neoHook}
 	\bb{\sigma}
-	&=& \frac{\mu}{J} \, \text{dev} \left( \bar{\bb{b}} \right) + \frac{\kappa}{2} \frac{J^2 - 1}{J} \bb{I},
+	&=& \frac{\mu}{J} \, \text{dev} \left( \bar{\bb{B}} \right) + \frac{\kappa}{2} \frac{J^2 - 1}{J} \bb{I},
 \end{eqnarray}
 where, once again, $\mu$ is the shear modulus, and $\kappa$ is the bulk modulus.
 The bulk modulus can be expressed in terms of the Young's modulus ($E$) and Poisson's ratio $\nu$ as:
 \begin{eqnarray}
 	\kappa = \frac{E}{3(1 - 2\nu)}.
 \end{eqnarray}
-The volume-preserving component of the elastic left Cauchy--Green deformation tensor $\boldsymbol{b}$ is given as
+The volume-preserving component of the elastic left Cauchy--Green deformation tensor $\boldsymbol{B}$ is given as
 \begin{eqnarray}
-	\bar{\bb{b}} = J^{-2/3} \bb{b} = J^{-2/3} \bb{F} \cdot \bb{F}^{\text{T}}.
+	\bar{\bb{B}} = J^{-2/3} \bb{b} = J^{-2/3} \bb{F} \cdot \bb{F}^{\text{T}}.
 \end{eqnarray}
 {\color{orange}In the limit of small deformations $\lVert \nabla \mathbf{u} \rVert  \ll 1$, the neo-Hookean model (Eq.~\eqref{eq:neoHook}) reduces to linear elasticity (Eq.~\eqref{eq:linearElastic}). More generally, any sufficiently smooth hyperelastic model linearised about the reference configuration recovers linear elasticity with the corresponding tangent moduli.}
 \iffalse
@@ -1737,7 +1736,7 @@ where $c_{10}$, $c_{01}$ and $c_{11}$ are material parameters, and the volumetri
 \end{eqnarray}
 
 
-Then, the Cauchy stress is given by:
+Then, the true (Cauchy) stress is given by:
 %
 \begin{eqnarray}
 	\boldsymbol{\sigma}
@@ -1806,7 +1805,7 @@ where $\mathbf{c}_{\bb{x}\bb{x}\bb{x}_N}$ is a symmetric third-order coefficient
 %
 derived from the rows of the matrix $\mathbf{\bar{A}}$.
 
-The second- and third-order terms appearing in Eq.~\eqref{eq:alphaJump}, namely $\bb{d}_{Nf}^2 \!:\! (\nabla \nabla \bb{u})_N$ and $\bb{d}_{Nf}^3 \!::\! (\nabla \nabla \nabla \bb{u})_N$, are vectors whose components are obtainer through successive tensor contraction performed independently for each displacement component:
+The second- and third-order terms appearing in Eq.~\eqref{eq:alphaJump}, namely $\bb{d}_{Nf}^2 \!:\! (\nabla \nabla \bb{u})_N$ and $\bb{d}_{Nf}^3 \!::\! (\nabla \nabla \nabla \bb{u})_N$ are vectors whose components are obtained through successive tensor contraction performed independently for each displacement component:
 %
 \begin{eqnarray}
 	\begin{split}
@@ -1863,7 +1862,7 @@ The second term corresponds to symmetry and displacement boundaries (traction bo
 \end{eqnarray}
 %
 Faces on the displacement boundary $\mathcal{S}_f^{\text{disp}}$ are discretised in the same way as internal faces.
-The ghost node contribution on displacement boundaries is included to the right-hand side vector.
+The ghost node contribution on displacement boundaries is included in the right-hand side vector.
 For symmetry faces, the stencil is split into the physical part $\mathcal{F}_P^{\text{symm,p}}$ and the ghost part $\mathcal{F}_P^{\text{symm,g}}$.
 The physical part is again discretised as internal faces, while the ghost contribution includes the reflection tensor $\bb{R}$:
 %
@@ -1912,7 +1911,7 @@ The velocity vector $\bb{v} = \partial \bb{u}/\partial t$ at the current time st
 	\dfrac{3\boldsymbol{u}_{\Omega, q}^{[t+1]} - 4\boldsymbol{u}_{\Omega, q}^{[t]} + \boldsymbol{u}_{\Omega, q}^{[t-1]}}{2\Delta t}.
 \end{eqnarray}
 %
-Consequently, the displacement and velocity at the two previous time steps must be stored, or alternatively, the displacement at the previous  four preceding time levels.
+Consequently, the displacement and velocity at the two previous time steps must be stored, or, alternatively, the displacement at the four preceding time levels.
 The displacement value at a cell quadrature point, $\boldsymbol{u}_{\Omega,q}$, is obtained by extrapolation from the cell centre. A Taylor-based extrapolation, identical to that used in Eq.~\eqref{eq:alphaJump}, is employed using derivatives evaluated at the cell centre, which are already available and stored as part of the $\alpha$ -stabilisation scheme. 
 The described approach integrates the temporal term in space with the same accuracy as the remaining terms in the governing equations. The BDF2 scheme is limited to second-order accuracy; however, higher-order temporal schemes or alternative time-integration operators \cite{Costa2022b} can be incorporated.
 %
@@ -1923,8 +1922,8 @@ The described approach integrates the temporal term in space with the same accur
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-Stabilisation by over-integration has been employed in previous studies \cite{Castrillo2022,Castrillo2024} to alleviate high-frequency numerical errors. For regular meshes, over-integration can be sufficient; however, on irregular meshes the stabilisation it provides is insufficient to adequately suppress such errors. This limitation is demonstrated in Figs.~\ref{fig:noalpha-disp:a}~and~\ref{fig:noalpha-disp:b} for the three-dimensional manufactured solution case presented in Section~\ref{case:mms}. Fig.~\ref{fig:noalpha-disp:a} shows results obtained on a regular hexahedral mesh, for which the solution remains stable, whereas Fig.~\ref{fig:noalpha-disp:b} presents results for an irregular tetrahedral mesh, where high-frequency oscillations persist despite the use of over-integration. This behaviour manifests as abrupt increases in the error norms and prevents the observation of a clear convergence trend, as the $L_{\infty}$ error exhibits sudden localised spikes at random locations within the computational domain.
-All results were generated using 12 quadrature points per triangular element for all interpolation orders, which is sufficient to exactly integrate up to sixth-order polynomial. The stencil employed is larger than that used with the $\alpha$-stabilisation approach, with $n^{+}=60$ for $p=1$, $n^{+}=70$ for $p=2$, and $n^{+}=80$ for $p=3$. When stabilisation is insufficient, the linear solver within the JFNK solution procedure stalls and fails to converge. For this reason, the results presented in Fig.~\ref{fig:noalpha-disp} were obtained without JFNK, i.e. by solving directly the near-exact Jacobian, whose construction is described in  \ref{app:P}.
+Stabilisation by over-integration has been employed in previous studies \cite{Castrillo2022,Castrillo2024} to alleviate high-frequency numerical errors. For regular meshes, over-integration can be sufficient; however, on irregular meshes, the stabilisation it provides is insufficient to adequately suppress such errors. This limitation is demonstrated in Figs.~\ref{fig:noalpha-disp:a}~and~\ref{fig:noalpha-disp:b} for the three-dimensional manufactured solution case presented in Section~\ref{case:mms}. Fig.~\ref{fig:noalpha-disp:a} shows results obtained on a regular hexahedral mesh, for which the solution remains stable, whereas Fig.~\ref{fig:noalpha-disp:b} presents results for an irregular tetrahedral mesh, where high-frequency oscillations persist despite the use of over-integration. This behaviour manifests as abrupt increases in the error norms and prevents a clear convergence trend, as the $L_{\infty}$ error exhibits sudden, localised spikes at random locations within the computational domain.
+All results were generated using 12 quadrature points per triangular element for all interpolation orders, which is sufficient to exactly integrate up to a sixth-order polynomial. The stencil employed is larger than that used with the $\alpha$-stabilisation approach, with $n^{+}=60$ for $p=1$, $n^{+}=70$ for $p=2$, and $n^{+}=80$ for $p=3$. When stabilisation is insufficient, the linear solver within the JFNK solution procedure stalls and fails to converge. For this reason, the results presented in Fig.~\ref{fig:noalpha-disp} were obtained without JFNK, i.e. by solving directly the near-exact Jacobian, whose construction is described in  \ref{app:P}.
 %
 \begin{figure}[h]
 	\centering
