@@ -1,6 +1,7 @@
-# Ignore the article pdf
-# article.pdf
-ignore.pdf
+# Ignore the article pdf as they are large changes each commit
+article.pdf
+2025_elsarticle_format_JCP/manuscript_revised.pdf
+2025_elsarticle_format_JCP_revised/manuscript_revised.pdf
 
 # macOS
 .DS_Store
